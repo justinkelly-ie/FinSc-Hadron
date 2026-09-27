@@ -1,13 +1,12 @@
-module Compound.GaugeBosons
+module Stage1.Hadron.GaugeBosons
 
-import Core.BoxInt
-import Core.Multiset
-import Core.VexelMaxel
-import Core.UnixelFraction
-import Core
-import Math.ExclusionPrinciple
-import Compound.HadronicConfinement
-import Compound.QuarkHadronAlgebra
+import Stage0.BoxInt
+import Stage0.Multiset
+import Stage1.VexelMaxel
+import Stage1.UnixelFraction
+import Stage1.ExclusionPrinciple
+import Stage1.Hadron.HadronicConfinement
+import Stage1.Hadron.QuarkHadronAlgebra
 import Data.List
 
 %default total
@@ -37,7 +36,7 @@ Eq GluonIndex where
 ||| A Gluon is an SU(3) color-exchange Maxel matrix [color_in, color_out].
 public export
 GluonMaxel : Type
-GluonMaxel = Core.VexelMaxel.Maxel
+GluonMaxel = Stage1.VexelMaxel.Maxel
 
 ||| Constructs the Maxel matrix for a given Gluon octet component.
 public export
@@ -76,7 +75,7 @@ Eq ElectroweakBoson where
 ||| Converts a 27-token Neutron Boxel into a 27-token Proton Boxel,
 ||| preserving exact total token mass across the decay event.
 public export
-betaDecayNucleon : HadronBoxel -> (HadronBoxel, Core.BoxInt.BoxInt)
+betaDecayNucleon : HadronBoxel -> (HadronBoxel, Stage0.BoxInt.BoxInt)
 betaDecayNucleon neutronBoxel =
   let protonBoxel = seedHadronBoxel
       releasedMass = totalBoxelWeight neutronBoxel - totalBoxelWeight protonBoxel
@@ -92,4 +91,4 @@ betaDecayNucleon neutronBoxel =
 public export
 auditGaugeBosonProof : Bool
 auditGaugeBosonProof =
-  (Core.BoxInt.intToBoxInt 27 == Core.BoxInt.intToBoxInt 27)
+  (Stage0.BoxInt.intToBoxInt 27 == Stage0.BoxInt.intToBoxInt 27)

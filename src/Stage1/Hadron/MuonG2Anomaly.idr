@@ -1,9 +1,9 @@
-module Math.MuonG2Anomaly
+module Stage1.Hadron.MuonG2Anomaly
 
-import Core.BoxInt
-import Core.UnixelFraction
-import Core.Multiset
-import Compound.StandardModel
+import Stage0.BoxInt
+import Stage1.UnixelFraction
+import Stage0.Multiset
+import Stage1.Hadron.StandardModel
 import Data.Vect
 import Data.List
 

@@ -1,11 +1,13 @@
-module Hadron.NucleosynthesisStream
+module Stage0.Hadron.NucleosynthesisStream
 
 import Data.List
 import Data.Fuel
-import Math.OnSeq.FusedStream
-import Compound.AlphaReplication
-import Core.VexelMaxel
-import Core.BoxInt
+import Stage0.OnSeq.FusedStream
+import Stage0.Hadron.AlphaReplication
+import Stage1.VexelMaxel
+import Stage0.BoxInt
+import Stage1.TypeTheory.Staging
+import Stage1.TypeTheory.TwoLevel
 
 %default total
 
@@ -30,8 +32,8 @@ fusedFilterStableAlpha = filterStream isAlphaStable
 
 ||| Deforested triple-alpha fusion map (Combines trios into 324-token carbon core total flux).
 public export
-fusedTripleAlphaFluxStream : FusedStream AlphaClusterState -> FusedStream Core.BoxInt.BoxInt
-fusedTripleAlphaFluxStream = mapStream (\alpha => totalAlphaFlux alpha * Core.BoxInt.intToBoxInt 3)
+fusedTripleAlphaFluxStream : FusedStream AlphaClusterState -> FusedStream Stage0.BoxInt.BoxInt
+fusedTripleAlphaFluxStream = mapStream (\alpha => totalAlphaFlux alpha * Stage0.BoxInt.intToBoxInt 3)
 
 ||| Evaluates an Alpha cluster stream into a List container.
 public export
@@ -40,12 +42,12 @@ runAlphaStream = runFueledStream
 
 ||| Direct stream generation for triple-alpha Carbon fusion flux ($3 \times 108 \to 324$).
 public export
-unfoldAlphaFusionStream : List AlphaClusterState -> FusedStream Core.BoxInt.BoxInt
+unfoldAlphaFusionStream : List AlphaClusterState -> FusedStream Stage0.BoxInt.BoxInt
 unfoldAlphaFusionStream alphas = fusedTripleAlphaFluxStream (stream alphas)
 
 ||| Zero-allocation total triple-alpha nucleosynthesis fusion energy flux accumulation using fusedHylomorphism.
 public export covering
-fusedComputeTotalNucleosynthesisFlux : Fuel -> List AlphaClusterState -> Core.BoxInt.BoxInt
+fusedComputeTotalNucleosynthesisFlux : Fuel -> List AlphaClusterState -> Stage0.BoxInt.BoxInt
 fusedComputeTotalNucleosynthesisFlux f alphas =
   fusedHylomorphism f
     (\st => case st of
@@ -62,3 +64,17 @@ auditNucleosynthesisStreamProof =
   let alpha = seedAlphaClusterEpoch4
       flux = fusedComputeTotalNucleosynthesisFlux (limit 100) [alpha, alpha, alpha]
   in unwrapBox flux == 972
+
+------------------------------------------------------------------------
+-- 2. 2LTT STAGING CODE GENERATOR TRANSDUCERS
+------------------------------------------------------------------------
+
+||| Deforested 2LTT staged code generator transducer for nucleosynthesis fusion stream.
+%inline public export
+stagedNucleosynthesisPipeline : List AlphaClusterState -> Code Stage0.BoxInt.BoxInt
+stagedNucleosynthesisPipeline alphas = quote (fusedComputeTotalNucleosynthesisFlux (limit 100) alphas)
+
+||| QTT 0 erased proof witness verifying nucleosynthesis fusion stream staging inverse identity.
+public export
+0 prfStagedNucleosynthesisPipeline : (alphas : List AlphaClusterState) -> splice (stagedNucleosynthesisPipeline alphas) = fusedComputeTotalNucleosynthesisFlux (limit 100) alphas
+prfStagedNucleosynthesisPipeline alphas = inverseSpliceQuote (fusedComputeTotalNucleosynthesisFlux (limit 100) alphas)

@@ -1,9 +1,9 @@
-module Compound.StellarNucleosynthesis
+module Stage0.Hadron.StellarNucleosynthesis
 
-import Core.BoxInt
-import Core.VexelMaxel
-import Compound.HadronicConfinement
-import Compound.AlphaReplication
+import Stage0.BoxInt
+import Stage1.VexelMaxel
+import Stage1.Hadron.HadronicConfinement
+import Stage0.Hadron.AlphaReplication
 import Data.Vect
 
 %default total

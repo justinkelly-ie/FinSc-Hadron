@@ -1,9 +1,9 @@
-module Compound.StandardModel
+module Stage1.Hadron.StandardModel
 
 import Language.Reflection
-import Core.BoxInt
-import Core.Multiset
-import Core.UnixelFraction
+import Stage0.BoxInt
+import Stage0.Multiset
+import Stage1.UnixelFraction
 import Data.List
 
 %default total
@@ -175,5 +175,5 @@ auditFullStandardModelCatalogProof =
 
 export
 %macro
-auditStandardModelCatalog : Elab (Compound.StandardModel.auditFullStandardModelCatalogProof = True)
+auditStandardModelCatalog : Elab (Stage1.Hadron.StandardModel.auditFullStandardModelCatalogProof = True)
 auditStandardModelCatalog = pure Refl

@@ -1,9 +1,9 @@
-module Compound.HadronizationEngine
+module Stage0.Hadron.HadronizationEngine
 
-import Core.BoxInt
-import Core.Multiset
-import Math.Multiset
-import Compound.StandardModel
+import Stage0.BoxInt
+import Stage0.Multiset
+import Stage0.Multiset
+import Stage1.Hadron.StandardModel
 
 import Data.Vect
 import Data.List

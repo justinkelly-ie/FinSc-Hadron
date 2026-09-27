@@ -1,13 +1,13 @@
-module Compound.StellarNuclei
+module Stage1.Hadron.StellarNuclei
 
-import Core.BoxInt
-import Core.Multiset
-import Core.VexelMaxel
-import Core.UnixelFraction
-import Compound.HadronicConfinement
-import Compound.QuarkHadronAlgebra
-import Compound.AlphaReplication
-import Compound.StellarNucleosynthesis
+import Stage0.BoxInt
+import Stage0.Multiset
+import Stage1.VexelMaxel
+import Stage1.UnixelFraction
+import Stage1.Hadron.HadronicConfinement
+import Stage1.Hadron.QuarkHadronAlgebra
+import Stage0.Hadron.AlphaReplication
+import Stage0.Hadron.StellarNucleosynthesis
 import Data.List
 
 %default total
@@ -51,8 +51,8 @@ stellarNucleusMassNumber Iron56      = 56
 
 ||| Evaluates fundamental mass token count (A * 27) of a stellar nucleus.
 public export
-stellarNucleusMassTokens : StellarNucleusSpec -> Core.BoxInt.BoxInt
-stellarNucleusMassTokens spec = Core.BoxInt.natToBoxInt (stellarNucleusMassNumber spec * 27)
+stellarNucleusMassTokens : StellarNucleusSpec -> Stage0.BoxInt.BoxInt
+stellarNucleusMassTokens spec = Stage0.BoxInt.natToBoxInt (stellarNucleusMassNumber spec * 27)
 
 ------------------------------------------------------------------------
 -- 2. SMART CONSTRUCTORS FOR STELLAR NUCLEI
@@ -65,8 +65,8 @@ fuseNeon20 alphaCores = foldl addBoxel (MkBoxel []) alphaCores
 
 ||| Fuses 56 Nucleons (56 * 27) into an Iron-56 peak binding nucleus (1512 mass tokens).
 public export
-fuseIron56Tokens : List HadronBoxel -> Core.BoxInt.BoxInt
-fuseIron56Tokens nucleons = foldl (+) (Core.BoxInt.intToBoxInt 0) (map totalBoxelWeight nucleons)
+fuseIron56Tokens : List HadronBoxel -> Stage0.BoxInt.BoxInt
+fuseIron56Tokens nucleons = foldl (+) (Stage0.BoxInt.intToBoxInt 0) (map totalBoxelWeight nucleons)
 
 ------------------------------------------------------------------------
 -- 3. FORMAL AUDIT PROOFS
@@ -83,9 +83,9 @@ fuseIron56Tokens nucleons = foldl (+) (Core.BoxInt.intToBoxInt 0) (map totalBoxe
 public export
 auditStellarNucleiProof : Bool
 auditStellarNucleiProof =
-  Core.BoxInt.unwrapBox (stellarNucleusMassTokens Beryllium7)  == 189 &&
-  Core.BoxInt.unwrapBox (stellarNucleusMassTokens Boron8)      == 216 &&
-  Core.BoxInt.unwrapBox (stellarNucleusMassTokens Neon20)      == 540 &&
-  Core.BoxInt.unwrapBox (stellarNucleusMassTokens Magnesium24) == 648 &&
-  Core.BoxInt.unwrapBox (stellarNucleusMassTokens Silicon28)   == 756 &&
-  Core.BoxInt.unwrapBox (stellarNucleusMassTokens Iron56)      == 1512
+  Stage0.BoxInt.unwrapBox (stellarNucleusMassTokens Beryllium7)  == 189 &&
+  Stage0.BoxInt.unwrapBox (stellarNucleusMassTokens Boron8)      == 216 &&
+  Stage0.BoxInt.unwrapBox (stellarNucleusMassTokens Neon20)      == 540 &&
+  Stage0.BoxInt.unwrapBox (stellarNucleusMassTokens Magnesium24) == 648 &&
+  Stage0.BoxInt.unwrapBox (stellarNucleusMassTokens Silicon28)   == 756 &&
+  Stage0.BoxInt.unwrapBox (stellarNucleusMassTokens Iron56)      == 1512

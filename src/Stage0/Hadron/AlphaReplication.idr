@@ -1,10 +1,10 @@
-module Compound.AlphaReplication
+module Stage0.Hadron.AlphaReplication
 
-import Core.BoxInt
-import Core.VexelMaxel
-import Geometry.LatticeTopology
-import Compound.HadronicConfinement
-import Core.UniverseState
+import Stage0.BoxInt
+import Stage1.VexelMaxel
+import Stage0.LatticeTopology
+import Stage1.Hadron.HadronicConfinement
+import Stage0.UniverseState
 import Data.Vect
 import Data.Fin
 

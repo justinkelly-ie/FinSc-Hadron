@@ -1,13 +1,13 @@
-module Compound.ExoticMultiquark
+module Stage1.Hadron.ExoticMultiquark
 
-import Core.BoxInt
-import Core.Multiset
-import Core.VexelMaxel
-import Core.UnixelFraction
-import Compound.HadronicConfinement
-import Compound.QuarkHadronAlgebra
-import Compound.MesonAlgebra
-import Compound.TypeIndexedMultiset
+import Stage0.BoxInt
+import Stage0.Multiset
+import Stage1.VexelMaxel
+import Stage1.UnixelFraction
+import Stage1.Hadron.HadronicConfinement
+import Stage1.Hadron.QuarkHadronAlgebra
+import Stage1.Hadron.MesonAlgebra
+import Stage1.Hadron.TypeIndexedMultiset
 import Data.List
 
 %default total

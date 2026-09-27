@@ -3,27 +3,26 @@ version = 0.3.1
 authors = "Justin Kelly"
 brief   = "Layer 4a Subatomic Particle Matter Pipeline & Hadronic Confinement Algebra."
 
-depends = FinSc-Geometry, FinSc-Multiset-Core, FinSc-Multiset-Transform, FinSc-Topology, base, linear
+depends = FinSc-Geometry, FinSc-Multiset-Core, FinSc-Multiset-Transform, base, linear
 sourcedir = "src"
 
 modules = Hadron,
-          Compound.AlphaReplication,
-          Compound.CosmicNucleosynthesis,
-          Compound.ExoticMultiquark,
-          Compound.GaugeBosons,
-          Compound.HadronicConfinement,
-          Compound.HadronizationEngine,
-          Compound.HeavyMesonAlgebra,
-          Compound.HyperonAlgebra,
-          Compound.MesonAlgebra,
-          Compound.ParticleScattering,
-          Compound.PlasmaRecombination,
-          Compound.QuarkHadronAlgebra,
-          Compound.StandardModel,
-          Compound.StellarNuclei,
-          Compound.StellarNucleosynthesis,
-          Compound.TypeIndexedMultiset,
-          Hadron.HadronScaleTransforms,
-          Hadron.NucleosynthesisStream,
-          Math.MuonG2Anomaly
-
+          Stage0.Hadron.AlphaReplication,
+          Stage0.Hadron.CosmicNucleosynthesis,
+          Stage0.Hadron.HadronizationEngine,
+          Stage0.Hadron.HadronScaleTransforms,
+          Stage0.Hadron.NucleosynthesisStream,
+          Stage0.Hadron.ParticleScattering,
+          Stage0.Hadron.PlasmaRecombination,
+          Stage0.Hadron.StellarNucleosynthesis,
+          Stage1.Hadron.ExoticMultiquark,
+          Stage1.Hadron.GaugeBosons,
+          Stage1.Hadron.HadronicConfinement,
+          Stage1.Hadron.HeavyMesonAlgebra,
+          Stage1.Hadron.HyperonAlgebra,
+          Stage1.Hadron.MesonAlgebra,
+          Stage1.Hadron.MuonG2Anomaly,
+          Stage1.Hadron.QuarkHadronAlgebra,
+          Stage1.Hadron.StandardModel,
+          Stage1.Hadron.StellarNuclei,
+          Stage1.Hadron.TypeIndexedMultiset

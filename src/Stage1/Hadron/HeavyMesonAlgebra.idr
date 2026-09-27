@@ -1,13 +1,12 @@
-module Compound.HeavyMesonAlgebra
+module Stage1.Hadron.HeavyMesonAlgebra
 
-import Core.BoxInt
-import Core.Multiset
-import Core.VexelMaxel
-import Core.UnixelFraction
-import Core
-import Math.ExclusionPrinciple
-import Compound.TypeIndexedMultiset
-import Compound.MesonAlgebra
+import Stage0.BoxInt
+import Stage0.Multiset
+import Stage1.VexelMaxel
+import Stage1.UnixelFraction
+import Stage1.ExclusionPrinciple
+import Stage1.Hadron.TypeIndexedMultiset
+import Stage1.Hadron.MesonAlgebra
 import Data.List
 
 %default total
@@ -74,8 +73,8 @@ makeUpsilonBottomoniumVexel =
 ||| Evaluates mass tokens of a Heavy Meson Vexel (must equal 18 tokens).
 %inline
 public export
-observeHeavyMesonMassTokens : MesonVexel -> Core.BoxInt.BoxInt
-observeHeavyMesonMassTokens (MkVexel [(u1, Core.BoxInt.MkBoxInt w1), (u2, Core.BoxInt.MkBoxInt w2)]) = Core.BoxInt.MkBoxInt (w1 + w2)
+observeHeavyMesonMassTokens : MesonVexel -> Stage0.BoxInt.BoxInt
+observeHeavyMesonMassTokens (MkVexel [(u1, Stage0.BoxInt.MkBoxInt w1), (u2, Stage0.BoxInt.MkBoxInt w2)]) = Stage0.BoxInt.MkBoxInt (w1 + w2)
 observeHeavyMesonMassTokens m = totalVexelMass m
 
 ||| Audits Heavy Meson Mass Token Conservation:
@@ -85,5 +84,5 @@ observeHeavyMesonMassTokens m = totalVexelMass m
 public export
 auditHeavyMesonAlgebraProof : Bool
 auditHeavyMesonAlgebraProof =
-  (Core.BoxInt.unwrapBox (observeHeavyMesonMassTokens makeJPsiCharmoniumVexel) == 18) &&
-  (Core.BoxInt.unwrapBox (observeHeavyMesonMassTokens makeUpsilonBottomoniumVexel) == 18)
+  (Stage0.BoxInt.unwrapBox (observeHeavyMesonMassTokens makeJPsiCharmoniumVexel) == 18) &&
+  (Stage0.BoxInt.unwrapBox (observeHeavyMesonMassTokens makeUpsilonBottomoniumVexel) == 18)

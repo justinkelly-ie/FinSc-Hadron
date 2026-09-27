@@ -1,11 +1,11 @@
-module Compound.CosmicNucleosynthesis
+module Stage0.Hadron.CosmicNucleosynthesis
 
-import Core.BoxInt
-import Core.Multiset
-import Core.VexelMaxel
-import Core.UnixelFraction
-import Compound.HadronicConfinement
-import Compound.QuarkHadronAlgebra
+import Stage0.BoxInt
+import Stage0.Multiset
+import Stage1.VexelMaxel
+import Stage1.UnixelFraction
+import Stage1.Hadron.HadronicConfinement
+import Stage1.Hadron.QuarkHadronAlgebra
 import Data.List
 
 %default total

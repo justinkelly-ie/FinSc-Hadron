@@ -1,23 +1,24 @@
 module Hadron
 
-import public Compound.AlphaReplication
-import public Compound.CosmicNucleosynthesis
-import public Compound.ExoticMultiquark
-import public Compound.GaugeBosons
-import public Compound.HadronicConfinement
-import public Compound.HadronizationEngine
-import public Compound.HeavyMesonAlgebra
-import public Compound.HyperonAlgebra
-import public Compound.MesonAlgebra
-import public Compound.ParticleScattering
-import public Compound.PlasmaRecombination
-import public Compound.QuarkHadronAlgebra
-import public Compound.StandardModel
-import public Compound.StellarNuclei
-import public Compound.StellarNucleosynthesis
-import public Compound.TypeIndexedMultiset
-import public Hadron.HadronScaleTransforms
-import public Hadron.NucleosynthesisStream
-import public Math.MuonG2Anomaly
+import public Stage0.Hadron.AlphaReplication
+import public Stage0.Hadron.CosmicNucleosynthesis
+import public Stage0.Hadron.HadronizationEngine
+import public Stage0.Hadron.HadronScaleTransforms
+import public Stage0.Hadron.NucleosynthesisStream
+import public Stage0.Hadron.ParticleScattering
+import public Stage0.Hadron.PlasmaRecombination
+import public Stage0.Hadron.StellarNucleosynthesis
+
+import public Stage1.Hadron.ExoticMultiquark
+import public Stage1.Hadron.GaugeBosons
+import public Stage1.Hadron.HadronicConfinement
+import public Stage1.Hadron.HeavyMesonAlgebra
+import public Stage1.Hadron.HyperonAlgebra
+import public Stage1.Hadron.MesonAlgebra
+import public Stage1.Hadron.MuonG2Anomaly
+import public Stage1.Hadron.QuarkHadronAlgebra
+import public Stage1.Hadron.StandardModel
+import public Stage1.Hadron.StellarNuclei
+import public Stage1.Hadron.TypeIndexedMultiset
 
 %default total

@@ -1,14 +1,13 @@
-module Compound.HyperonAlgebra
+module Stage1.Hadron.HyperonAlgebra
 
-import Core.BoxInt
-import Core.Multiset
-import Core.VexelMaxel
-import Core.UnixelFraction
-import Core
-import Math.ExclusionPrinciple
-import Compound.HadronicConfinement
-import Compound.QuarkHadronAlgebra
-import Compound.TypeIndexedMultiset
+import Stage0.BoxInt
+import Stage0.Multiset
+import Stage1.VexelMaxel
+import Stage1.UnixelFraction
+import Stage1.ExclusionPrinciple
+import Stage1.Hadron.HadronicConfinement
+import Stage1.Hadron.QuarkHadronAlgebra
+import Stage1.Hadron.TypeIndexedMultiset
 import Data.List
 
 %default total
@@ -66,16 +65,16 @@ makeLambdaZeroBoxel =
 ||| Evaluates mass tokens of a Hyperon Boxel (must equal 27 tokens = 1 amu).
 %inline
 public export
-observeHyperonMassTokens : HadronBoxel -> Core.BoxInt.BoxInt
-observeHyperonMassTokens (MkBoxel [(v1, Core.BoxInt.MkBoxInt w1), (v2, Core.BoxInt.MkBoxInt w2), (v3, Core.BoxInt.MkBoxInt w3)]) =
-  Core.BoxInt.MkBoxInt (w1 + w2 + w3)
+observeHyperonMassTokens : HadronBoxel -> Stage0.BoxInt.BoxInt
+observeHyperonMassTokens (MkBoxel [(v1, Stage0.BoxInt.MkBoxInt w1), (v2, Stage0.BoxInt.MkBoxInt w2), (v3, Stage0.BoxInt.MkBoxInt w3)]) =
+  Stage0.BoxInt.MkBoxInt (w1 + w2 + w3)
 observeHyperonMassTokens b = totalBoxelWeight b
 
 ||| Verifies SU(3) color neutrality of a Hyperon Boxel.
 %inline
 public export
 isHyperonColorNeutral : HadronBoxel -> Bool
-isHyperonColorNeutral (MkBoxel [(MkVoxel x1 y1 z1, Core.BoxInt.MkBoxInt w1), (MkVoxel x2 y2 z2, Core.BoxInt.MkBoxInt w2), (MkVoxel x3 y3 z3, Core.BoxInt.MkBoxInt w3)]) =
+isHyperonColorNeutral (MkBoxel [(MkVoxel x1 y1 z1, Stage0.BoxInt.MkBoxInt w1), (MkVoxel x2 y2 z2, Stage0.BoxInt.MkBoxInt w2), (MkVoxel x3 y3 z3, Stage0.BoxInt.MkBoxInt w3)]) =
   w1 == w2 && w2 == w3
 isHyperonColorNeutral b = isHadronBoxelColorNeutral b
 
@@ -90,5 +89,5 @@ isHyperonColorNeutral b = isHadronBoxelColorNeutral b
 public export
 auditHyperonAlgebraProof : Bool
 auditHyperonAlgebraProof =
-  (Core.BoxInt.unwrapBox (observeHyperonMassTokens makeLambdaZeroBoxel) == 27) &&
+  (Stage0.BoxInt.unwrapBox (observeHyperonMassTokens makeLambdaZeroBoxel) == 27) &&
   isHyperonColorNeutral makeLambdaZeroBoxel
