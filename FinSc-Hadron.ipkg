@@ -1,9 +1,9 @@
 package FinSc-Hadron
 version = 0.3.1
 authors = "Justin Kelly"
-brief   = "Layer 4a Subatomic Particle Matter Pipeline & Hadronic Confinement Algebra."
+brief   = "Layer 5b Subatomic Particle Matter Pipeline & Hadronic Confinement Algebra."
 
-depends = FinSc-Geometry, FinSc-Multiset-Core, FinSc-Multiset-Transform, base, linear
+depends = FinSc-Geometry, FinSc-Multiset, FinSc-Metric-Substrate, FinSc-Multiset-Transform, base, linear
 sourcedir = "src"
 
 modules = Hadron,

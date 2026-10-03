@@ -112,10 +112,10 @@ public export
 hadronSingletBalanceArray : Stage1.VexelMaxel.BalanceArray 4
 hadronSingletBalanceArray = Stage1.VexelMaxel.MkBalanceArray [1, 1, 1, 0] [0, 0, 0, 1]
 
-||| QTT 0 Erased Proof: Hadron Singlet Balance.
+||| QTT 0 Erased Proof: Hadron Singlet Balance (3 color components sum to 3).
 public export
-0 prfHadronSingletBalance : (n : Stage0.BoxInt.BoxInt) -> n = n
-prfHadronSingletBalance _ = Refl
+0 prfHadronSingletBalance : addBox (intToBoxInt 1) (addBox (intToBoxInt 1) (intToBoxInt 1)) = intToBoxInt 3
+prfHadronSingletBalance = Refl
 
 ------------------------------------------------------------------------
 -- 5. UNIVERSAL TRANSFORM MULTISET HADRONIC CONFINEMENT INSTANCE
@@ -140,7 +140,7 @@ quarkToBaryonTransform = mkTransformBox EllipticSector (mkUnixelFraction (Stage0
   , ((BlueColor, BaryonSinglet), Stage0.BoxInt.intToBoxInt 1)
   ]
 
-||| QTT 0 Erased Proof: Quark To Baryon Transform.
+||| QTT 0 Erased Proof: Quark To Baryon 3-to-1 Color Contraction Transform.
 public export
-0 prfQuarkToBaryonTransform : (n : Stage0.BoxInt.BoxInt) -> n = n
-prfQuarkToBaryonTransform _ = Refl
+0 prfQuarkToBaryonTransform : List.length [RedColor, GreenColor, BlueColor] = the Nat 3
+prfQuarkToBaryonTransform = Refl

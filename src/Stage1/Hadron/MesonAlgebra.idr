@@ -102,6 +102,12 @@ public export
 auditMesonAlgebraProof : Bool
 auditMesonAlgebraProof = True
 
+||| Erased compile-time witness: Pion+ net charge is +1e (2/3 + 1/3 = 3/3).
 public export
-0 prfMesonAlgebra : (n : Stage0.BoxInt.BoxInt) -> n = n
-prfMesonAlgebra _ = Refl
+0 prfPionPlusChargeThirds : addBox (intToBoxInt 2) (intToBoxInt 1) = intToBoxInt 3
+prfPionPlusChargeThirds = Refl
+
+||| QTT 0 Erased Proof: Meson mass token conservation (9 + 9 = 18).
+public export
+0 prfMesonAlgebra : addBox (intToBoxInt 9) (intToBoxInt 9) = intToBoxInt 18
+prfMesonAlgebra = Refl

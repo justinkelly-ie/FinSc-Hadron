@@ -4,7 +4,7 @@ import Stage0.BoxInt
 import Stage0.Multiset
 import Stage0.WitnessLedger
 import Stage1.QuadStream
-import Stage1.Category.Adjunction
+import Stage1.MultisetDuality
 import Stage1.TypeTheory.Staging
 import Stage1.TypeTheory.TwoLevel
 
@@ -142,8 +142,9 @@ StrictReflectionFunctor ConcreteHadronFunctor AbstractHadronFunctor where
 
 ||| QTT 0 Erased Proof: Hadron Scale Multiset Adjunction Duality Invariant
 public export
-0 prfHadronScaleAdjunctionDuality : (n : BoxInt) -> n = n
-prfHadronScaleAdjunctionDuality = prfMultisetDuality
+0 prfHadronScaleAdjunctionDuality : (s : ConcreteHadronState) ->
+  f_pullback (the HadronMacroDomain (f_pushforward s)) = s
+prfHadronScaleAdjunctionDuality (MkConcreteHadron _) = Refl
 
 --------------------------------------------------------------------------------
 -- 3. HADRONIC LAWS: QUARK-HADRON CONFINEMENT MULTISET ADJUNCTION (L_Quark ⊣ R_Baryon)

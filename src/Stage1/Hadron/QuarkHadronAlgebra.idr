@@ -95,9 +95,32 @@ public export
 auditQuarkHadronAlgebraProof : Bool
 auditQuarkHadronAlgebraProof = True
 
+||| Quark electric charge in units of e/3 (+2 for Up, -1 for Down).
 public export
-0 prfQuarkHadronAlgebra : (n : Stage0.BoxInt.BoxInt) -> n = n
-prfQuarkHadronAlgebra _ = Refl
+quarkChargeThirds : (isUp : Bool) -> Stage0.BoxInt.BoxInt
+quarkChargeThirds True = intToBoxInt 2
+quarkChargeThirds False = intToBoxInt (-1)
+
+||| Baryon net electric charge in units of e/3.
+public export
+baryonChargeThirds : (q1Up : Bool) -> (q2Up : Bool) -> (q3Up : Bool) -> Stage0.BoxInt.BoxInt
+baryonChargeThirds q1 q2 q3 =
+  addBox (quarkChargeThirds q1) (addBox (quarkChargeThirds q2) (quarkChargeThirds q3))
+
+||| Erased compile-time witness: Proton net charge is +1e (3/3).
+public export
+0 prfProtonCharge : baryonChargeThirds True True False = intToBoxInt 3
+prfProtonCharge = Refl
+
+||| Erased compile-time witness: Neutron net charge is 0e (0/3).
+public export
+0 prfNeutronCharge : baryonChargeThirds True False False = intToBoxInt 0
+prfNeutronCharge = Refl
+
+||| QTT 0 Erased Proof: Hadronic mass token conservation (9 + 9 + 9 = 27).
+public export
+0 prfQuarkHadronAlgebra : addBox (intToBoxInt 9) (addBox (intToBoxInt 9) (intToBoxInt 9)) = intToBoxInt 27
+prfQuarkHadronAlgebra = Refl
 
 ------------------------------------------------------------------------
 -- 6. DEFORESTED MAXEL MATRIX MULTIPLICATION

@@ -13,7 +13,7 @@ type = "local"
 path = "../FinSc-Multiset-Transform"
 ipkg = "FinSc-Multiset-Transform.ipkg"
 
-[custom.all.FinSc-Physics]
+[custom.all.FinSc-Action-Dynamics]
 type = "local"
-path = "../FinSc-Physics"
-ipkg = "FinSc-Physics.ipkg"
+path = "../FinSc-Action-Dynamics"
+ipkg = "FinSc-Action-Dynamics.ipkg"
