@@ -7,6 +7,7 @@ depends = FinSc-Geometry, FinSc-Multiset, FinSc-Metric-Substrate, FinSc-Phase-Un
 sourcedir = "src"
 
 modules = NuclearMatter,
+          Reflect.NuclearAuditor,
           Hadron,
           Stage0.Hadron.AlphaReplication,
           Stage0.Hadron.CosmicNucleosynthesis,

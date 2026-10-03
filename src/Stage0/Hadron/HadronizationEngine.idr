@@ -60,6 +60,13 @@ fragmentQGPJetMultiset jetBag =
   let hadronBag = fiberPullback qgpDecayFiberMap jetBag
   in MkMultisetHadronizedJetState hadronBag ConfinementHadronGas
 
+||| Strict QTT Linear State Evolution for QGP Hadronization (Rule 04).
+||| Consumes the deconfined QGP state linearly to guarantee zero state cloning or silent decay loss.
+public export
+stepHadronizationLinear : (1 state : MultisetHadronizedJetState) -> MultisetHadronizedJetState
+stepHadronizationLinear (MkMultisetHadronizedJetState bag _) =
+  fragmentQGPJetMultiset bag
+
 ------------------------------------------------------------------------
 -- 2. HADRONIZATION AUTOMATON (g -> q q_bar, q q_bar -> Pion, q q q -> Nucleon)
 ------------------------------------------------------------------------
