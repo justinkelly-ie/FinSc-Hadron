@@ -1,12 +1,13 @@
-package FinSc-Hadron
+package FinSc-Nuclear-Matter
 version = 0.3.1
 authors = "Justin Kelly"
-brief   = "Layer 5b Subatomic Particle Matter Pipeline & Hadronic Confinement Algebra."
+brief   = "Layer 5b Hadronic Confinement, Quark Trapping & Stellar Nucleosynthesis Engine."
 
 depends = FinSc-Geometry, FinSc-Multiset, FinSc-Metric-Substrate, FinSc-Phase-Unfolding, base, linear
 sourcedir = "src"
 
-modules = Hadron,
+modules = NuclearMatter,
+          Hadron,
           Stage0.Hadron.AlphaReplication,
           Stage0.Hadron.CosmicNucleosynthesis,
           Stage0.Hadron.HadronizationEngine,
