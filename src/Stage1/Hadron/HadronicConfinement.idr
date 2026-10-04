@@ -37,16 +37,24 @@ seedHadronEpoch3 =
           BlueColor  => Stage0.BoxInt.intToBoxInt 1)
   in MkHadronState grid
 
-||| Computes the net color charge sum of a sector.
+||| Deforested direct vector slice sum of 9 cells from an offset.
+private
+sum9From : Nat -> Vect 27 Stage0.BoxInt.BoxInt -> Stage0.BoxInt.BoxInt
+sum9From offset grid = go 9 offset (Stage0.BoxInt.intToBoxInt 0)
+  where
+    go : Nat -> Nat -> Stage0.BoxInt.BoxInt -> Stage0.BoxInt.BoxInt
+    go Z _ acc = acc
+    go (S k) idx acc =
+      case natToFin idx 27 of
+        Just finIdx => go k (S idx) (Stage0.BoxInt.addBox acc (index finIdx grid))
+        Nothing     => acc
+
+||| Computes the net color charge sum of a sector via deforested direct vector slices.
 public export
 sectorColorSum : ColorCharge -> HadronState -> Stage0.BoxInt.BoxInt
-sectorColorSum targetColor (MkHadronState grid) =
-  let cells = filter (\idx => cellColorSector idx == targetColor) (allFins 27)
-  in foldl (\acc, idx => acc + index idx grid) (Stage0.BoxInt.intToBoxInt 0) cells
-  where
-    allFins : (n : Nat) -> List (Fin n)
-    allFins Z = []
-    allFins (S k) = FZ :: map FS (allFins k)
+sectorColorSum RedColor (MkHadronState grid)   = sum9From 0 grid
+sectorColorSum GreenColor (MkHadronState grid) = sum9From 9 grid
+sectorColorSum BlueColor (MkHadronState grid)  = sum9From 18 grid
 
 ||| Color Neutrality (White / Singlet State) Predicate:
 ||| A hadron is confined and color-neutral if and only if Red Sum == Green Sum == Blue Sum.
