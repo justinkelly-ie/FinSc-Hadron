@@ -47,17 +47,29 @@ public export
 unfoldAlphaFusionStream : List AlphaClusterState -> FusedStream Stage0.BoxInt.BoxInt
 unfoldAlphaFusionStream alphas = fusedTripleAlphaFluxStream (stream alphas)
 
+||| Direct stream accumulator for total triple-alpha nucleosynthesis fusion energy flux using foldStreamNat.
+public export
+fusedComputeTotalNucleosynthesisFluxNatDirect : (fuel : Nat) -> FusedStream AlphaClusterState -> Stage0.BoxInt.BoxInt
+fusedComputeTotalNucleosynthesisFluxNatDirect fuel strm =
+  foldStreamNat fuel (\acc, alpha => addBox (mulBox (totalAlphaFlux alpha) (intToBoxInt 3)) acc) (intToBoxInt 0) strm
+
+||| Direct stream accumulator for total nucleosynthesis flux using foldStreamFuel.
+public export
+fusedComputeTotalNucleosynthesisFluxDirect : Fuel -> FusedStream AlphaClusterState -> Stage0.BoxInt.BoxInt
+fusedComputeTotalNucleosynthesisFluxDirect f strm =
+  foldStreamFuel f (\acc, alpha => addBox (mulBox (totalAlphaFlux alpha) (intToBoxInt 3)) acc) (intToBoxInt 0) strm
+
 ||| Total triple-alpha nucleosynthesis fusion energy flux accumulation using foldStreamNat.
 public export
 fusedComputeTotalNucleosynthesisFluxNat : (fuel : Nat) -> List AlphaClusterState -> Stage0.BoxInt.BoxInt
 fusedComputeTotalNucleosynthesisFluxNat fuel alphas =
-  foldStreamNat fuel (\acc, alpha => (totalAlphaFlux alpha * intToBoxInt 3) + acc) (intToBoxInt 0) (stream alphas)
+  fusedComputeTotalNucleosynthesisFluxNatDirect fuel (stream alphas)
 
 ||| Backward-compatible total nucleosynthesis flux accumulation using foldStreamFuel.
 public export
 fusedComputeTotalNucleosynthesisFlux : Fuel -> List AlphaClusterState -> Stage0.BoxInt.BoxInt
 fusedComputeTotalNucleosynthesisFlux f alphas =
-  foldStreamFuel f (\acc, alpha => (totalAlphaFlux alpha * intToBoxInt 3) + acc) (intToBoxInt 0) (stream alphas)
+  fusedComputeTotalNucleosynthesisFluxDirect f (stream alphas)
 
 ||| Verification audit witness proving zero-allocation triple-alpha fusion energy flux computation.
 public export
