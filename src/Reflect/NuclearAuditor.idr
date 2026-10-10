@@ -6,6 +6,8 @@ module Reflect.NuclearAuditor
 
 import Stage0.BoxInt
 import Stage0.Hadron.NucleosynthesisStream
+import Stage0.Hadron.CosmicNucleosynthesis
+import Stage0.Hadron.ParticleScattering
 import Language.Reflection
 
 %default total
@@ -104,6 +106,36 @@ public export
 auditNuclearReactionConservation : Elab (Reflect.NuclearAuditor.auditNuclearReactionConservationProofExport = True)
 auditNuclearReactionConservation = pure Refl
 
+||| Audit 5: Primordial BBN Helium-4 Mass Fraction PDG Interval Containment.
+public export
+auditBBNHeliumMassFractionProofExport : Bool
+auditBBNHeliumMassFractionProofExport = Stage0.Hadron.CosmicNucleosynthesis.auditBBNHeliumMassFractionProof
+
+public export
+%macro
+auditBBNHeliumMassFraction : Elab (Reflect.NuclearAuditor.auditBBNHeliumMassFractionProofExport = True)
+auditBBNHeliumMassFraction = auditWitness Reflect.NuclearAuditor.auditBBNHeliumMassFractionProofExport
+
+||| Audit 6: BBN Holographic Saturation & Primorial 210 Closure.
+public export
+auditBBNHolographicSaturationProofExport : Bool
+auditBBNHolographicSaturationProofExport = Stage0.Hadron.CosmicNucleosynthesis.auditBBNHolographicSaturationProof
+
+public export
+%macro
+auditBBNHolographicSaturation : Elab (Reflect.NuclearAuditor.auditBBNHolographicSaturationProofExport = True)
+auditBBNHolographicSaturation = auditWitness Reflect.NuclearAuditor.auditBBNHolographicSaturationProofExport
+
+||| Audit 7: Discrete Mandelstam 2-to-2 Scattering Invariant Identity (s + t + u = sum m^2).
+public export
+auditMandelstamIdentityProofExport : Bool
+auditMandelstamIdentityProofExport = Stage0.Hadron.ParticleScattering.auditMandelstamIdentityProof
+
+public export
+%macro
+auditMandelstamIdentity : Elab (Reflect.NuclearAuditor.auditMandelstamIdentityProofExport = True)
+auditMandelstamIdentity = auditWitness Reflect.NuclearAuditor.auditMandelstamIdentityProofExport
+
 ||| Batch nuclear auditor witnesses.
 public export
 nuclearAuditorWitnesses : List Bool
@@ -112,4 +144,7 @@ nuclearAuditorWitnesses =
   , auditBaryonConfinementBoundProof
   , auditTripleAlphaFusionProof
   , auditNuclearReactionConservationProofExport
+  , auditBBNHeliumMassFractionProofExport
+  , auditBBNHolographicSaturationProofExport
+  , auditMandelstamIdentityProofExport
   ]

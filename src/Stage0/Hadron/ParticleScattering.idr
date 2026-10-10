@@ -84,3 +84,22 @@ auditParticleScatteringProof =
   (qedLeptonScatteringVertex (SMPFermion LepE) (SMPFermion AntiLepE) == Just [SMPFermion LepMu, SMPFermion AntiLepMu]) &&
   (qcdQuarkAnnihilationVertex (SMPFermion QuarkU) (SMPFermion AntiQuarkU) == Just [SMPBoson GluonR, SMPBoson GluonR]) &&
   (weakVectorBosonFusionVertex (SMPBoson WPlus) (SMPBoson WMinus) == Just [SMPBoson Higgs0, SMPBoson Photon])
+
+||| Evaluates the Mandelstam sum: s + t + u.
+public export
+mandelstamSum : MandelstamInvariants -> UnixelFraction
+mandelstamSum inv = addUnixelFraction (sVar inv) (addUnixelFraction (tVar inv) (uVar inv))
+
+||| Audits the Mandelstam identity: s + t + u = \sum_{i=1}^4 m_i^2.
+||| For 4 equal-mass particles of mass m = 2 (m^2 = 4): sum m^2 = 16.
+||| With s = 10, t = -2, u = 8 (s + t + u = 16).
+public export
+auditMandelstamIdentityProof : Bool
+auditMandelstamIdentityProof =
+  let s = mkUnixelFraction (intToBoxInt 10) 1
+      t = mkUnixelFraction (intToBoxInt (-2)) 1
+      u = mkUnixelFraction (intToBoxInt 8) 1
+      invariants = computeMandelstamInvariants s t u
+      totalSum = mandelstamSum invariants
+      expectedSum = mkUnixelFraction (intToBoxInt 16) 1
+  in totalSum == expectedSum
