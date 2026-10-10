@@ -1,8 +1,9 @@
 module Stage0.Hadron.HadronizationEngine
 
 import Stage0.BoxInt
+import Stage0.BoxNat
 import Stage0.Multiset
-import Stage0.Multiset
+import Stage0.OnSeq.FusedStream
 import Stage1.Hadron.StandardModel
 
 import Data.Vect
@@ -119,4 +120,60 @@ auditHadronizationEngineProof =
       tMultiset = (qgpPhase mState == ConfinementHadronGas) &&
                   (hadronBag mState == expectedBag)
   in tList && tMultiset
+
+------------------------------------------------------------------------
+-- 4. RLE MULTIPLICITY STREAMING JET FRAGMENTATION (BoxNat)
+------------------------------------------------------------------------
+
+||| RLE-compressed particle token carrying exact BoxNat multiplicity.
+public export
+record RLEParticleToken where
+  constructor MkRLEParticle
+  particle     : StandardModelParticle
+  multiplicity : BoxNat
+
+public export
+Eq RLEParticleToken where
+  (MkRLEParticle p1 m1) == (MkRLEParticle p2 m2) =
+    p1 == p2 && boxNatToNat m1 == boxNatToNat m2
+
+||| Streams a hadron bag as a zero-allocation deforested RLE stream of (particle, BoxNat).
+public export
+streamHadronBagRLE : Multiset BoxInt StandardModelParticle -> FusedStream RLEParticleToken
+streamHadronBagRLE bag =
+  unfoldStream step bag
+  where
+    step : Multiset BoxInt StandardModelParticle -> Step (Multiset BoxInt StandardModelParticle) RLEParticleToken
+    step ZeroM = Done
+    step (AddM p w rest) =
+      let m = natToBoxNat (fromInteger (abs (unwrapBox w)))
+      in Yield (MkRLEParticle p m) rest
+
+||| Deforested QGP fragmentation transducer over RLE particle streams:
+||| Splitting gluons into u and u_bar pairs while preserving BoxNat multiplicities.
+public export
+streamFragmentQGPRLE : FusedStream RLEParticleToken -> FusedStream RLEParticleToken
+streamFragmentQGPRLE strm =
+  fusedConcat (mapStream (\(MkRLEParticle p m) =>
+    case p of
+      SMPBoson GluonR =>
+        stream [ MkRLEParticle (SMPFermion QuarkU) m
+               , MkRLEParticle (SMPFermion AntiQuarkU) m
+               ]
+      other => stream [ MkRLEParticle other m ]
+  ) strm)
+
+||| Evaluates discrete internal energy contribution of an RLE particle token.
+public export
+rleParticleEnergy : RLEParticleToken -> BoxInt
+rleParticleEnergy (MkRLEParticle p m) =
+  let w = natToBoxInt (boxNatToNat m)
+  in mulBox w (intToBoxInt 1)
+
+||| Deforested transducer mapping an RLE particle stream to discrete energy-weight pairs (E, w).
+public export
+streamRLEParticleToEnergyPairs : FusedStream RLEParticleToken -> FusedStream (BoxInt, BoxInt)
+streamRLEParticleToEnergyPairs strm =
+  mapStream (\tok => (rleParticleEnergy tok, natToBoxInt (boxNatToNat (multiplicity tok)))) strm
+
 
