@@ -14,6 +14,8 @@ import Stage1.Order.Preorder
 import Stage1.TypeTheory.Staging
 import Stage1.TypeTheory.TwoLevel
 import Stage0.OnSeq.FusedStream
+import Stage1.Goh.Factor
+import Stage1.FourGeometries
 
 %default total
 
@@ -31,6 +33,34 @@ QuarkVexel = Stage1.VexelMaxel.Vexel
 public export
 HadronBoxel : Type
 HadronBoxel = Stage1.VexelMaxel.Boxel
+
+||| Canonical prime of quark triplet color SU(3) confinement.
+public export
+colorConfinementPrime : GohPrime 3
+colorConfinementPrime = Prime3
+
+||| Canonical constructive Goh factor of 3D quarks and trit confinement (Law 16).
+public export
+quarkConfinementFactor : GohFactor 3
+quarkConfinementFactor = Factor3
+
+||| Static compile-time witness: The quark confinement prime dimension is 3.
+public export
+0 verifyQuarkConfinementDimension :
+  (the Nat (gohPrimeNat (3 ** Stage1.Hadron.QuarkHadronAlgebra.colorConfinementPrime))) = 3
+verifyQuarkConfinementDimension = Refl
+
+||| Static compile-time witness: Quark confinement sector is Elliptic.
+public export
+0 verifyQuarkConfinementSector :
+  Stage1.Hadron.QuarkHadronAlgebra.quarkConfinementFactor.geometrySector = Stage1.FourGeometries.EllipticGeom
+verifyQuarkConfinementSector = Refl
+
+||| Static compile-time witness: Quark confinement vacuum quadrance is 9.
+public export
+0 verifyQuarkConfinementQuadrance :
+  Stage1.Hadron.QuarkHadronAlgebra.quarkConfinementFactor.vacuumQuadrance = intToBoxInt 9
+verifyQuarkConfinementQuadrance = Refl
 
 ------------------------------------------------------------------------
 -- 2. GENERATORS (Pure Multiset Introduction Rules)
