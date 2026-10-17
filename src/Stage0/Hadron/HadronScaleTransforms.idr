@@ -3,6 +3,8 @@ module Stage0.Hadron.HadronScaleTransforms
 import Stage0.BoxInt
 import Stage0.Multiset
 import Stage0.WitnessLedger
+import Stage0.PrimeMultiset
+import Stage1.MultisetTree
 import Stage1.QuadStream
 import Stage1.MultisetDuality
 import Stage1.TypeTheory.Staging
@@ -384,3 +386,46 @@ prfStagedQuarkBaryonPipeline qs = inverseSpliceQuote (MkBaryonState (multisetSum
 public export
 auditHadronScaleTransformProof : Bool
 auditHadronScaleTransformProof = True
+
+--------------------------------------------------------------------------------
+-- 6. LOGARITHMIC O(log N) MULTISET-TREE CHARGE INDEXING
+--------------------------------------------------------------------------------
+
+||| A logarithmic O(log N) balanced Hadron State indexed by AnyGohPrime:
+||| Encodes color/flavor/baryon charge quanta into a balanced AVL MultisetTree.
+public export
+record HadronMultisetTreeState where
+  constructor MkHadronTreeState
+  chargeTree : MultisetTree AnyGohPrime
+
+||| Converts a GohPrimeMultiset into an O(log N) balanced HadronMultisetTreeState.
+public export
+gohToHadronTree : GohPrimeMultiset -> HadronMultisetTreeState
+gohToHadronTree m = MkHadronTreeState (toMultisetTreeGoh m)
+
+||| Fast O(log N) query of quark color triad / baryon capacity (Prime 3):
+public export
+baryonChargeFromTree : HadronMultisetTreeState -> Nat
+baryonChargeFromTree (MkHadronTreeState tree) =
+  lookupTokenTree anyPrime3 tree
+
+||| Fast O(log N) query of isospin charge quanta (Prime 2):
+public export
+isospinQuantaFromTree : HadronMultisetTreeState -> Nat
+isospinQuantaFromTree (MkHadronTreeState tree) =
+  lookupTokenTree anyPrime2 tree
+
+||| Audits that HadronMultisetTreeState performs O(log N) token queries accurately:
+public export
+auditHadronTreeProof : Bool
+auditHadronTreeProof =
+  let m = MkGohPrimeMultiset 2 3 0 1 0 0
+      st = gohToHadronTree m
+      iso = isospinQuantaFromTree st
+      baryon = baryonChargeFromTree st
+      tot = treeTokenSum st.chargeTree
+  in (iso == 2) && (baryon == 3) && (tot == 6)
+
+public export
+0 verifyHadronTreeAudits : Stage0.Hadron.HadronScaleTransforms.auditHadronTreeProof = True
+verifyHadronTreeAudits = Refl
