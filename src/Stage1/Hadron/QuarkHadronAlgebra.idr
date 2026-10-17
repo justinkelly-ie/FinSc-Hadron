@@ -233,19 +233,6 @@ fusedHadronizationStreamFuelModel : GohFuel cap -> List (QuarkVexel, QuarkVexel,
 fusedHadronizationStreamFuelModel fuel triplets =
   fusedHadronizationStreamNat (gohSteps fuel) triplets
 
-||| O(1) allocation deforested stream transducer folding total hadron mass across quark triplets using BoxNat fuel.
-public export
-fusedHadronizationStreamBoxNat : BoxNat -> List (QuarkVexel, QuarkVexel, QuarkVexel) -> Stage0.BoxInt.BoxInt
-fusedHadronizationStreamBoxNat bfuel triplets =
-  fusedHadronizationStreamNat (boxNatToNat bfuel) triplets
-
-||| O(1) allocation deforested stream transducer folding total hadron mass across quark triplets.
-public export
-fusedHadronizationStream : Fuel -> List (QuarkVexel, QuarkVexel, QuarkVexel) -> Stage0.BoxInt.BoxInt
-fusedHadronizationStream (More f) triplets =
-  fusedHadronizationStreamFuelModel ellipticGohFuelModel triplets
-fusedHadronizationStream Dry _ = Stage0.BoxInt.intToBoxInt 0
-
 ||| O(1) allocation deforested stream transducer evaluating net baryon number numerator sum across hadron streams using total structural Nat fuel.
 public export
 fusedComputeNetBaryonMassNat : Nat -> List (QuarkVexel, QuarkVexel, QuarkVexel) -> Stage0.BoxInt.BoxInt
@@ -268,18 +255,7 @@ fusedComputeNetBaryonMassFuelModel : GohFuel cap -> List (QuarkVexel, QuarkVexel
 fusedComputeNetBaryonMassFuelModel fuel triplets =
   fusedComputeNetBaryonMassNat (gohSteps fuel) triplets
 
-||| O(1) allocation deforested stream transducer evaluating net baryon number numerator sum across hadron streams using BoxNat fuel.
-public export
-fusedComputeNetBaryonMassBoxNat : BoxNat -> List (QuarkVexel, QuarkVexel, QuarkVexel) -> Stage0.BoxInt.BoxInt
-fusedComputeNetBaryonMassBoxNat bfuel triplets =
-  fusedComputeNetBaryonMassNat (boxNatToNat bfuel) triplets
 
-||| O(1) allocation deforested stream transducer evaluating net baryon number numerator sum across hadron streams.
-public export
-fusedComputeNetBaryonMass : Fuel -> List (QuarkVexel, QuarkVexel, QuarkVexel) -> Stage0.BoxInt.BoxInt
-fusedComputeNetBaryonMass (More f) triplets =
-  fusedComputeNetBaryonMassFuelModel ellipticGohFuelModel triplets
-fusedComputeNetBaryonMass Dry _ = Stage0.BoxInt.intToBoxInt 0
 
 ------------------------------------------------------------------------
 -- 9. 2LTT STAGED QUARK HADRON FLAVOR COMBINATORICS
