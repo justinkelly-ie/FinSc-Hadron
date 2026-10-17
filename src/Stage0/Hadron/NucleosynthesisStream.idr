@@ -2,6 +2,7 @@ module Stage0.Hadron.NucleosynthesisStream
 
 import Data.List
 import Data.Fuel
+import Stage0.StructuralFuel
 import Stage0.OnSeq.FusedStream
 import Stage0.Hadron.AlphaReplication
 import Stage1.VexelMaxel
@@ -42,6 +43,11 @@ public export
 runAlphaStream : Fuel -> FusedStream AlphaClusterState -> List AlphaClusterState
 runAlphaStream = runFueledStream
 
+||| Evaluates an Alpha cluster stream into a List container using model-indexed GohFuel.
+public export
+runAlphaStreamFuelModel : GohFuel cap -> FusedStream AlphaClusterState -> List AlphaClusterState
+runAlphaStreamFuelModel = runFueledStreamFuelModel
+
 ||| Direct stream generation for triple-alpha Carbon fusion flux ($3 \times 108 \to 324$).
 public export
 unfoldAlphaFusionStream : List AlphaClusterState -> FusedStream Stage0.BoxInt.BoxInt
@@ -65,6 +71,12 @@ fusedComputeTotalNucleosynthesisFluxNat : (fuel : Nat) -> List AlphaClusterState
 fusedComputeTotalNucleosynthesisFluxNat fuel alphas =
   fusedComputeTotalNucleosynthesisFluxNatDirect fuel (stream alphas)
 
+||| Total triple-alpha nucleosynthesis fusion energy flux accumulation using model-indexed GohFuel.
+public export
+fusedComputeTotalNucleosynthesisFluxFuelModel : GohFuel cap -> List AlphaClusterState -> Stage0.BoxInt.BoxInt
+fusedComputeTotalNucleosynthesisFluxFuelModel fuel alphas =
+  fusedComputeTotalNucleosynthesisFluxNatDirect (gohSteps fuel) (stream alphas)
+
 ||| Backward-compatible total nucleosynthesis flux accumulation using foldStreamFuel.
 public export
 fusedComputeTotalNucleosynthesisFlux : Fuel -> List AlphaClusterState -> Stage0.BoxInt.BoxInt
@@ -76,7 +88,7 @@ public export
 auditNucleosynthesisStreamProof : Bool
 auditNucleosynthesisStreamProof =
   let alpha = seedAlphaClusterEpoch4
-      flux = fusedComputeTotalNucleosynthesisFluxNat 100 [alpha, alpha, alpha]
+      flux = fusedComputeTotalNucleosynthesisFluxFuelModel ellipticGohFuelModel [alpha, alpha, alpha]
   in unwrapBox flux == 972
 
 ------------------------------------------------------------------------
