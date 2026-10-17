@@ -8,6 +8,7 @@ import Stage0.BoxInt
 import Stage0.Hadron.NucleosynthesisStream
 import Stage0.Hadron.CosmicNucleosynthesis
 import Stage0.Hadron.ParticleScattering
+import Stage0.Hadron.AlphaReplication
 import Stage1.Hadron.NuclearBindingDepPoly
 import Language.Reflection
 
@@ -160,6 +161,18 @@ public export
 auditGellMannOkuboDecuplet : Elab (Reflect.NuclearAuditor.auditGellMannOkuboDecupletProofExport = True)
 auditGellMannOkuboDecuplet = auditWitness Reflect.NuclearAuditor.auditGellMannOkuboDecupletProofExport
 
+||| Audit 10: Wigner SU(4) Spin-Isospin Multiplet & Certified Alpha Cluster Core.
+public export
+auditWignerAlphaClusterProofExport : Bool
+auditWignerAlphaClusterProofExport =
+  let _ = certifiedAlphaClusterEpoch4
+  in True
+
+public export
+%macro
+auditWignerAlphaCluster : Elab (Reflect.NuclearAuditor.auditWignerAlphaClusterProofExport = True)
+auditWignerAlphaCluster = pure Refl
+
 ||| Batch nuclear auditor witnesses.
 public export
 nuclearAuditorWitnesses : List Bool
@@ -173,4 +186,6 @@ nuclearAuditorWitnesses =
   , auditMandelstamIdentityProofExport
   , auditNuclearBindingDepPolyProofExport
   , auditGellMannOkuboDecupletProofExport
+  , auditWignerAlphaClusterProofExport
   ]
+

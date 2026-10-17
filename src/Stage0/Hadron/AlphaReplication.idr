@@ -1,6 +1,7 @@
 module Stage0.Hadron.AlphaReplication
 
 import Stage0.BoxInt
+import Stage0.PrimeMultiset
 import Stage1.VexelMaxel
 import Stage0.LatticeTopology
 import Stage1.Hadron.HadronicConfinement
@@ -60,6 +61,73 @@ totalAlphaFlux alpha =
 public export
 isAlphaStable : AlphaClusterState -> Bool
 isAlphaStable alpha = isNuclearClusterStable alpha
+
+------------------------------------------------------------------------
+-- WIGNER SU(4) SPIN-ISOSPIN MULTIPLET & CERTIFIED ALPHA CLUSTER (4 NUCLEONS)
+------------------------------------------------------------------------
+
+||| Discrete nuclear nucleon spin state: Spin-Up or Spin-Down.
+public export
+data SpinState = SpinUp | SpinDown
+
+public export
+Eq SpinState where
+  SpinUp == SpinUp = True
+  SpinDown == SpinDown = True
+  _ == _ = False
+
+||| Discrete nuclear isospin state: Proton (I_z = +1/2) or Neutron (I_z = -1/2).
+public export
+data IsospinState = ProtonState | NeutronState
+
+public export
+Eq IsospinState where
+  ProtonState == ProtonState = True
+  NeutronState == NeutronState = True
+  _ == _ = False
+
+||| Single nucleon in the 4-dimensional Wigner supermultiplet basis (2 spin x 2 isospin = 4 states).
+public export
+record WignerNucleonState where
+  constructor MkWignerNucleonState
+  spin    : SpinState
+  isospin : IsospinState
+
+||| Certified Wigner supermultiplet capacity: 2 x 2 = 4 states.
+public export
+0 prfWignerMultipletCapacity : (dim : Nat ** GohPrimeProduct 2 2 dim)
+prfWignerMultipletCapacity = (4 ** gohPrimeProduct2_2)
+
+||| Certified Alpha Particle Core: 2 Protons + 2 Neutrons (GohPrimeSum 2 2 4).
+public export
+record CertifiedAlphaCluster where
+  constructor MkCertifiedAlphaCluster
+  0 compositionWitness : GohPrimeSum 2 2 4
+  0 dyadicWitness      : GohDyadicFixedPoint
+  clusterData          : NuclearCluster 4
+
+public export
+certifiedAlphaClusterEpoch4 : CertifiedAlphaCluster
+certifiedAlphaClusterEpoch4 =
+  MkCertifiedAlphaCluster gohPrimeSum2_2 gohDyadicFixedPoint seedAlphaClusterEpoch4
+
+||| Proof witness that the 108 Visible Matter cells of an Alpha Cluster
+||| equal the product of the 4 nucleons and the 27 cells of the Elliptic manifest canvas:
+||| 4 * 27 = 108.
+public export
+0 prfAlphaClusterCells108 : (the Nat (4 * 27)) = 108
+prfAlphaClusterCells108 = Refl
+
+||| Proof witness that the Hoyle Triple-Alpha Carbon-12 fusion step combines
+||| 3 Alpha clusters into 12 nucleons and 324 Visible Matter cells:
+||| 3 * 4 = 12 and 3 * 108 = 324.
+public export
+0 prfHoyleTripleAlphaNucleons12 : (the Nat (3 * 4)) = 12
+prfHoyleTripleAlphaNucleons12 = Refl
+
+public export
+0 prfHoyleTripleAlphaCells324 : (the Nat (3 * 108)) = 324
+prfHoyleTripleAlphaCells324 = Refl
 
 ||| Step-Up to Epoch 4 Cosmic State: UniverseState 108 128 6.
 public export
