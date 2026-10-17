@@ -28,4 +28,5 @@ modules = NuclearMatter,
           Stage1.Hadron.StandardModel,
           Stage1.Hadron.StellarNuclei,
           Stage1.Hadron.TypeIndexedMultiset,
-          Stage1.Hadron.NuclearRepIso
+          Stage1.Hadron.NuclearRepIso,
+          Stage1.Hadron.NuclearBindingDepPoly

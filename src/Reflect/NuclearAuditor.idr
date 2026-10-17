@@ -8,6 +8,7 @@ import Stage0.BoxInt
 import Stage0.Hadron.NucleosynthesisStream
 import Stage0.Hadron.CosmicNucleosynthesis
 import Stage0.Hadron.ParticleScattering
+import Stage1.Hadron.NuclearBindingDepPoly
 import Language.Reflection
 
 %default total
@@ -136,6 +137,29 @@ public export
 auditMandelstamIdentity : Elab (Reflect.NuclearAuditor.auditMandelstamIdentityProofExport = True)
 auditMandelstamIdentity = auditWitness Reflect.NuclearAuditor.auditMandelstamIdentityProofExport
 
+||| Audit 8: Weizsäcker Liquid-Drop Coulomb & Asymmetry Binding DepPolynumber Verification.
+public export
+auditNuclearBindingDepPolyProofExport : Bool
+auditNuclearBindingDepPolyProofExport =
+  Stage1.Hadron.NuclearBindingDepPoly.auditWeizsackerCoulombDepPolyProof &&
+  Stage1.Hadron.NuclearBindingDepPoly.auditWeizsackerAsymmetryDepPolyProof
+
+public export
+%macro
+auditNuclearBindingDepPoly : Elab (Reflect.NuclearAuditor.auditNuclearBindingDepPolyProofExport = True)
+auditNuclearBindingDepPoly = auditWitness Reflect.NuclearAuditor.auditNuclearBindingDepPolyProofExport
+
+||| Audit 9: Gell-Mann–Okubo Hadron Mass Decuplet DepPolynumber Verification.
+public export
+auditGellMannOkuboDecupletProofExport : Bool
+auditGellMannOkuboDecupletProofExport =
+  Stage1.Hadron.NuclearBindingDepPoly.auditGellMannOkuboDecupletProof
+
+public export
+%macro
+auditGellMannOkuboDecuplet : Elab (Reflect.NuclearAuditor.auditGellMannOkuboDecupletProofExport = True)
+auditGellMannOkuboDecuplet = auditWitness Reflect.NuclearAuditor.auditGellMannOkuboDecupletProofExport
+
 ||| Batch nuclear auditor witnesses.
 public export
 nuclearAuditorWitnesses : List Bool
@@ -147,4 +171,6 @@ nuclearAuditorWitnesses =
   , auditBBNHeliumMassFractionProofExport
   , auditBBNHolographicSaturationProofExport
   , auditMandelstamIdentityProofExport
+  , auditNuclearBindingDepPolyProofExport
+  , auditGellMannOkuboDecupletProofExport
   ]

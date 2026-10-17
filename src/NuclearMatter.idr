@@ -21,5 +21,6 @@ import public Stage1.Hadron.StandardModel
 import public Stage1.Hadron.StellarNuclei
 import public Stage1.Hadron.TypeIndexedMultiset
 import public Stage1.Hadron.NuclearRepIso
+import public Stage1.Hadron.NuclearBindingDepPoly
 
 %default total
