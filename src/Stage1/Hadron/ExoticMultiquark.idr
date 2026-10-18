@@ -88,6 +88,6 @@ auditExoticMultiquarksProof =
       tetra = fuseTetraquark dummyMeson dummyMeson
       pentaTokens = fusePentaquarkTokens dummyHadron dummyMeson
       dibaryon = fuseDibaryon dummyHadron dummyHadron
-  in (unwrapBox (observeTetraquarkMass tetra) == 36) &&
-     (unwrapBox pentaTokens == 45) &&
-     (unwrapBox (observeDibaryonMass dibaryon) == 54)
+  in (observeTetraquarkMass tetra == intToBoxInt 36) &&
+     (pentaTokens == intToBoxInt 45) &&
+     (observeDibaryonMass dibaryon == intToBoxInt 54)

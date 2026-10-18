@@ -91,7 +91,7 @@ auditWeizsackerCoulombDepPolyProof =
   let he = evalCoulombFactor 2
       c  = evalCoulombFactor 6
       fe = evalCoulombFactor 26
-  in unwrapBox he == 2 && unwrapBox c == 30 && unwrapBox fe == 650
+  in he == intToBoxInt 2 && c == intToBoxInt 30 && fe == intToBoxInt 650
 
 ||| Audits Asymmetry liquid-drop polynomial evaluation for Iron-56 (A=56, Z=26):
 ||| (A - 2Z)^2 = (56 - 52)^2 = 4^2 = 16.
@@ -100,7 +100,7 @@ auditWeizsackerAsymmetryDepPolyProof : Bool
 auditWeizsackerAsymmetryDepPolyProof =
   let asymFe = evalAsymmetryFactor 56 26
       asymHe = evalAsymmetryFactor 4 2
-  in unwrapBox asymFe == 16 && unwrapBox asymHe == 0
+  in asymFe == intToBoxInt 16 && asymHe == intToBoxInt 0
 
 ||| Audits Gell-Mann–Okubo Decuplet equal-spacing mass relation across:
 ||| Delta (Y = 1): 1232 MeV
@@ -116,7 +116,7 @@ auditGellMannOkuboDecupletProof =
       mSigmaVal = evalDecupletMass mDelta deltaM (intToBoxInt 0)
       mXiVal    = evalDecupletMass mDelta deltaM (intToBoxInt (-1))
       mOmegaVal = evalDecupletMass mDelta deltaM (intToBoxInt (-2))
-  in unwrapBox mDeltaVal == 1232
-  && unwrapBox mSigmaVal == 1385
-  && unwrapBox mXiVal    == 1538
-  && unwrapBox mOmegaVal == 1691
+  in mDeltaVal == intToBoxInt 1232
+  && mSigmaVal == intToBoxInt 1385
+  && mXiVal    == intToBoxInt 1538
+  && mOmegaVal == intToBoxInt 1691

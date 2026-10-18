@@ -107,7 +107,7 @@ weakVectorBosonFusionVertexM p1 p2 =
 public export
 streamScatteringProducts : Multiset BoxInt StandardModelParticle -> FS.FusedStream (StandardModelParticle, BoxInt)
 streamScatteringProducts bag =
-  FS.filterMapStream (\(p, w) => if unwrapBox w /= 0 then Just (p, w) else Nothing)
+  FS.filterMapStream (\(p, w) => if boxIsNonZero w then Just (p, w) else Nothing)
                      (FS.stream (multisetToList bag))
 
 ------------------------------------------------------------------------

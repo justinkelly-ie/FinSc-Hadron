@@ -79,9 +79,8 @@ observeHeavyMesonMassTokens m = totalVexelMass m
 ||| Audits Heavy Meson Mass Token Conservation:
 ||| 1. J/psi carries 18 mass tokens.
 ||| 2. Upsilon carries 18 mass tokens.
-%inline
 public export
 auditHeavyMesonAlgebraProof : Bool
 auditHeavyMesonAlgebraProof =
-  (Stage0.BoxInt.unwrapBox (observeHeavyMesonMassTokens makeJPsiCharmoniumVexel) == 18) &&
-  (Stage0.BoxInt.unwrapBox (observeHeavyMesonMassTokens makeUpsilonBottomoniumVexel) == 18)
+  (observeHeavyMesonMassTokens makeJPsiCharmoniumVexel == intToBoxInt 18) &&
+  (observeHeavyMesonMassTokens makeUpsilonBottomoniumVexel == intToBoxInt 18)

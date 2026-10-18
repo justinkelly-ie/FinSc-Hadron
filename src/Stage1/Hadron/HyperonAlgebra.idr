@@ -85,9 +85,8 @@ isHyperonColorNeutral b = isHadronBoxelColorNeutral b
 ||| Audits Hyperon Mass Token Conservation and Color Neutrality:
 ||| 1. Lambda0 carries 27 mass tokens.
 ||| 2. Lambda0 is color neutral.
-%inline
 public export
 auditHyperonAlgebraProof : Bool
 auditHyperonAlgebraProof =
-  (Stage0.BoxInt.unwrapBox (observeHyperonMassTokens makeLambdaZeroBoxel) == 27) &&
+  (observeHyperonMassTokens makeLambdaZeroBoxel == intToBoxInt 27) &&
   isHyperonColorNeutral makeLambdaZeroBoxel

@@ -88,7 +88,7 @@ auditNucleosynthesisStreamProof : Bool
 auditNucleosynthesisStreamProof =
   let alpha = seedAlphaClusterEpoch4
       flux = fusedComputeTotalNucleosynthesisFluxFuelModel ellipticGohFuelModel [alpha, alpha, alpha]
-  in unwrapBox flux == 972
+  in flux == intToBoxInt 972
 
 ------------------------------------------------------------------------
 -- 2. LINEAR QTT NUCLEON STREAM TRANSDUCERS & 2LTT STAGING
@@ -115,7 +115,7 @@ auditLinearNucleonConservationProof : Bool
 auditLinearNucleonConservationProof =
   let alpha = seedAlphaClusterEpoch4
       flux = fusedComputeTotalNucleosynthesisFluxNat 100 [alpha, alpha, alpha]
-  in unwrapBox flux == 972
+  in flux == intToBoxInt 972
 
 ||| Deforested 2LTT staged code generator transducer for nucleosynthesis fusion stream.
 %inline public export

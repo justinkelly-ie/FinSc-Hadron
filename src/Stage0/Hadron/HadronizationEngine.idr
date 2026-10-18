@@ -143,7 +143,7 @@ streamHadronBagRLE bag =
     step : Multiset BoxInt StandardModelParticle -> Step (Multiset BoxInt StandardModelParticle) RLEParticleToken
     step ZeroM = Done
     step (AddM p w rest) =
-      let m = natToBoxNat (fromInteger (abs (unwrapBox w)))
+      let m = natToBoxNat (boxToNat (absBox w))
       in Yield (MkRLEParticle p m) rest
 
 ||| Deforested QGP fragmentation transducer over RLE particle streams:

@@ -79,13 +79,12 @@ fuseIron56Tokens nucleons = foldl (+) (Stage0.BoxInt.intToBoxInt 0) (map totalBo
 ||| 4. Magnesium-24 = 24 * 27 = 648 tokens.
 ||| 5. Silicon-28 = 28 * 27 = 756 tokens.
 ||| 6. Iron-56 = 56 * 27 = 1512 tokens.
-%inline
 public export
 auditStellarNucleiProof : Bool
 auditStellarNucleiProof =
-  Stage0.BoxInt.unwrapBox (stellarNucleusMassTokens Beryllium7)  == 189 &&
-  Stage0.BoxInt.unwrapBox (stellarNucleusMassTokens Boron8)      == 216 &&
-  Stage0.BoxInt.unwrapBox (stellarNucleusMassTokens Neon20)      == 540 &&
-  Stage0.BoxInt.unwrapBox (stellarNucleusMassTokens Magnesium24) == 648 &&
-  Stage0.BoxInt.unwrapBox (stellarNucleusMassTokens Silicon28)   == 756 &&
-  Stage0.BoxInt.unwrapBox (stellarNucleusMassTokens Iron56)      == 1512
+  stellarNucleusMassTokens Beryllium7  == intToBoxInt 189 &&
+  stellarNucleusMassTokens Boron8      == intToBoxInt 216 &&
+  stellarNucleusMassTokens Neon20      == intToBoxInt 540 &&
+  stellarNucleusMassTokens Magnesium24 == intToBoxInt 648 &&
+  stellarNucleusMassTokens Silicon28   == intToBoxInt 756 &&
+  stellarNucleusMassTokens Iron56      == intToBoxInt 1512

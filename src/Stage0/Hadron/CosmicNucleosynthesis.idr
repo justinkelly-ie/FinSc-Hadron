@@ -72,10 +72,10 @@ fuseLithium7 nucleons = foldl addBoxel (MkBoxel []) nucleons
 public export
 auditCosmicNucleosynthesisProof : Bool
 auditCosmicNucleosynthesisProof =
-  unwrapBox (nucleusMassTokens Deuteron2H) == 54 &&
-  unwrapBox (nucleusMassTokens Triton3H)   == 81 &&
-  unwrapBox (nucleusMassTokens Helium3He)  == 81 &&
-  unwrapBox (nucleusMassTokens Lithium7Li) == 189
+  (nucleusMassTokens Deuteron2H == intToBoxInt 54) &&
+  (nucleusMassTokens Triton3H   == intToBoxInt 81) &&
+  (nucleusMassTokens Helium3He  == intToBoxInt 81) &&
+  (nucleusMassTokens Lithium7Li == intToBoxInt 189)
 
 ||| Neutron-to-proton freeze-out ratio prior to BBN: n/p = 1/7.
 public export
@@ -118,5 +118,5 @@ auditBBNHolographicSaturationProof : Bool
 auditBBNHolographicSaturationProof =
   (deuteronHolographicAreaTokens == 54) &&
   (4 * deuteronHolographicAreaTokens >= 210) &&
-  (unwrapBox (nucleusMassTokens Lithium7Li) + 21 == 210)
+  (nucleusMassTokens Lithium7Li + intToBoxInt 21 == intToBoxInt 210)
 
