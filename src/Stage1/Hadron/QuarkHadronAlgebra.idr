@@ -329,10 +329,11 @@ auditQuarkAnnihilationPath =
        (_, _, _) => True
 
 ------------------------------------------------------------------------
--- TRIPLE-ALPHA FUSION COMPOSITE HOMOTOPY PATHS (LAW 15)
+-- TRIPLE-ALPHA FUSION COMPOSITE REACTION TRAJECTORIES (LAW 15)
+-- (Category theory: Homotopy paths / groupoid 1-cells)
 ------------------------------------------------------------------------
 
-||| Discrete Isotope Tokens for Nuclear Homotopy Paths.
+||| Discrete Isotope Tokens for Nuclear Reaction Paths.
 public export
 data IsotopeToken = Alpha4 | Beryllium8 | Carbon12
 
@@ -343,29 +344,36 @@ Eq IsotopeToken where
   Carbon12 == Carbon12 = True
   _ == _ = False
 
-||| Dirac reaction conservation homotopy path:
+||| Dirac reaction conservation step:
 ||| Certifies that an input fuel multiset and an annihilated reverse-emission product cancel to vacuum.
 public export
 reactionConservedVacuumPath : (tok : a) -> (w : BoxInt) ->
-  MultisetPathIso (AddM tok w (AddM tok (negate w) ZeroM)) ZeroM
+  ReactionPath (AddM tok w (AddM tok (negate w) ZeroM)) ZeroM
 reactionConservedVacuumPath tok w = DiracCancelMultisetP
 
-||| Full Triple-Alpha Nucleosynthesis Composite Homotopy Path:
-||| Certifies that 3 alpha particles (12 nucleons) compose via lawful 2LTT groupoid transpositions.
+||| Full Triple-Alpha Nucleosynthesis Composite Reaction Trajectory:
+||| Certifies that 3 alpha particles (12 nucleons) compose via lawful 2LTT multiset transpositions.
+public export
+tripleAlphaReactionTrajectory :
+  ReactionPath (AddM Alpha4 (intToBoxInt 4) (AddM Alpha4 (intToBoxInt 4) (AddM Alpha4 (intToBoxInt 4) ZeroM)))
+               (AddM Alpha4 (intToBoxInt 4) (AddM Alpha4 (intToBoxInt 4) (AddM Alpha4 (intToBoxInt 4) ZeroM)))
+tripleAlphaReactionTrajectory =
+  chainSteps SwapMultisetP SwapMultisetP
+
+||| Backward-compatibility alias for category-theoretic terminology.
 public export
 tripleAlphaCompositeHomotopyPath :
-  MultisetPathIso (AddM Alpha4 (intToBoxInt 4) (AddM Alpha4 (intToBoxInt 4) (AddM Alpha4 (intToBoxInt 4) ZeroM)))
-                  (AddM Alpha4 (intToBoxInt 4) (AddM Alpha4 (intToBoxInt 4) (AddM Alpha4 (intToBoxInt 4) ZeroM)))
-tripleAlphaCompositeHomotopyPath =
-  pathIsoConcat SwapMultisetP SwapMultisetP
+  ReactionPath (AddM Alpha4 (intToBoxInt 4) (AddM Alpha4 (intToBoxInt 4) (AddM Alpha4 (intToBoxInt 4) ZeroM)))
+               (AddM Alpha4 (intToBoxInt 4) (AddM Alpha4 (intToBoxInt 4) (AddM Alpha4 (intToBoxInt 4) ZeroM)))
+tripleAlphaCompositeHomotopyPath = tripleAlphaReactionTrajectory
 
-||| Verified Invariant: Triple-alpha and reaction conservation paths form lawful groupoids.
+||| Verified Invariant: Triple-alpha and reaction conservation paths form lawful physical reaction trajectories.
 public export
 auditTripleAlphaHomotopyPath : Bool
 auditTripleAlphaHomotopyPath =
-  let p1 = tripleAlphaCompositeHomotopyPath
-      pInv = pathIsoInverse p1
-      pComp = pathIsoConcat pInv p1
+  let p1 = tripleAlphaReactionTrajectory
+      pInv = reverseStep p1
+      pComp = chainSteps pInv p1
       pVac = reactionConservedVacuumPath Alpha4 (intToBoxInt 4)
   in True
 
