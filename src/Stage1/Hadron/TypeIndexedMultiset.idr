@@ -5,6 +5,7 @@ import Stage0.Singleton.Bit
 import Stage0.BoxInt
 import Stage0.Multiset
 import Stage1.VexelMaxel
+import Stage1.MultisetTree
 import Stage1.UnixelFraction
 import Stage1.ExclusionPrinciple
 import Stage1.Hadron.HadronicConfinement
@@ -112,8 +113,8 @@ public export
 record RefinedQuark (spec : QuarkSpec) (col : ColorSector) where
   constructor MkRefinedQuark
   vexelCarrier : QuarkVexel
-  0 tokenProof : (case vexelCarrier of
-                    MkVexel [(MkUnixel c, w)] => c == colorToNat col && w == Stage0.BoxInt.intToBoxInt 9
+  0 tokenProof : (case vexelTerms vexelCarrier of
+                    [(MkUnixel c, w)] => c == colorToNat col && w == Stage0.BoxInt.intToBoxInt 9
                     _ => False) = True
 
 ||| Refined Hadron: 3D Boxel (27 mass tokens) with verified color neutrality.

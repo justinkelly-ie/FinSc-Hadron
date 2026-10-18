@@ -41,16 +41,12 @@ Show ExoticMultiquarkSpec where
 %inline
 public export
 fuseTetraquark : MesonVexel -> MesonVexel -> Vexel
-fuseTetraquark (MkVexel [(u1, MkBoxInt w1), (u2, MkBoxInt w2)]) (MkVexel [(u3, MkBoxInt w3), (u4, MkBoxInt w4)]) =
-  MkVexel [(u1, MkBoxInt w1), (u2, MkBoxInt w2), (u3, MkBoxInt w3), (u4, MkBoxInt w4)]
 fuseTetraquark m1 m2 = addVexel m1 m2
 
 ||| Fuses a Hadron Boxel (27) and a Meson Vexel (18) into a 45-token Pentaquark (27 + 18 = 45).
 %inline
 public export
 fusePentaquarkTokens : HadronBoxel -> MesonVexel -> BoxInt
-fusePentaquarkTokens (MkBoxel [(v1, MkBoxInt w1), (v2, MkBoxInt w2), (v3, MkBoxInt w3)]) (MkVexel [(u1, MkBoxInt m1), (u2, MkBoxInt m2)]) =
-  MkBoxInt (w1 + w2 + w3 + m1 + m2)
 fusePentaquarkTokens h m = totalBoxelWeight h + totalVexelMass m
 
 ||| Fuses 2 Hadron Boxels (27 + 27) into a 54-token H-Dibaryon (6 * 9 = 54).
@@ -65,8 +61,6 @@ fuseDibaryon h1 h2 = addBoxel h1 h2
 %inline
 public export
 observeTetraquarkMass : Vexel -> BoxInt
-observeTetraquarkMass (MkVexel [(u1, MkBoxInt w1), (u2, MkBoxInt w2), (u3, MkBoxInt w3), (u4, MkBoxInt w4)]) =
-  MkBoxInt (w1 + w2 + w3 + w4)
 observeTetraquarkMass v = totalVexelMass v
 
 ||| Evaluates mass tokens of a 6-term Dibaryon Boxel.
