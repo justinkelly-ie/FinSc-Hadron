@@ -10,6 +10,7 @@ import Stage1.ExclusionPrinciple
 import Stage1.Hadron.HadronicConfinement
 import Stage0.Hadron.AlphaReplication
 import Stage1.Hadron.QuarkHadronAlgebra
+import Stage1.FanoOctonion
 import Data.List
 
 %default total
@@ -51,7 +52,8 @@ Eq LeptonSpec where
   TauNeutrino      == TauNeutrino      = True
   _                == _                = False
 
-||| SU(3) Color Gauge Sector.
+||| SU(3) Color Gauge Sector grounded in Fano Octonionic Basis Units (Rule 03 §7):
+||| ColorRed = E1, ColorGreen = E2, ColorBlue = E3.
 public export
 data ColorSector = ColorRed | ColorGreen | ColorBlue
 
@@ -62,11 +64,17 @@ Eq ColorSector where
   ColorBlue == ColorBlue = True
   _ == _ = False
 
+||| Canonical isomorphism mapping quark color charge to the Fano plane basis unit:
+public export
+colorToFanoPoint : ColorSector -> FanoPoint
+colorToFanoPoint ColorRed   = E1
+colorToFanoPoint ColorGreen = E2
+colorToFanoPoint ColorBlue  = E3
+
+||| 1-indexed Nat rank of color charge derived from Fano point:
 public export
 colorToNat : ColorSector -> Nat
-colorToNat ColorRed   = 1
-colorToNat ColorGreen = 2
-colorToNat ColorBlue  = 3
+colorToNat c = S (fanoPointToNat (colorToFanoPoint c))
 
 ||| Hadronic Bound State Specification.
 public export
