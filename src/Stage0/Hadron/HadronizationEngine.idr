@@ -6,9 +6,6 @@ import Stage0.Multiset
 import Stage0.OnSeq.FusedStream
 import Stage1.Hadron.StandardModel
 
-import Data.Vect
-import Data.List
-
 %default total
 
 ------------------------------------------------------------------------
