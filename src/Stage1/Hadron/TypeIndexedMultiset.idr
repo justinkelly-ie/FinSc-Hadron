@@ -11,9 +11,6 @@ import Stage1.Hadron.HadronicConfinement
 import Stage0.Hadron.AlphaReplication
 import Stage1.Hadron.QuarkHadronAlgebra
 import Data.List
-import Data.Fin
-import Data.Vect
-
 
 %default total
 
