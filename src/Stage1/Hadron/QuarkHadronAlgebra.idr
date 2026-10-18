@@ -15,6 +15,7 @@ import Stage0.OnSeq.FusedStream
 import Stage1.Goh.Factor
 import Stage1.FourGeometries
 import Stage1.TypeTheory.Staging
+import Data.Vect
 
 %default total
 
@@ -276,6 +277,57 @@ stagedHadronFlavorCombinatorics liftedStream = hadronFlavorMultisetSum (splice l
 public export
 0 prfStagedHadronFlavor : (m : Multiset BoxInt String) -> splice (quote m) = m
 prfStagedHadronFlavor m = inverseSpliceQuote m
+
+------------------------------------------------------------------------
+-- 10. 2LTT QUARK-ANTIQUARK ANNIHILATION & CONFINEMENT HOMOTOPY PATHS
+------------------------------------------------------------------------
+
+||| Generates a pure multiset Anti-Quark Vexel in a given color sector:
+||| Carries negative color tokens (-9) conjugate to the quark.
+public export
+makeAntiQuarkVexel : (colorIdx : Nat) -> QuarkVexel
+makeAntiQuarkVexel col =
+  Stage1.VexelMaxel.MkVexel [(Stage1.VexelMaxel.MkUnixel col, intToBoxInt (-9))]
+
+||| A 3-dimensional VexelN representing a quark in color basis (Red=0, Green=1, Blue=2).
+public export
+makeQuarkVexel3 : (colorIdx : Fin 3) -> (massTokens : BoxInt) -> VexelN 3
+makeQuarkVexel3 FZ w = MkVexelN [w, intToBoxInt 0, intToBoxInt 0]
+makeQuarkVexel3 (FS FZ) w = MkVexelN [intToBoxInt 0, w, intToBoxInt 0]
+makeQuarkVexel3 (FS (FS FZ)) w = MkVexelN [intToBoxInt 0, intToBoxInt 0, w]
+
+||| A 3-dimensional VexelN representing an antiquark with opposite color charge tokens.
+public export
+makeAntiQuarkVexel3 : (colorIdx : Fin 3) -> (massTokens : BoxInt) -> VexelN 3
+makeAntiQuarkVexel3 col w = makeQuarkVexel3 col (negate w)
+
+||| Color-Singlet Meson Vacuum Annihilation Path (q + qBar ~ 0):
+||| Certifies that a quark and antiquark with identical color sector and opposite weights
+||| annihilate definitionally to the vacuum multiset via 2LTT Dirac cancellation.
+public export
+mesonVacuumAnnihilationPath : (col : Nat) -> (w : BoxInt) ->
+  MultisetPathIso (AddM col w (AddM col (negate w) ZeroM)) ZeroM
+mesonVacuumAnnihilationPath col w = DiracCancelMultisetP
+
+||| Color Permutation Path Witness:
+||| Certifies that swapping colors in a quark triplet (e.g. R G B ~ G R B)
+||| is a lawful 2LTT homotopy path.
+public export
+quarkColorSwapPath : (c1, c2 : Nat) -> (w1, w2 : BoxInt) -> (rest : Multiset BoxInt Nat) ->
+  MultisetPathIso (AddM c1 w1 (AddM c2 w2 rest)) (AddM c2 w2 (AddM c1 w1 rest))
+quarkColorSwapPath c1 c2 w1 w2 rest = SwapMultisetP
+
+||| Verified Invariant: Quark-antiquark vacuum annihilation and color permutations
+||| form valid MultisetPathIso groupoid paths.
+public export
+auditQuarkAnnihilationPath : Bool
+auditQuarkAnnihilationPath =
+  let pAnnihilate = mesonVacuumAnnihilationPath 1 (intToBoxInt 9)
+      pSwap = quarkColorSwapPath 1 2 (intToBoxInt 9) (intToBoxInt 9) ZeroM
+      pComp = pathIsoConcat (pathIsoInverse pAnnihilate) pAnnihilate
+  in case (pAnnihilate, pSwap, pComp) of
+       (_, _, _) => True
+
 
 
 
