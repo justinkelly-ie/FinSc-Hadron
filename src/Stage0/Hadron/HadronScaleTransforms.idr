@@ -27,7 +27,7 @@ Eq ConcreteHadronState where
 
 public export
 Show ConcreteHadronState where
-  show (MkConcreteHadron w) = "ConcreteHadron(Weight=" ++ show (unwrapBox w) ++ ")"
+  show (MkConcreteHadron w) = "ConcreteHadron(Weight=" ++ show w ++ ")"
 
 ||| Maps QuadStreamMultiset to ConcreteHadronState.
 public export
@@ -47,7 +47,7 @@ Eq HadronMacroDomain where
 
 public export
 Show HadronMacroDomain where
-  show (MkHadronMacro w) = "HadronMacro(Weight=" ++ show (unwrapBox w) ++ ")"
+  show (MkHadronMacro w) = "HadronMacro(Weight=" ++ show w ++ ")"
 
 ||| Maps QuadStreamMultiset to HadronMacroDomain.
 public export

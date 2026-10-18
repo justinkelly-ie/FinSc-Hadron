@@ -67,9 +67,9 @@ public export
 auditMuonMagneticAnomalyProof : Bool
 auditMuonMagneticAnomalyProof =
   let moment = computeTotalMuonMagneticMoment
-      qedNum = unwrapBox (num (qedSchwinger moment))
-      bsmNum = unwrapBox (num (bsmLoopDefect moment))
-  in (qedNum == 1) && (bsmNum == 1)
+      qedNum = num (qedSchwinger moment)
+      bsmNum = num (bsmLoopDefect moment)
+  in (qedNum == intToBoxInt 1) && (bsmNum == intToBoxInt 1)
 
 ------------------------------------------------------------------------
 -- BACKWARD-COMPATIBILITY ALIASES
