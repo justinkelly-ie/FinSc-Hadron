@@ -11,11 +11,10 @@ import Data.List
 import Data.Fin
 import Data.Fuel
 import Stage1.Order.Preorder
-import Stage1.TypeTheory.Staging
-import Stage1.TypeTheory.TwoLevel
 import Stage0.OnSeq.FusedStream
 import Stage1.Goh.Factor
 import Stage1.FourGeometries
+import Stage1.TypeTheory.Staging
 
 %default total
 

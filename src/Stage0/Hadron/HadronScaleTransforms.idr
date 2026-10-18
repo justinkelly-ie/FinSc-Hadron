@@ -8,7 +8,6 @@ import Stage1.MultisetTree
 import Stage1.QuadStream
 import Stage1.MultisetDuality
 import Stage1.TypeTheory.Staging
-import Stage1.TypeTheory.TwoLevel
 
 %default total
 

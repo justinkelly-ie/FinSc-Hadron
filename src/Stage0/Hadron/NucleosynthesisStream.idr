@@ -10,7 +10,6 @@ import Stage0.BoxInt
 import Stage0.Multiset
 import Stage0.TransitionNetwork
 import Stage1.TypeTheory.Staging
-import Stage1.TypeTheory.TwoLevel
 
 %default total
 
