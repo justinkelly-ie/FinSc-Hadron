@@ -55,8 +55,6 @@ fusePentaquarkTokens h m = totalBoxelWeight h + totalVexelMass m
 %inline
 public export
 fuseDibaryon : HadronBoxel -> HadronBoxel -> Boxel
-fuseDibaryon (MkBoxel [(v1, MkBoxInt w1), (v2, MkBoxInt w2), (v3, MkBoxInt w3)]) (MkBoxel [(v4, MkBoxInt w4), (v5, MkBoxInt w5), (v6, MkBoxInt w6)]) =
-  MkBoxel [(v1, MkBoxInt w1), (v2, MkBoxInt w2), (v3, MkBoxInt w3), (v4, MkBoxInt w4), (v5, MkBoxInt w5), (v6, MkBoxInt w6)]
 fuseDibaryon h1 h2 = addBoxel h1 h2
 
 ||| Evaluates mass tokens of a 4-term Tetraquark Vexel.
@@ -69,9 +67,8 @@ observeTetraquarkMass v = totalVexelMass v
 %inline
 public export
 observeDibaryonMass : Boxel -> BoxInt
-observeDibaryonMass (MkBoxel [(v1, MkBoxInt w1), (v2, MkBoxInt w2), (v3, MkBoxInt w3), (v4, MkBoxInt w4), (v5, MkBoxInt w5), (v6, MkBoxInt w6)]) =
-  MkBoxInt (w1 + w2 + w3 + w4 + w5 + w6)
 observeDibaryonMass b = totalBoxelWeight b
+
 
 ------------------------------------------------------------------------
 -- 3. FORMAL AUDIT PROOFS

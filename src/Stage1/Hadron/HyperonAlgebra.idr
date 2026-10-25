@@ -67,17 +67,14 @@ makeLambdaZeroBoxel =
 %inline
 public export
 observeHyperonMassTokens : HadronBoxel -> Stage0.BoxInt.BoxInt
-observeHyperonMassTokens (MkBoxel [(v1, Stage0.BoxInt.MkBoxInt w1), (v2, Stage0.BoxInt.MkBoxInt w2), (v3, Stage0.BoxInt.MkBoxInt w3)]) =
-  Stage0.BoxInt.MkBoxInt (w1 + w2 + w3)
 observeHyperonMassTokens b = totalBoxelWeight b
 
 ||| Verifies SU(3) color neutrality of a Hyperon Boxel.
 %inline
 public export
 isHyperonColorNeutral : HadronBoxel -> Bool
-isHyperonColorNeutral (MkBoxel [(_, Stage0.BoxInt.MkBoxInt w1), (_, Stage0.BoxInt.MkBoxInt w2), (_, Stage0.BoxInt.MkBoxInt w3)]) =
-  w1 == w2 && w2 == w3
 isHyperonColorNeutral b = isHadronBoxelColorNeutral b
+
 
 ------------------------------------------------------------------------
 -- 4. FORMAL AUDIT PROOFS
