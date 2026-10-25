@@ -3,7 +3,10 @@ module Stage1.Hadron.QuarkHadronAlgebra
 import Stage0.BoxInt
 import Stage0.Multiset
 import Stage0.StructuralFuel
-import Stage1.VexelMaxel
+import Stage1.Carrier.Vexel
+import Stage1.Carrier.Boxel
+import Stage1.Carrier.Maxel
+import Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
 import Stage1.ExclusionPrinciple
 import Stage1.Hadron.HadronicConfinement
@@ -27,12 +30,12 @@ import Data.Vect
 ||| A Quark is a 1D Vexel carrying color-charge tokens on the Fin 3 slice.
 public export
 QuarkVexel : Type
-QuarkVexel = Stage1.VexelMaxel.Vexel
+QuarkVexel = Vexel
 
 ||| A Hadron is a 3D Boxel (27-token multiset) spanning the 3x3x3 lattice.
 public export
 HadronBoxel : Type
-HadronBoxel = Stage1.VexelMaxel.Boxel
+HadronBoxel = Boxel
 
 ||| Canonical prime of quark triplet color SU(3) confinement.
 public export
@@ -71,14 +74,14 @@ verifyQuarkConfinementQuadrance = Refl
 public export
 makeUpQuarkVexel : (colorIdx : Nat) -> QuarkVexel
 makeUpQuarkVexel col =
-  Stage1.VexelMaxel.MkVexel [(Stage1.VexelMaxel.MkUnixel col, intToBoxInt 9)]
+  MkVexel [(MkUnixel col, intToBoxInt 9)]
 
 ||| Generates a pure multiset Down-Quark Vexel in a given color sector:
 ||| Carries -1 negative valence charge token and 9 mass tokens.
 public export
 makeDownQuarkVexel : (colorIdx : Nat) -> QuarkVexel
 makeDownQuarkVexel col =
-  Stage1.VexelMaxel.MkVexel [(Stage1.VexelMaxel.MkUnixel col, intToBoxInt 9)]
+  MkVexel [(MkUnixel col, intToBoxInt 9)]
 
 ------------------------------------------------------------------------
 -- 3. COMBINATORS (Pure Multiset Addition & Boxel Packing)
@@ -89,7 +92,7 @@ makeDownQuarkVexel col =
 public export
 hadronizeQuarkVexels : QuarkVexel -> QuarkVexel -> QuarkVexel -> HadronBoxel
 hadronizeQuarkVexels qR qG qB =
-  let combinedVexel = Stage1.VexelMaxel.addVexel qR (Stage1.VexelMaxel.addVexel qG qB)
+  let combinedVexel = addVexel qR (addVexel qG qB)
   in Stage1.Hadron.HadronicConfinement.seedHadronBoxel
 
 ------------------------------------------------------------------------
@@ -99,7 +102,7 @@ hadronizeQuarkVexels qR qG qB =
 ||| Observation: Total Mass Tokens of a Hadron Boxel (must equal 27).
 public export
 observeHadronMassTokens : HadronBoxel -> Stage0.BoxInt.BoxInt
-observeHadronMassTokens b = Stage1.VexelMaxel.totalBoxelWeight b
+observeHadronMassTokens b = totalBoxelWeight b
 
 ||| Observation: Color Neutrality via Z-slice symmetry on Boxels.
 public export
@@ -110,8 +113,8 @@ observeHadronColorNeutrality b = Stage1.Hadron.HadronicConfinement.isHadronBoxel
 public export
 observeHadronBaryonFraction : HadronBoxel -> Stage1.UnixelFraction.UnixelFraction
 observeHadronBaryonFraction b =
-  let w = Stage1.VexelMaxel.totalBoxelWeight b
-  in Stage1.UnixelFraction.MkUnixelFraction w (Stage1.VexelMaxel.MkUnixel 27)
+  let w = totalBoxelWeight b
+  in Stage1.UnixelFraction.MkUnixelFraction w (MkUnixel 27)
 
 ------------------------------------------------------------------------
 -- 5. EQUATIONAL PROOFS (Pure Multiset Homomorphisms)
@@ -160,8 +163,8 @@ prfQuarkHadronAlgebra = Refl
 ||| Evaluates hadronic Maxel matrix product in O(1) stack allocations using Fused Stream Fusion.
 ||| Deforests non-matching color cross-sector terms to zero-allocation Skip steps.
 %inline public export
-fusedHadronicMatrixProduct : Stage0.OnSeq.FusedStream.FusedStream Stage0.OnSeq.FusedStream.Maxel -> Stage0.OnSeq.FusedStream.FusedStream Stage0.OnSeq.FusedStream.Maxel -> Stage0.OnSeq.FusedStream.FusedStream Stage0.OnSeq.FusedStream.Maxel
-fusedHadronicMatrixProduct = Stage0.OnSeq.FusedStream.multiplyMaxels
+fusedHadronicMatrixProduct : FusedStream GeometricPixel -> FusedStream GeometricPixel -> FusedStream GeometricPixel
+fusedHadronicMatrixProduct = multiplyGeometricPixels
 
 ------------------------------------------------------------------------
 -- 7. COMPILE-TIME COLOR NEUTRALITY WITNESSES & VERIFIED HADRONS
@@ -287,7 +290,7 @@ prfStagedHadronFlavor m = inverseSpliceQuote m
 public export
 makeAntiQuarkVexel : (colorIdx : Nat) -> QuarkVexel
 makeAntiQuarkVexel col =
-  Stage1.VexelMaxel.MkVexel [(Stage1.VexelMaxel.MkUnixel col, intToBoxInt (-9))]
+  MkVexel [(MkUnixel col, intToBoxInt (-9))]
 
 ||| A 3-dimensional VexelN representing a quark in color basis (Red=0, Green=1, Blue=2).
 public export

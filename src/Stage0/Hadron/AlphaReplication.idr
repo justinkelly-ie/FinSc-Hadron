@@ -2,7 +2,10 @@ module Stage0.Hadron.AlphaReplication
 
 import Stage0.BoxInt
 import Stage0.PrimeMultiset
-import Stage1.VexelMaxel
+import Stage1.Carrier.Vexel
+import Stage1.Carrier.Boxel
+import Stage1.Carrier.BalanceArray
+import Stage1.Basis.Coordinate
 import Stage0.LatticeTopology
 import Stage1.Hadron.HadronicConfinement
 import Stage0.UniverseState
@@ -146,7 +149,7 @@ alphaCosmicStateEpoch4 =
 public export
 embedNucleonBoxel : (dx : Nat) -> (dy : Nat) -> (dz : Nat) -> Boxel -> Boxel
 embedNucleonBoxel dx dy dz (MkBoxel voxs) =
-  MkBoxel (map (\(MkVoxel x y z, w) => (MkVoxel (x + dx) (y + dy) (z + dz), w)) voxs)
+  MkBoxel (map (\(v, w) => (mkVoxel (voxelX v + dx) (voxelY v + dy) (voxelZ v + dz), w)) voxs)
 
 ||| Full 108-voxel Alpha Particle (4He) represented as a single unified 3D Boxel multiset
 ||| with 4 tetrahedral spatial offsets: (0,0,0), (3,0,0), (0,3,0), (0,0,3).

@@ -4,7 +4,9 @@ import Language.Reflection
 import Stage0.Singleton.Bit
 import Stage0.BoxInt
 import Stage0.Multiset
-import Stage1.VexelMaxel
+import Stage1.Carrier.Vexel
+import Stage1.Carrier.Boxel
+import Stage1.Basis.Coordinate
 import Stage1.MultisetTree
 import Stage1.UnixelFraction
 import Stage1.ExclusionPrinciple
@@ -114,7 +116,7 @@ record RefinedQuark (spec : QuarkSpec) (col : ColorSector) where
   constructor MkRefinedQuark
   vexelCarrier : QuarkVexel
   0 tokenProof : (case vexelTerms vexelCarrier of
-                    [(MkUnixel c, w)] => c == colorToNat col && w == Stage0.BoxInt.intToBoxInt 9
+                    [(u, w)] => unwrapUnixel u == colorToNat col && w == Stage0.BoxInt.intToBoxInt 9
                     _ => False) = True
 
 ||| Refined Hadron: 3D Boxel (27 mass tokens) with verified color neutrality.
@@ -128,7 +130,7 @@ record RefinedHadron (spec : HadronSpec) where
 public export
 record RefinedAlpha (spec : AlphaSpec) where
   constructor MkRefinedAlpha
-  alphaBoxelCarrier : Stage1.VexelMaxel.Boxel
+  alphaBoxelCarrier : Boxel
   0 alphaSpecProof  : (spec == spec) = True
 
 ||| Refined Carbon-12 Nucleus: 324 tokens governed by Triple-Alpha Balance.
@@ -205,18 +207,18 @@ fuseCarbon12Nucleus (MkRefinedAlpha _ _) (MkRefinedAlpha _ _) (MkRefinedAlpha _ 
 ||| Observation: Exact Hadron Charge (Proton = +1, Neutron = 0).
 public export
 observeRefinedHadronCharge : (s : HadronSpec) -> RefinedHadron s -> Stage1.UnixelFraction.UnixelFraction
-observeRefinedHadronCharge ProtonSpec _  = Stage1.UnixelFraction.MkUnixelFraction (Stage0.BoxInt.intToBoxInt 3) (Stage1.VexelMaxel.MkUnixel 3)
-observeRefinedHadronCharge NeutronSpec _ = Stage1.UnixelFraction.MkUnixelFraction (Stage0.BoxInt.intToBoxInt 0) (Stage1.VexelMaxel.MkUnixel 3)
+observeRefinedHadronCharge ProtonSpec _  = Stage1.UnixelFraction.MkUnixelFraction (Stage0.BoxInt.intToBoxInt 3) (MkUnixel 3)
+observeRefinedHadronCharge NeutronSpec _ = Stage1.UnixelFraction.MkUnixelFraction (Stage0.BoxInt.intToBoxInt 0) (MkUnixel 3)
 
 ||| Observation: Total Mass Tokens of a Refined Hadron (27 tokens).
 public export
 observeRefinedHadronMass : RefinedHadron spec -> Stage0.BoxInt.BoxInt
-observeRefinedHadronMass (MkRefinedHadron carrier _) = Stage1.VexelMaxel.totalBoxelWeight carrier
+observeRefinedHadronMass (MkRefinedHadron carrier _) = totalBoxelWeight carrier
 
 ||| Observation: Total Mass Tokens of a Refined Alpha Particle (108 tokens).
 public export
 observeRefinedAlphaMass : RefinedAlpha spec -> Stage0.BoxInt.BoxInt
-observeRefinedAlphaMass (MkRefinedAlpha carrier _) = Stage1.VexelMaxel.totalBoxelWeight carrier
+observeRefinedAlphaMass (MkRefinedAlpha carrier _) = totalBoxelWeight carrier
 
 ||| Observation: Total Nucleon Tokens of a Refined Carbon-12 Nucleus (324 tokens).
 public export

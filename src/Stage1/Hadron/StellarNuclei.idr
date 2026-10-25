@@ -2,7 +2,7 @@ module Stage1.Hadron.StellarNuclei
 
 import Stage0.BoxInt
 import Stage0.Multiset
-import Stage1.VexelMaxel
+import Stage1.Carrier.Boxel
 import Stage1.UnixelFraction
 import Stage1.Hadron.HadronicConfinement
 import Stage1.Hadron.QuarkHadronAlgebra

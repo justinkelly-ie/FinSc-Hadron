@@ -2,7 +2,10 @@ module Stage1.Hadron.GaugeBosons
 
 import Stage0.BoxInt
 import Stage0.Multiset
-import Stage1.VexelMaxel
+import Stage1.Carrier.Maxel
+import Stage1.Carrier.Vexel
+import Stage1.Carrier.Boxel
+import Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
 import Stage1.ExclusionPrinciple
 import Stage1.Hadron.HadronicConfinement
@@ -36,7 +39,7 @@ Eq GluonIndex where
 ||| A Gluon is an SU(3) color-exchange Maxel matrix [color_in, color_out].
 public export
 GluonMaxel : Type
-GluonMaxel = Stage1.VexelMaxel.Maxel
+GluonMaxel = Maxel
 
 ||| Constructs the Maxel matrix for a given Gluon octet component.
 public export

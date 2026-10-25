@@ -2,7 +2,8 @@ module Stage1.Hadron.HyperonAlgebra
 
 import Stage0.BoxInt
 import Stage0.Multiset
-import Stage1.VexelMaxel
+import Stage1.Carrier.Boxel
+import Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
 import Stage1.ExclusionPrinciple
 import Stage1.Hadron.HadronicConfinement
@@ -74,7 +75,7 @@ observeHyperonMassTokens b = totalBoxelWeight b
 %inline
 public export
 isHyperonColorNeutral : HadronBoxel -> Bool
-isHyperonColorNeutral (MkBoxel [(MkVoxel x1 y1 z1, Stage0.BoxInt.MkBoxInt w1), (MkVoxel x2 y2 z2, Stage0.BoxInt.MkBoxInt w2), (MkVoxel x3 y3 z3, Stage0.BoxInt.MkBoxInt w3)]) =
+isHyperonColorNeutral (MkBoxel [(_, Stage0.BoxInt.MkBoxInt w1), (_, Stage0.BoxInt.MkBoxInt w2), (_, Stage0.BoxInt.MkBoxInt w3)]) =
   w1 == w2 && w2 == w3
 isHyperonColorNeutral b = isHadronBoxelColorNeutral b
 

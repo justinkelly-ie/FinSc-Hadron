@@ -1,7 +1,8 @@
 module Stage0.Hadron.StellarNucleosynthesis
 
 import Stage0.BoxInt
-import Stage1.VexelMaxel
+import Stage1.Carrier.Vexel
+import Stage1.Basis.Coordinate
 import Stage1.Hadron.HadronicConfinement
 import Stage0.Hadron.AlphaReplication
 import Data.Vect

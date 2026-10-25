@@ -5,7 +5,7 @@ import Data.Fuel
 import Stage0.StructuralFuel
 import Stage0.OnSeq.FusedStream
 import Stage0.Hadron.AlphaReplication
-import Stage1.VexelMaxel
+import Stage1.Carrier.Boxel
 import Stage0.BoxInt
 import Stage0.Multiset
 import Stage0.TransitionNetwork

@@ -1,7 +1,6 @@
 module Stage0.Hadron.PlasmaRecombination
 
 import Stage0.BoxInt
-import Stage1.VexelMaxel
 import Stage1.Hadron.HadronicConfinement
 import Data.Vect
 

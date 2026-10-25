@@ -8,6 +8,8 @@ import Stage0.LatticeTopology
 import Stage1.FourGeometries
 import Data.Vect
 import Data.Fin
+import Stage1.Carrier.Boxel
+import Stage1.Carrier.BalanceArray
 
 %default total
 
@@ -82,24 +84,24 @@ hadronCosmicStateEpoch3 = seedCosmicVacuum 27 128 3
 
 ||| Converts a HadronState into a 3D Boxel multiset.
 public export
-hadronStateToBoxel : HadronState -> Stage1.VexelMaxel.Boxel
+hadronStateToBoxel : HadronState -> Boxel
 hadronStateToBoxel (MkHadronState grid) = field27ToBoxel grid
 
 ||| Converts a 3D Boxel multiset into a HadronState.
 public export
-boxelToHadronState : Stage1.VexelMaxel.Boxel -> HadronState
+boxelToHadronState : Boxel -> HadronState
 boxelToHadronState b = MkHadronState (boxelToField27 b)
 
 ||| Ground-state Hadron Nucleon represented as a canonical 3D Boxel multiset.
 public export
-seedHadronBoxel : Stage1.VexelMaxel.Boxel
+seedHadronBoxel : Boxel
 seedHadronBoxel = hadronStateToBoxel seedHadronEpoch3
 
 ||| Validates QCD Color Neutrality directly on a 3D Boxel multiset:
 ||| Evaluates that the 3 Z-slice Maxel planes (z=0 Red, z=1 Green, z=2 Blue)
 ||| carry identically balanced color flux.
 public export
-isHadronBoxelColorNeutral : Stage1.VexelMaxel.Boxel -> Bool
+isHadronBoxelColorNeutral : Boxel -> Bool
 isHadronBoxelColorNeutral b =
   let redSlice   = sliceBoxelZ 0 b
       greenSlice = sliceBoxelZ 1 b
@@ -111,14 +113,14 @@ isHadronBoxelColorNeutral b =
 
 ||| Direct bridge from UniverseState 27 de dm to a 3D Boxel multiset.
 public export
-stateToEpoch3Boxel : UniverseState 27 de dm -> Stage1.VexelMaxel.Boxel
+stateToEpoch3Boxel : UniverseState 27 de dm -> Boxel
 stateToEpoch3Boxel (MkUniverseState vm _ _) = field27ToBoxel vm
 
 ||| A 4-Vexel Balance Array representing Hadronic Color Singlet Confinement:
 ||| q_R + q_G + q_B = B_singlet
 public export
-hadronSingletBalanceArray : Stage1.VexelMaxel.BalanceArray 4
-hadronSingletBalanceArray = Stage1.VexelMaxel.MkBalanceArray [1, 1, 1, 0] [0, 0, 0, 1]
+hadronSingletBalanceArray : BalanceArray 4
+hadronSingletBalanceArray = MkBalanceArray [1, 1, 1, 0] [0, 0, 0, 1]
 
 ||| QTT 0 Erased Proof: Hadron Singlet Balance (3 color components sum to 3).
 public export
