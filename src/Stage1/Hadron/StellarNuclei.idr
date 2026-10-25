@@ -61,7 +61,7 @@ stellarNucleusMassTokens spec = Stage0.BoxInt.natToBoxInt (stellarNucleusMassNum
 ||| Fuses 5 Alpha Cores (5 * 108) into a Neon-20 nucleus (540 mass tokens).
 public export
 fuseNeon20 : List Boxel -> Boxel
-fuseNeon20 alphaCores = foldl addBoxel (MkBoxel []) alphaCores
+fuseNeon20 alphaCores = foldl addBoxel neutral alphaCores
 
 ||| Fuses 56 Nucleons (56 * 27) into an Iron-56 peak binding nucleus (1512 mass tokens).
 public export

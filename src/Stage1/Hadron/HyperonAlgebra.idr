@@ -54,10 +54,9 @@ Show HyperonSpec where
 public export
 makeLambdaZeroBoxel : HadronBoxel
 makeLambdaZeroBoxel =
-  MkBoxel [ (MkVoxel 0 0 0, MkBoxInt 9)   -- Red Sector (uds)
-          , (MkVoxel 1 1 1, MkBoxInt 9)   -- Green Sector (uds)
-          , (MkVoxel 2 2 2, MkBoxInt 9)   -- Blue Sector (uds)
-          ]
+  singletonCell (mkVoxel 0 0 0) (MkBoxInt 9) <+>
+  singletonCell (mkVoxel 1 1 1) (MkBoxInt 9) <+>
+  singletonCell (mkVoxel 2 2 2) (MkBoxInt 9)
 
 ------------------------------------------------------------------------
 -- 3. OBSERVATIONS & COLOR NEUTRALITY
