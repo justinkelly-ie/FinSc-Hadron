@@ -145,11 +145,11 @@ alphaCosmicStateEpoch4 =
 -- PURE 3D BOXEL NUCLEAR EMBEDDING & ALPHA CORE (108 VOXELS)
 ------------------------------------------------------------------------
 
-||| Translates all voxel coordinates in a Boxel by a spatial offset (dx, dy, dz).
+||| Translates all voxel coordinates in a Boxel by a spatial offset (dx, dy, dz)
+||| via upstream Stage1.Carrier.Boxel.translateBoxel.
 public export
 embedNucleonBoxel : (dx : Nat) -> (dy : Nat) -> (dz : Nat) -> Boxel -> Boxel
-embedNucleonBoxel dx dy dz (MkBoxel voxs) =
-  MkBoxel (map (\(v, w) => (mkVoxel (voxelX v + dx) (voxelY v + dy) (voxelZ v + dz), w)) voxs)
+embedNucleonBoxel dx dy dz = translateBoxel (mkCell3 dx dy dz)
 
 ||| Full 108-voxel Alpha Particle (4He) represented as a single unified 3D Boxel multiset
 ||| with 4 tetrahedral spatial offsets: (0,0,0), (3,0,0), (0,3,0), (0,0,3).
