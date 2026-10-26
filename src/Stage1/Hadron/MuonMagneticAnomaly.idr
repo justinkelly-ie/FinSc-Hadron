@@ -4,8 +4,6 @@ import Stage0.BoxInt
 import Stage1.UnixelFraction
 import Stage0.Multiset
 import Stage1.Hadron.StandardModel
-import Data.Vect
-import Data.List
 
 %default total
 
