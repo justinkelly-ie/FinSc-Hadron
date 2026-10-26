@@ -1,8 +1,7 @@
 module Stage0.Hadron.StellarNucleosynthesis
 
 import Stage0.BoxInt
-import Stage1.Carrier.Vexel
-import Stage1.Basis.Coordinate
+import public Stage1.Basis.Coordinate
 import Stage1.Hadron.HadronicConfinement
 import Stage0.Hadron.AlphaReplication
 import Data.Vect
@@ -89,10 +88,9 @@ nuclideVexel : StellarElement -> (neutrons : Nat) -> Vexel
 nuclideVexel elem n =
   let z = stellarAtomicNumber elem
       a = z + n
-  in canonicalizeVexel (MkVexel [ (MkUnixel 1, natToBoxInt z)
-                               , (MkUnixel 2, natToBoxInt n)
-                               , (MkUnixel 3, natToBoxInt a)
-                               ])
+  in singletonCell (mkCell1 1) (natToBoxInt z) <+>
+     singletonCell (mkCell1 2) (natToBoxInt n) <+>
+     singletonCell (mkCell1 3) (natToBoxInt a)
 
 ------------------------------------------------------------------------
 -- 2. TRIPLE-ALPHA FUSION GRAPH CONTRACTION
@@ -155,10 +153,10 @@ nuclideSi28 = nuclideVexel ElemSi 14 -- [14, 14, 28]
 
 public export
 nuclideNi56Core : Vexel
-nuclideNi56Core = canonicalizeVexel (MkVexel [ (MkUnixel 1, intToBoxInt 28)
-                                             , (MkUnixel 2, intToBoxInt 28)
-                                             , (MkUnixel 3, intToBoxInt 56)
-                                             ])
+nuclideNi56Core =
+  singletonCell (mkCell1 1) (intToBoxInt 28) <+>
+  singletonCell (mkCell1 2) (intToBoxInt 28) <+>
+  singletonCell (mkCell1 3) (intToBoxInt 56)
 
 ||| Audits the Complete Closed Stellar Nucleosynthesis Balance Network:
 ||| 1. Triple-Alpha: 3 * He4 = C12

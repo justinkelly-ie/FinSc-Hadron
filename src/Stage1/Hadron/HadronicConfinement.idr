@@ -8,7 +8,7 @@ import Stage0.LatticeTopology
 import Stage1.FourGeometries
 import Data.Vect
 import Data.Fin
-import Stage1.Carrier.Boxel
+import public Stage1.Basis.Coordinate
 import Stage1.Carrier.BalanceArray
 
 %default total
@@ -106,9 +106,9 @@ isHadronBoxelColorNeutral b =
   let redSlice   = sliceBoxelZ 0 b
       greenSlice = sliceBoxelZ 1 b
       blueSlice  = sliceBoxelZ 2 b
-      wRed   = totalMaxelWeight redSlice
-      wGreen = totalMaxelWeight greenSlice
-      wBlue  = totalMaxelWeight blueSlice
+      wRed   = totalCellMultisetWeight redSlice
+      wGreen = totalCellMultisetWeight greenSlice
+      wBlue  = totalCellMultisetWeight blueSlice
   in wRed == wGreen && wGreen == wBlue
 
 ||| Direct bridge from UniverseState 27 de dm to a 3D Boxel multiset.

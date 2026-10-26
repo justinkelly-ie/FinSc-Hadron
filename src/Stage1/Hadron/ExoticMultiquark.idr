@@ -2,9 +2,9 @@ module Stage1.Hadron.ExoticMultiquark
 
 import Stage0.BoxInt
 import Stage0.Multiset
-import Stage1.Carrier.Vexel
-import Stage1.Carrier.Boxel
-import Stage1.Basis.Coordinate
+import Stage0.BoxInt
+import Stage0.Multiset
+import public Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
 import Stage1.Hadron.HadronicConfinement
 import Stage1.Hadron.QuarkHadronAlgebra
@@ -43,31 +43,31 @@ Show ExoticMultiquarkSpec where
 %inline
 public export
 fuseTetraquark : MesonVexel -> MesonVexel -> Vexel
-fuseTetraquark m1 m2 = addVexel m1 m2
+fuseTetraquark m1 m2 = addCellMultiset m1 m2
 
 ||| Fuses a Hadron Boxel (27) and a Meson Vexel (18) into a 45-token Pentaquark (27 + 18 = 45).
 %inline
 public export
 fusePentaquarkTokens : HadronBoxel -> MesonVexel -> BoxInt
-fusePentaquarkTokens h m = totalBoxelWeight h + totalVexelMass m
+fusePentaquarkTokens h m = totalCellMultisetWeight h + totalCellMultisetWeight m
 
 ||| Fuses 2 Hadron Boxels (27 + 27) into a 54-token H-Dibaryon (6 * 9 = 54).
 %inline
 public export
 fuseDibaryon : HadronBoxel -> HadronBoxel -> Boxel
-fuseDibaryon h1 h2 = addBoxel h1 h2
+fuseDibaryon h1 h2 = addCellMultiset h1 h2
 
 ||| Evaluates mass tokens of a 4-term Tetraquark Vexel.
 %inline
 public export
 observeTetraquarkMass : Vexel -> BoxInt
-observeTetraquarkMass v = totalVexelMass v
+observeTetraquarkMass v = totalCellMultisetWeight v
 
 ||| Evaluates mass tokens of a 6-term Dibaryon Boxel.
 %inline
 public export
 observeDibaryonMass : Boxel -> BoxInt
-observeDibaryonMass b = totalBoxelWeight b
+observeDibaryonMass b = totalCellMultisetWeight b
 
 
 ------------------------------------------------------------------------
@@ -82,8 +82,10 @@ observeDibaryonMass b = totalBoxelWeight b
 public export
 auditExoticMultiquarksProof : Bool
 auditExoticMultiquarksProof =
-  let dummyMeson = MkVexel [(MkUnixel 1, MkBoxInt 9), (MkUnixel 2, MkBoxInt 9)]
-      dummyHadron = MkBoxel [(MkVoxel 0 0 0, MkBoxInt 9), (MkVoxel 1 1 1, MkBoxInt 9), (MkVoxel 2 2 2, MkBoxInt 9)]
+  let dummyMeson = singletonCell (mkCell1 1) (intToBoxInt 9) <+> singletonCell (mkCell1 2) (intToBoxInt 9)
+      dummyHadron = singletonCell (mkVoxel 0 0 0) (intToBoxInt 9) <+>
+                    singletonCell (mkVoxel 1 1 1) (intToBoxInt 9) <+>
+                    singletonCell (mkVoxel 2 2 2) (intToBoxInt 9)
       tetra = fuseTetraquark dummyMeson dummyMeson
       pentaTokens = fusePentaquarkTokens dummyHadron dummyMeson
       dibaryon = fuseDibaryon dummyHadron dummyHadron

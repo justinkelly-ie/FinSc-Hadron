@@ -2,8 +2,7 @@ module Stage1.Hadron.HyperonAlgebra
 
 import Stage0.BoxInt
 import Stage0.Multiset
-import Stage1.Carrier.Boxel
-import Stage1.Basis.Coordinate
+import public Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
 import Stage1.ExclusionPrinciple
 import Stage1.Hadron.HadronicConfinement
@@ -66,7 +65,7 @@ makeLambdaZeroBoxel =
 %inline
 public export
 observeHyperonMassTokens : HadronBoxel -> Stage0.BoxInt.BoxInt
-observeHyperonMassTokens b = totalBoxelWeight b
+observeHyperonMassTokens b = totalCellMultisetWeight b
 
 ||| Verifies SU(3) color neutrality of a Hyperon Boxel.
 %inline

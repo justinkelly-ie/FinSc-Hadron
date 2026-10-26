@@ -2,7 +2,7 @@ module Stage1.Hadron.StellarNuclei
 
 import Stage0.BoxInt
 import Stage0.Multiset
-import Stage1.Carrier.Boxel
+import public Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
 import Stage1.Hadron.HadronicConfinement
 import Stage1.Hadron.QuarkHadronAlgebra
@@ -61,12 +61,12 @@ stellarNucleusMassTokens spec = Stage0.BoxInt.natToBoxInt (stellarNucleusMassNum
 ||| Fuses 5 Alpha Cores (5 * 108) into a Neon-20 nucleus (540 mass tokens).
 public export
 fuseNeon20 : List Boxel -> Boxel
-fuseNeon20 alphaCores = foldl addBoxel neutral alphaCores
+fuseNeon20 alphaCores = foldl (<+>) neutral alphaCores
 
 ||| Fuses 56 Nucleons (56 * 27) into an Iron-56 peak binding nucleus (1512 mass tokens).
 public export
 fuseIron56Tokens : List HadronBoxel -> Stage0.BoxInt.BoxInt
-fuseIron56Tokens nucleons = foldl (+) (Stage0.BoxInt.intToBoxInt 0) (map totalBoxelWeight nucleons)
+fuseIron56Tokens nucleons = foldl (+) (Stage0.BoxInt.intToBoxInt 0) (map totalCellMultisetWeight nucleons)
 
 ------------------------------------------------------------------------
 -- 3. FORMAL AUDIT PROOFS

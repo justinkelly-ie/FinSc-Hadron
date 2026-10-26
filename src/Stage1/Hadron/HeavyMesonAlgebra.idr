@@ -2,8 +2,7 @@ module Stage1.Hadron.HeavyMesonAlgebra
 
 import Stage0.BoxInt
 import Stage0.Multiset
-import Stage1.Carrier.Vexel
-import Stage1.Basis.Coordinate
+import public Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
 import Stage1.ExclusionPrinciple
 import Stage1.Hadron.TypeIndexedMultiset
@@ -54,18 +53,16 @@ Show HeavyMesonSpec where
 public export
 makeJPsiCharmoniumVexel : MesonVexel
 makeJPsiCharmoniumVexel =
-  MkVexel [ (MkUnixel 4, MkBoxInt 9)   -- Charm Quark
-          , (MkUnixel 4, MkBoxInt 9)   -- Anti-Charm Quark
-          ]
+  singletonCell (mkCell1 4) (intToBoxInt 9) <+>
+  singletonCell (mkCell1 4) (intToBoxInt 9)
 
 ||| Constructs a Upsilon Bottomonium (b b_bar) 18-token Meson Vexel.
 %inline
 public export
 makeUpsilonBottomoniumVexel : MesonVexel
 makeUpsilonBottomoniumVexel =
-  MkVexel [ (MkUnixel 5, MkBoxInt 9)   -- Bottom Quark
-          , (MkUnixel 5, MkBoxInt 9)   -- Anti-Bottom Quark
-          ]
+  singletonCell (mkCell1 5) (intToBoxInt 9) <+>
+  singletonCell (mkCell1 5) (intToBoxInt 9)
 
 ------------------------------------------------------------------------
 -- 3. OBSERVATIONS & AUDIT
@@ -75,7 +72,7 @@ makeUpsilonBottomoniumVexel =
 %inline
 public export
 observeHeavyMesonMassTokens : MesonVexel -> Stage0.BoxInt.BoxInt
-observeHeavyMesonMassTokens m = totalVexelMass m
+observeHeavyMesonMassTokens m = totalCellMultisetWeight m
 
 ||| Audits Heavy Meson Mass Token Conservation:
 ||| 1. J/psi carries 18 mass tokens.

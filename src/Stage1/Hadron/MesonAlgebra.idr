@@ -2,8 +2,7 @@ module Stage1.Hadron.MesonAlgebra
 
 import Stage0.BoxInt
 import Stage0.Multiset
-import Stage1.Carrier.Vexel
-import Stage1.Basis.Coordinate
+import public Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
 import Stage1.ExclusionPrinciple
 import Stage1.Hadron.TypeIndexedMultiset
@@ -51,25 +50,22 @@ Show MesonSpec where
 public export
 makePionPlusVexel : MesonVexel
 makePionPlusVexel =
-  MkVexel [ (MkUnixel 1, intToBoxInt 9)  -- Up Quark (Red)
-          , (MkUnixel 2, intToBoxInt 9)  -- Anti-Down Quark (Anti-Green)
-          ]
+  singletonCell (mkCell1 1) (intToBoxInt 9) <+>
+  singletonCell (mkCell1 2) (intToBoxInt 9)
 
 ||| Constructs a Pion- (d u_bar) 18-token Vexel multiset across color-anticolor sectors.
 public export
 makePionMinusVexel : MesonVexel
 makePionMinusVexel =
-  MkVexel [ (MkUnixel 2, intToBoxInt 9)  -- Down Quark (Green)
-          , (MkUnixel 1, intToBoxInt 9)  -- Anti-Up Quark (Anti-Red)
-          ]
+  singletonCell (mkCell1 2) (intToBoxInt 9) <+>
+  singletonCell (mkCell1 1) (intToBoxInt 9)
 
 ||| Constructs a Kaon+ (u s_bar) 18-token Vexel multiset.
 public export
 makeKaonPlusVexel : MesonVexel
 makeKaonPlusVexel =
-  MkVexel [ (MkUnixel 1, intToBoxInt 9)  -- Up Quark
-          , (MkUnixel 3, intToBoxInt 9)  -- Anti-Strange Quark
-          ]
+  singletonCell (mkCell1 1) (intToBoxInt 9) <+>
+  singletonCell (mkCell1 3) (intToBoxInt 9)
 
 ------------------------------------------------------------------------
 -- 3. OBSERVATIONS & COLOR-ANTICOLOR NEUTRALITY
@@ -79,7 +75,7 @@ makeKaonPlusVexel =
 %inline
 public export
 observeMesonMassTokens : MesonVexel -> Stage0.BoxInt.BoxInt
-observeMesonMassTokens m = totalVexelMass m
+observeMesonMassTokens m = totalCellMultisetWeight m
 
 ||| Verifies Color-Anticolor Neutrality on a Meson Vexel:
 ||| Mass tokens must be perfectly balanced between quark and antiquark components (9 == 9).
@@ -87,9 +83,8 @@ observeMesonMassTokens m = totalVexelMass m
 public export
 isMesonColorNeutral : MesonVexel -> Bool
 isMesonColorNeutral m =
-  case vexelTerms m of
-    [(s1, w1), (s2, w2)] => w1 == Stage0.BoxInt.intToBoxInt 9 && w2 == Stage0.BoxInt.intToBoxInt 9
-    _ => False
+  totalCellMultisetWeight m == Stage0.BoxInt.intToBoxInt 18 &&
+  foldBoxTreeL (\acc, (_, w) => acc && (w == Stage0.BoxInt.intToBoxInt 9)) True m
 
 ------------------------------------------------------------------------
 -- 4. FORMAL AUDIT PROOFS

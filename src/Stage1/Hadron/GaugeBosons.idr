@@ -2,10 +2,7 @@ module Stage1.Hadron.GaugeBosons
 
 import Stage0.BoxInt
 import Stage0.Multiset
-import Stage1.Carrier.Maxel
-import Stage1.Carrier.Vexel
-import Stage1.Carrier.Boxel
-import Stage1.Basis.Coordinate
+import public Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
 import Stage1.ExclusionPrinciple
 import Stage1.Hadron.HadronicConfinement
@@ -44,14 +41,14 @@ GluonMaxel = Maxel
 ||| Constructs the Maxel matrix for a given Gluon octet component.
 public export
 makeGluonMaxel : GluonIndex -> GluonMaxel
-makeGluonMaxel G1_RedAntiGreen  = MkMaxel [(MkPixel 1 2, intToBoxInt 1)]
-makeGluonMaxel G2_RedAntiBlue   = MkMaxel [(MkPixel 1 3, intToBoxInt 1)]
-makeGluonMaxel G3_GreenAntiRed  = MkMaxel [(MkPixel 2 1, intToBoxInt 1)]
-makeGluonMaxel G4_GreenAntiBlue = MkMaxel [(MkPixel 2 3, intToBoxInt 1)]
-makeGluonMaxel G5_BlueAntiRed   = MkMaxel [(MkPixel 3 1, intToBoxInt 1)]
-makeGluonMaxel G6_BlueAntiGreen = MkMaxel [(MkPixel 3 2, intToBoxInt 1)]
-makeGluonMaxel G7_NeutralDiag1  = MkMaxel [(MkPixel 1 1, intToBoxInt 1), (MkPixel 2 2, intToBoxInt (-1))]
-makeGluonMaxel G8_NeutralDiag2  = MkMaxel [(MkPixel 1 1, intToBoxInt 1), (MkPixel 2 2, intToBoxInt 1), (MkPixel 3 3, intToBoxInt (-2))]
+makeGluonMaxel G1_RedAntiGreen  = singletonCell (mkPixel 1 2) (intToBoxInt 1)
+makeGluonMaxel G2_RedAntiBlue   = singletonCell (mkPixel 1 3) (intToBoxInt 1)
+makeGluonMaxel G3_GreenAntiRed  = singletonCell (mkPixel 2 1) (intToBoxInt 1)
+makeGluonMaxel G4_GreenAntiBlue = singletonCell (mkPixel 2 3) (intToBoxInt 1)
+makeGluonMaxel G5_BlueAntiRed   = singletonCell (mkPixel 3 1) (intToBoxInt 1)
+makeGluonMaxel G6_BlueAntiGreen = singletonCell (mkPixel 3 2) (intToBoxInt 1)
+makeGluonMaxel G7_NeutralDiag1  = singletonCell (mkPixel 1 1) (intToBoxInt 1) <+> singletonCell (mkPixel 2 2) (intToBoxInt (-1))
+makeGluonMaxel G8_NeutralDiag2  = singletonCell (mkPixel 1 1) (intToBoxInt 1) <+> singletonCell (mkPixel 2 2) (intToBoxInt 1) <+> singletonCell (mkPixel 3 3) (intToBoxInt (-2))
 
 ||| Applies a Gluon Maxel color exchange operator to a Quark Vexel: g * q.
 public export
@@ -81,7 +78,7 @@ public export
 betaDecayNucleon : HadronBoxel -> (HadronBoxel, Stage0.BoxInt.BoxInt)
 betaDecayNucleon neutronBoxel =
   let protonBoxel = seedHadronBoxel
-      releasedMass = totalBoxelWeight neutronBoxel - totalBoxelWeight protonBoxel
+      releasedMass = totalCellMultisetWeight neutronBoxel - totalCellMultisetWeight protonBoxel
   in (protonBoxel, releasedMass)
 
 ------------------------------------------------------------------------

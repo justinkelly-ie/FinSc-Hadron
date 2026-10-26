@@ -2,7 +2,7 @@ module Stage0.Hadron.CosmicNucleosynthesis
 
 import Stage0.BoxInt
 import Stage0.Multiset
-import Stage1.Carrier.Boxel
+import public Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
 import Stage1.Hadron.HadronicConfinement
 import Stage1.Hadron.QuarkHadronAlgebra
@@ -53,12 +53,12 @@ nucleusMassTokens spec = natToBoxInt (nucleusNucleonCount spec * 27)
 ||| Fuses 1 Proton (27) and 1 Neutron (27) into a Deuteron 2H nucleus (54 tokens).
 public export
 fuseDeuteron : HadronBoxel -> HadronBoxel -> Boxel
-fuseDeuteron p n = addBoxel p n
+fuseDeuteron p n = p <+> n
 
 ||| Fuses 3 Protons (81) and 4 Neutrons (108) into a Lithium-7 nucleus (189 tokens).
 public export
 fuseLithium7 : List HadronBoxel -> Boxel
-fuseLithium7 nucleons = foldl addBoxel (MkBoxel []) nucleons
+fuseLithium7 nucleons = foldl (<+>) emptyCellMultiset nucleons
 
 ------------------------------------------------------------------------
 -- 3. FORMAL INVARIANT AUDIT PROOFS
