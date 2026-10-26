@@ -144,7 +144,7 @@ alphaCosmicStateEpoch4 =
 ------------------------------------------------------------------------
 
 ||| Translates all voxel coordinates in a Boxel by a spatial offset (dx, dy, dz)
-||| via upstream Stage1.Carrier.Boxel.translateBoxel.
+||| via upstream Stage1.Basis.Coordinate.translateCell.
 public export
 embedNucleonBoxel : (dx : Nat) -> (dy : Nat) -> (dz : Nat) -> Boxel -> Boxel
 embedNucleonBoxel dx dy dz = translateCell (mkCell3 dx dy dz)
