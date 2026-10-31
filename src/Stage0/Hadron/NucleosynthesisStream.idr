@@ -1,7 +1,6 @@
 module Stage0.Hadron.NucleosynthesisStream
 
 import Data.List
-import Data.Fuel
 import Stage0.StructuralFuel
 import Stage0.OnSeq.FusedStream
 import Stage0.Hadron.AlphaReplication
@@ -37,11 +36,6 @@ public export
 fusedTripleAlphaFluxStream : FusedStream AlphaClusterState -> FusedStream Stage0.BoxInt.BoxInt
 fusedTripleAlphaFluxStream = mapStream (\alpha => totalAlphaFlux alpha * Stage0.BoxInt.intToBoxInt 3)
 
-||| Evaluates an Alpha cluster stream into a List container.
-public export
-runAlphaStream : Fuel -> FusedStream AlphaClusterState -> List AlphaClusterState
-runAlphaStream = runFueledStream
-
 ||| Evaluates an Alpha cluster stream into a List container using model-indexed GohFuel.
 public export
 runAlphaStreamFuelModel : GohFuel cap -> FusedStream AlphaClusterState -> List AlphaClusterState
@@ -58,12 +52,6 @@ fusedComputeTotalNucleosynthesisFluxNatDirect : (fuel : Nat) -> FusedStream Alph
 fusedComputeTotalNucleosynthesisFluxNatDirect fuel strm =
   foldStreamNat fuel (\acc, alpha => addBox (mulBox (totalAlphaFlux alpha) (intToBoxInt 3)) acc) (intToBoxInt 0) strm
 
-||| Direct stream accumulator for total nucleosynthesis flux using foldStreamFuel.
-public export
-fusedComputeTotalNucleosynthesisFluxDirect : Fuel -> FusedStream AlphaClusterState -> Stage0.BoxInt.BoxInt
-fusedComputeTotalNucleosynthesisFluxDirect f strm =
-  foldStreamFuel f (\acc, alpha => addBox (mulBox (totalAlphaFlux alpha) (intToBoxInt 3)) acc) (intToBoxInt 0) strm
-
 ||| Total triple-alpha nucleosynthesis fusion energy flux accumulation using foldStreamNat.
 public export
 fusedComputeTotalNucleosynthesisFluxNat : (fuel : Nat) -> List AlphaClusterState -> Stage0.BoxInt.BoxInt
@@ -75,12 +63,6 @@ public export
 fusedComputeTotalNucleosynthesisFluxFuelModel : GohFuel cap -> List AlphaClusterState -> Stage0.BoxInt.BoxInt
 fusedComputeTotalNucleosynthesisFluxFuelModel fuel alphas =
   fusedComputeTotalNucleosynthesisFluxNatDirect (gohSteps fuel) (stream alphas)
-
-||| Backward-compatible total nucleosynthesis flux accumulation using foldStreamFuel.
-public export
-fusedComputeTotalNucleosynthesisFlux : Fuel -> List AlphaClusterState -> Stage0.BoxInt.BoxInt
-fusedComputeTotalNucleosynthesisFlux f alphas =
-  fusedComputeTotalNucleosynthesisFluxDirect f (stream alphas)
 
 ||| Verification audit witness proving zero-allocation triple-alpha fusion energy flux computation.
 public export
@@ -376,9 +358,9 @@ public export
 streamNuclearTrajectory : TransitionChannel IsotopeToken -> TransitionState IsotopeToken -> FusedStream (TransitionState IsotopeToken)
 streamNuclearTrajectory = streamTransitionTrajectory
 
-||| Evaluates nuclear reaction trajectory under fuel bounds without intermediate list allocations.
+||| Evaluates nuclear reaction trajectory under Nat fuel bounds without intermediate list allocations.
 public export
-runNuclearTrajectory : Fuel -> TransitionChannel IsotopeToken -> TransitionState IsotopeToken -> TransitionState IsotopeToken
-runNuclearTrajectory = runTransitionTrajectory
+runNuclearTrajectoryNat : Nat -> TransitionChannel IsotopeToken -> TransitionState IsotopeToken -> TransitionState IsotopeToken
+runNuclearTrajectoryNat = runTransitionTrajectoryNat
 
 

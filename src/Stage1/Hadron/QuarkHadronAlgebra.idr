@@ -42,7 +42,7 @@ colorConfinementPrime = Prime3
 ||| Canonical constructive Goh factor of 3D quarks and trit confinement (Law 16).
 public export
 quarkConfinementFactor : GohFactor 3
-quarkConfinementFactor = Factor3
+quarkConfinementFactor = gohFactor 3
 
 ||| Static compile-time witness: The quark confinement prime dimension is 3.
 public export
