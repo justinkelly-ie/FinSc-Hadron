@@ -363,4 +363,14 @@ public export
 runNuclearTrajectoryNat : Nat -> TransitionChannel IsotopeToken -> TransitionState IsotopeToken -> TransitionState IsotopeToken
 runNuclearTrajectoryNat = runTransitionTrajectoryNat
 
+||| Evaluates nuclear reaction trajectory bounded by model-indexed GohFuel.
+public export
+runNuclearTrajectoryFuelModel : GohFuel cap -> TransitionChannel IsotopeToken -> TransitionState IsotopeToken -> TransitionState IsotopeToken
+runNuclearTrajectoryFuelModel fuel = runTransitionTrajectoryNat (gohSteps fuel)
+
+||| Evaluates nuclear reaction trajectory bounded canonically by masterSubstrateGohFuelModel (Primorial 210 capacity).
+public export
+runNuclearTrajectoryGoh : TransitionChannel IsotopeToken -> TransitionState IsotopeToken -> TransitionState IsotopeToken
+runNuclearTrajectoryGoh = runNuclearTrajectoryFuelModel masterSubstrateGohFuelModel
+
 
