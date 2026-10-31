@@ -15,7 +15,7 @@ import public Stage1.Hadron.HadronicConfinement
 import public Stage1.Hadron.HeavyMesonAlgebra
 import public Stage1.Hadron.HyperonAlgebra
 import public Stage1.Hadron.MesonAlgebra
-import public Stage1.Hadron.MuonG2Anomaly
+import public Stage1.Hadron.MuonMagneticAnomaly
 import public Stage1.Hadron.QuarkHadronAlgebra
 import public Stage1.Hadron.StandardModel
 import public Stage1.Hadron.StellarNuclei

@@ -68,19 +68,3 @@ auditMuonMagneticAnomalyProof =
       qedNum = num (qedSchwinger moment)
       bsmNum = num (bsmLoopDefect moment)
   in (qedNum == intToBoxInt 1) && (bsmNum == intToBoxInt 1)
-
-------------------------------------------------------------------------
--- BACKWARD-COMPATIBILITY ALIASES
-------------------------------------------------------------------------
-
-public export
-MuonG2Moment : Type
-MuonG2Moment = MuonMagneticMoment
-
-public export
-computeTotalMuonG2 : MuonMagneticMoment
-computeTotalMuonG2 = computeTotalMuonMagneticMoment
-
-public export
-auditMuonG2AnomalyProof : Bool
-auditMuonG2AnomalyProof = auditMuonMagneticAnomalyProof
