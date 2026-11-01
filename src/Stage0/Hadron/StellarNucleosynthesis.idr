@@ -1,6 +1,8 @@
 module Stage0.Hadron.StellarNucleosynthesis
 
 import Stage0.BoxInt
+import Stage0.Multiset
+import Stage0.TransitionNetwork
 import public Stage1.Basis.Coordinate
 import Stage1.Hadron.HadronicConfinement
 import Stage0.Hadron.AlphaReplication
@@ -146,6 +148,79 @@ ppFusionLinear (MkLToken ElemH) (MkLToken ElemH) =
 ppFusionLinear (MkLToken x) (MkLToken y) =
   (MkLToken x, MkLToken (SMPBoson Photon), MkLToken (SMPBoson Photon))
 
+||| Returns the mass number A (total nucleons = Z + N) for stellar elements.
+public export
+stellarNucleonCount : StellarElement -> Nat
+stellarNucleonCount ElemH  = 1
+stellarNucleonCount ElemHe = 4
+stellarNucleonCount ElemC  = 12
+stellarNucleonCount ElemN  = 14
+stellarNucleonCount ElemO  = 16
+stellarNucleonCount ElemNe = 20
+stellarNucleonCount ElemMg = 24
+stellarNucleonCount ElemSi = 28
+stellarNucleonCount ElemP  = 31
+stellarNucleonCount ElemFe = 56
+
+||| Maps an atomic stellar element token to a multiset of nucleons (Rule 03 §7):
+public export
+elementToNucleonMultiset : Token StellarElement -> Multiset BoxInt Nat
+elementToNucleonMultiset (MkToken elem) =
+  AddM (stellarNucleonCount elem) (intToBoxInt 1) ZeroM
+
+||| Free monoid adjunction lifting element tokens into nucleon multisets:
+public export
+liftElementToNucleons : Multiset BoxInt StellarElement -> Multiset BoxInt Nat
+liftElementToNucleons = liftToken elementToNucleonMultiset
+
+||| Homomorphic tally of total nucleons across a stellar element multiset:
+public export
+totalNucleonCount : Multiset BoxInt StellarElement -> BoxInt
+totalNucleonCount ZeroM = MkBoxInt 0
+totalNucleonCount (AddM elem (MkBoxInt w) rest) =
+  addBox (MkBoxInt (cast (stellarNucleonCount elem) * w)) (totalNucleonCount rest)
+
+||| Homomorphic tally of total protons across a stellar element multiset:
+public export
+totalProtonCount : Multiset BoxInt StellarElement -> BoxInt
+totalProtonCount ZeroM = MkBoxInt 0
+totalProtonCount (AddM elem (MkBoxInt w) rest) =
+  addBox (MkBoxInt (cast (stellarAtomicNumber elem) * w)) (totalProtonCount rest)
+
+------------------------------------------------------------------------
+-- 2b. MULTI-TOKEN STOICHIOMETRIC STELLAR FUSION TRANSITIONS
+------------------------------------------------------------------------
+
+||| Triple-Alpha multi-token stoichiometric firing transition (3 x He -> C) (Rule 03 & 04):
+public export
+fireTripleAlphaMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
+fireTripleAlphaMultiToken =
+  fireMultiTokenTransition [toToken ElemHe, toToken ElemHe, toToken ElemHe] [toToken ElemC]
+
+||| Alpha Capture multi-token stoichiometric firing on Carbon (C + He -> O):
+public export
+fireAlphaCaptureCarbonMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
+fireAlphaCaptureCarbonMultiToken =
+  fireMultiTokenTransition [toToken ElemC, toToken ElemHe] [toToken ElemO]
+
+||| Alpha Capture multi-token stoichiometric firing on Oxygen (O + He -> Ne):
+public export
+fireAlphaCaptureOxygenMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
+fireAlphaCaptureOxygenMultiToken =
+  fireMultiTokenTransition [toToken ElemO, toToken ElemHe] [toToken ElemNe]
+
+||| Alpha Capture multi-token stoichiometric firing on Neon (Ne + He -> Mg):
+public export
+fireAlphaCaptureNeonMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
+fireAlphaCaptureNeonMultiToken =
+  fireMultiTokenTransition [toToken ElemNe, toToken ElemHe] [toToken ElemMg]
+
+||| Alpha Capture multi-token stoichiometric firing on Magnesium (Mg + He -> Si):
+public export
+fireAlphaCaptureMagnesiumMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
+fireAlphaCaptureMagnesiumMultiToken =
+  fireMultiTokenTransition [toToken ElemMg, toToken ElemHe] [toToken ElemSi]
+
 ------------------------------------------------------------------------
 -- 3. STELLAR FUSION BALANCE ARRAY NETWORK (CH. 26 & 28)
 ------------------------------------------------------------------------
@@ -235,4 +310,44 @@ public export
 %macro
 auditLinearStellarFusion : Elab (Stage0.Hadron.StellarNucleosynthesis.auditLinearStellarFusionProof = True)
 auditLinearStellarFusion = pure Refl
+
+||| Audits that Triple-Alpha multi-token stoichiometric firing consumes 3 alphas and deposits 1 carbon:
+public export
+auditTripleAlphaMultiTokenProof : Bool
+auditTripleAlphaMultiTokenProof =
+  let initial = the (TransitionState StellarElement)
+                  (AddM ElemHe (intToBoxInt 3) ZeroM)
+  in case fireTripleAlphaMultiToken initial of
+       Just finalState =>
+         let nBefore = totalNucleonCount initial
+             nAfter  = totalNucleonCount finalState
+             pBefore = totalProtonCount initial
+             pAfter  = totalProtonCount finalState
+         in boxEq nBefore nAfter && boxEq pBefore pAfter && boxEq nAfter (intToBoxInt 12)
+       Nothing => False
+
+||| Audits the full multi-token alpha capture ladder (C -> O -> Ne -> Mg -> Si):
+public export
+auditAlphaCaptureLadderMultiTokenProof : Bool
+auditAlphaCaptureLadderMultiTokenProof =
+  let s0 = the (TransitionState StellarElement)
+             (AddM ElemC (intToBoxInt 1) (AddM ElemHe (intToBoxInt 4) ZeroM))
+  in case fireAlphaCaptureCarbonMultiToken s0 of
+       Nothing => False
+       Just s1 => case fireAlphaCaptureOxygenMultiToken s1 of
+         Nothing => False
+         Just s2 => case fireAlphaCaptureNeonMultiToken s2 of
+           Nothing => False
+           Just s3 => case fireAlphaCaptureMagnesiumMultiToken s3 of
+             Nothing => False
+             Just s4 =>
+               let n0 = totalNucleonCount s0
+                   n4 = totalNucleonCount s4
+               in boxEq n0 n4 && boxEq n4 (intToBoxInt 28)
+
+||| Compile-time witness: Free monoid adjunction nucleon tally reduces definitionally.
+public export
+0 prfAdjunctionNucleonTally :
+  boxEq (totalNucleonCount (AddM ElemC (intToBoxInt 1) ZeroM)) (intToBoxInt 12) = True
+prfAdjunctionNucleonTally = Refl
 
