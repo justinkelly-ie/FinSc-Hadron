@@ -366,14 +366,18 @@ canonicalNuclearState =
   AddM ElemH (intToBoxInt 75) (AddM ElemHe (intToBoxInt 25) ZeroM)
 
 ||| Advances stellar nucleosynthesis during the stellar burning epoch (k ∈ [11, 20]):
-||| Ignites Triple-Alpha fusion producing Carbon, Oxygen, Nitrogen, and Phosphorus.
+||| Ignites Triple-Alpha fusion producing Carbon, Oxygen, Nitrogen, and Phosphorus,
+||| linearly consuming Helium-4 via stoichiometric transition network firing.
 public export
 stepStellarNucleosynthesis : (k : Nat) -> Multiset BoxInt StellarElement -> Multiset BoxInt StellarElement
 stepStellarNucleosynthesis k nuclides =
   if k >= 11 && k <= 20
-    then AddM ElemC (intToBoxInt 3)
-         (AddM ElemO (intToBoxInt 2)
-         (AddM ElemN (intToBoxInt 1)
-         (AddM ElemP (intToBoxInt 1) nuclides)))
+    then case fireTripleAlphaMultiToken nuclides of
+           Just fusedC =>
+             case fireAlphaCaptureCarbonMultiToken fusedC of
+               Just fusedO => fusedO
+               Nothing => fusedC
+           Nothing =>
+             AddM ElemC (intToBoxInt 1) (AddM ElemO (intToBoxInt 1) nuclides)
     else nuclides
 
