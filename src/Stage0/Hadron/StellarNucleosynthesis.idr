@@ -72,6 +72,10 @@ stellarAtomicNumber ElemSi = 14
 stellarAtomicNumber ElemP  = 15
 stellarAtomicNumber ElemFe = 26
 
+public export
+Ord StellarElement where
+  compare e1 e2 = compare (stellarAtomicNumber e1) (stellarAtomicNumber e2)
+
 ||| Returns the valence capacity for covalent and polyphosphate bonding.
 public export
 stellarValenceCapacity : StellarElement -> Nat
@@ -350,4 +354,26 @@ public export
 0 prfAdjunctionNucleonTally :
   boxEq (totalNucleonCount (AddM ElemC (intToBoxInt 1) ZeroM)) (intToBoxInt 12) = True
 prfAdjunctionNucleonTally = Refl
+
+------------------------------------------------------------------------
+-- 5. CANONICAL STELLAR NUCLEOSYNTHESIS STATE & TRANSITIONS
+------------------------------------------------------------------------
+
+||| Canonical primordial nucleosynthesis state: 75% Hydrogen, 25% Helium.
+public export
+canonicalNuclearState : Multiset BoxInt StellarElement
+canonicalNuclearState =
+  AddM ElemH (intToBoxInt 75) (AddM ElemHe (intToBoxInt 25) ZeroM)
+
+||| Advances stellar nucleosynthesis during the stellar burning epoch (k ∈ [11, 20]):
+||| Ignites Triple-Alpha fusion producing Carbon, Oxygen, Nitrogen, and Phosphorus.
+public export
+stepStellarNucleosynthesis : (k : Nat) -> Multiset BoxInt StellarElement -> Multiset BoxInt StellarElement
+stepStellarNucleosynthesis k nuclides =
+  if k >= 11 && k <= 20
+    then AddM ElemC (intToBoxInt 3)
+         (AddM ElemO (intToBoxInt 2)
+         (AddM ElemN (intToBoxInt 1)
+         (AddM ElemP (intToBoxInt 1) nuclides)))
+    else nuclides
 
