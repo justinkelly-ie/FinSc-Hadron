@@ -13,6 +13,7 @@ import Data.Vect
 import Stage1.FourGeometries
 import Stage1.Carrier.ChromogeometricMetric
 import Stage1.Multiset.PrimordialUnfolding
+import Stage1.ScalePipeline
 
 %default total
 
@@ -61,19 +62,44 @@ Show StellarElement where
   show ElemP  = "P (Z=15)"
   show ElemFe = "Fe (Z=26)"
 
-||| Returns the atomic number Z (number of protons) for stellar elements.
+||| Canonical constituent hadron multiset for every stellar nuclide (Rule 03 §7):
+||| Grounded directly in prior-layer HadronTokens (ProtonToken, NeutronToken).
+public export
+elementToHadrons : StellarElement -> Multiset BoxInt HadronToken
+elementToHadrons ElemH  = AddM ProtonToken (intToBoxInt 1) ZeroM
+elementToHadrons ElemHe = AddM ProtonToken (intToBoxInt 2) (AddM NeutronToken (intToBoxInt 2) ZeroM)                 -- 1 * Alpha (2p, 2n)
+elementToHadrons ElemC  = AddM ProtonToken (intToBoxInt 6) (AddM NeutronToken (intToBoxInt 6) ZeroM)                 -- 3 * Alpha (6p, 6n)
+elementToHadrons ElemN  = AddM ProtonToken (intToBoxInt 7) (AddM NeutronToken (intToBoxInt 7) ZeroM)                 -- CNO cycle (7p, 7n)
+elementToHadrons ElemO  = AddM ProtonToken (intToBoxInt 8) (AddM NeutronToken (intToBoxInt 8) ZeroM)                 -- 4 * Alpha (8p, 8n)
+elementToHadrons ElemNe = AddM ProtonToken (intToBoxInt 10) (AddM NeutronToken (intToBoxInt 10) ZeroM)               -- 5 * Alpha (10p, 10n)
+elementToHadrons ElemMg = AddM ProtonToken (intToBoxInt 12) (AddM NeutronToken (intToBoxInt 12) ZeroM)               -- 6 * Alpha (12p, 12n)
+elementToHadrons ElemSi = AddM ProtonToken (intToBoxInt 14) (AddM NeutronToken (intToBoxInt 14) ZeroM)               -- 7 * Alpha (14p, 14n)
+elementToHadrons ElemP  = AddM ProtonToken (intToBoxInt 15) (AddM NeutronToken (intToBoxInt 16) ZeroM)               -- (15p, 16n)
+elementToHadrons ElemFe = AddM ProtonToken (intToBoxInt 26) (AddM NeutronToken (intToBoxInt 30) ZeroM)               -- Silicon burning peak (26p, 30n)
+
+||| Returns the atomic number Z (number of protons) observed from constituent hadrons:
 public export
 stellarAtomicNumber : StellarElement -> Nat
-stellarAtomicNumber ElemH  = 1
-stellarAtomicNumber ElemHe = 2
-stellarAtomicNumber ElemC  = 6
-stellarAtomicNumber ElemN  = 7
-stellarAtomicNumber ElemO  = 8
-stellarAtomicNumber ElemNe = 10
-stellarAtomicNumber ElemMg = 12
-stellarAtomicNumber ElemSi = 14
-stellarAtomicNumber ElemP  = 15
-stellarAtomicNumber ElemFe = 26
+stellarAtomicNumber elem =
+  boxToNat (lookupCountBox ProtonToken (elementToHadrons elem))
+
+||| Returns the neutron count N observed from constituent hadrons:
+public export
+stellarNeutronCount : StellarElement -> Nat
+stellarNeutronCount elem =
+  boxToNat (lookupCountBox NeutronToken (elementToHadrons elem))
+
+||| Returns the mass number A (total nucleons = Z + N) observed from constituent hadrons:
+public export
+stellarNucleonCount : StellarElement -> Nat
+stellarNucleonCount elem =
+  stellarAtomicNumber elem + stellarNeutronCount elem
+
+||| Compile-time proof witness auditing that mass number A identically equals Z + N:
+public export
+auditNuclideConstituentConservation : (elem : StellarElement) ->
+  stellarNucleonCount elem = stellarAtomicNumber elem + stellarNeutronCount elem
+auditNuclideConstituentConservation _ = Refl
 
 ||| Returns the valence capacity for covalent and polyphosphate bonding.
 public export
@@ -151,19 +177,6 @@ ppFusionLinear (MkLToken ElemH) (MkLToken ElemH) =
 ppFusionLinear (MkLToken x) (MkLToken y) =
   (MkLToken x, MkLToken (SMPBoson Photon), MkLToken (SMPBoson Photon))
 
-||| Returns the mass number A (total nucleons = Z + N) for stellar elements.
-public export
-stellarNucleonCount : StellarElement -> Nat
-stellarNucleonCount ElemH  = 1
-stellarNucleonCount ElemHe = 4
-stellarNucleonCount ElemC  = 12
-stellarNucleonCount ElemN  = 14
-stellarNucleonCount ElemO  = 16
-stellarNucleonCount ElemNe = 20
-stellarNucleonCount ElemMg = 24
-stellarNucleonCount ElemSi = 28
-stellarNucleonCount ElemP  = 31
-stellarNucleonCount ElemFe = 56
 
 ||| Maps an atomic stellar element token to a multiset of nucleons (Rule 03 §7):
 public export
