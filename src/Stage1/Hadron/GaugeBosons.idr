@@ -91,4 +91,9 @@ betaDecayNucleon neutronBoxel =
 public export
 auditGaugeBosonProof : Bool
 auditGaugeBosonProof =
-  (Stage0.BoxInt.intToBoxInt 27 == Stage0.BoxInt.intToBoxInt 27)
+  let greenQuark = singletonCell (mkCell1 2) (intToBoxInt 1)
+      redQuark   = actGluonOnQuark (makeGluonMaxel G1_RedAntiGreen) greenQuark
+      (protonB, released) = betaDecayNucleon seedHadronBoxel
+  in boxEq (lookupCellMultiset (mkCell1 1) redQuark) (intToBoxInt 1) &&
+     boxEq (totalCellMultisetWeight protonB) (intToBoxInt 27) &&
+     boxEq released (intToBoxInt 0)

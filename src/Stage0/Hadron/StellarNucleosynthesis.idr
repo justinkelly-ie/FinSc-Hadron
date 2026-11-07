@@ -10,6 +10,9 @@ import Stage0.Token
 import Stage1.Hadron.StandardModel
 import Language.Reflection
 import Data.Vect
+import Stage1.FourGeometries
+import Stage1.Carrier.ChromogeometricMetric
+import Stage1.Multiset.PrimordialUnfolding
 
 %default total
 
@@ -71,10 +74,6 @@ stellarAtomicNumber ElemMg = 12
 stellarAtomicNumber ElemSi = 14
 stellarAtomicNumber ElemP  = 15
 stellarAtomicNumber ElemFe = 26
-
-public export
-Ord StellarElement where
-  compare e1 e2 = compare (stellarAtomicNumber e1) (stellarAtomicNumber e2)
 
 ||| Returns the valence capacity for covalent and polyphosphate bonding.
 public export
@@ -195,35 +194,46 @@ totalProtonCount (AddM elem (MkBoxInt w) rest) =
 -- 2b. MULTI-TOKEN STOICHIOMETRIC STELLAR FUSION TRANSITIONS
 ------------------------------------------------------------------------
 
+||| Executes a single stoichiometric nuclear reaction step (k = 1) using reactMultisetBox:
+public export
+fireSingleReactionBox :
+  (reactants : Multiset BoxInt StellarElement) ->
+  (products : Multiset BoxInt StellarElement) ->
+  TransitionState StellarElement ->
+  Maybe (TransitionState StellarElement)
+fireSingleReactionBox reactants products state =
+  let (nextState, k) = reactMultisetBox (intToBoxInt 1) reactants products state
+  in if k > intToBoxInt 0 then Just nextState else Nothing
+
 ||| Triple-Alpha multi-token stoichiometric firing transition (3 x He -> C) (Rule 03 & 04):
 public export
 fireTripleAlphaMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
 fireTripleAlphaMultiToken =
-  fireMultiTokenTransition [toToken ElemHe, toToken ElemHe, toToken ElemHe] [toToken ElemC]
+  fireSingleReactionBox (AddM ElemHe (intToBoxInt 3) ZeroM) (AddM ElemC (intToBoxInt 1) ZeroM)
 
 ||| Alpha Capture multi-token stoichiometric firing on Carbon (C + He -> O):
 public export
 fireAlphaCaptureCarbonMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
 fireAlphaCaptureCarbonMultiToken =
-  fireMultiTokenTransition [toToken ElemC, toToken ElemHe] [toToken ElemO]
+  fireSingleReactionBox (AddM ElemC (intToBoxInt 1) (AddM ElemHe (intToBoxInt 1) ZeroM)) (AddM ElemO (intToBoxInt 1) ZeroM)
 
 ||| Alpha Capture multi-token stoichiometric firing on Oxygen (O + He -> Ne):
 public export
 fireAlphaCaptureOxygenMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
 fireAlphaCaptureOxygenMultiToken =
-  fireMultiTokenTransition [toToken ElemO, toToken ElemHe] [toToken ElemNe]
+  fireSingleReactionBox (AddM ElemO (intToBoxInt 1) (AddM ElemHe (intToBoxInt 1) ZeroM)) (AddM ElemNe (intToBoxInt 1) ZeroM)
 
 ||| Alpha Capture multi-token stoichiometric firing on Neon (Ne + He -> Mg):
 public export
 fireAlphaCaptureNeonMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
 fireAlphaCaptureNeonMultiToken =
-  fireMultiTokenTransition [toToken ElemNe, toToken ElemHe] [toToken ElemMg]
+  fireSingleReactionBox (AddM ElemNe (intToBoxInt 1) (AddM ElemHe (intToBoxInt 1) ZeroM)) (AddM ElemMg (intToBoxInt 1) ZeroM)
 
 ||| Alpha Capture multi-token stoichiometric firing on Magnesium (Mg + He -> Si):
 public export
 fireAlphaCaptureMagnesiumMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
 fireAlphaCaptureMagnesiumMultiToken =
-  fireMultiTokenTransition [toToken ElemMg, toToken ElemHe] [toToken ElemSi]
+  fireSingleReactionBox (AddM ElemMg (intToBoxInt 1) (AddM ElemHe (intToBoxInt 1) ZeroM)) (AddM ElemSi (intToBoxInt 1) ZeroM)
 
 ------------------------------------------------------------------------
 -- 3. STELLAR FUSION BALANCE ARRAY NETWORK (CH. 26 & 28)
@@ -359,11 +369,72 @@ prfAdjunctionNucleonTally = Refl
 -- 5. CANONICAL STELLAR NUCLEOSYNTHESIS STATE & TRANSITIONS
 ------------------------------------------------------------------------
 
-||| Canonical primordial nucleosynthesis state: 75% Hydrogen, 25% Helium.
+||| Synthesizes the primordial nuclear nuclide multiset from a chromogeometric triad:
+||| - Helium-4 alphas: 1 * Q_Blue = 25 (100 nucleons)
+||| - Hydrogen protons: 3 * Q_Blue = 75 (75 nucleons)
+||| - Conserved nucleons: Q_Red * Q_Blue = 7 * 25 = 175 nucleons
+public export
+synthesizeNuclearFromTriad : TriadQuadrance -> Multiset BoxInt StellarElement
+synthesizeNuclearFromTriad triad =
+  let heCount = triad.blueQ
+      hCount  = mulBox (intToBoxInt 3) triad.blueQ
+  in AddM ElemH hCount (AddM ElemHe heCount ZeroM)
+
+||| Canonical primordial nuclear nuclide state, synthesized from the base (25, 7, 24) triad:
 public export
 canonicalNuclearState : Multiset BoxInt StellarElement
-canonicalNuclearState =
-  AddM ElemH (intToBoxInt 75) (AddM ElemHe (intToBoxInt 25) ZeroM)
+canonicalNuclearState = synthesizeNuclearFromTriad (epochTriadQuadrance 0)
+
+||| Reads active Helium-4 alpha particle count directly from the nuclear multiset:
+public export
+heliumAlphasInNuclear : Multiset BoxInt StellarElement -> BoxInt
+heliumAlphasInNuclear = lookupCountBox ElemHe
+
+||| Reads active Hydrogen proton count directly from the nuclear multiset:
+public export
+hydrogenProtonsInNuclear : Multiset BoxInt StellarElement -> BoxInt
+hydrogenProtonsInNuclear = lookupCountBox ElemH
+
+||| Reads total conserved nucleon count directly from the nuclear multiset:
+public export
+totalNucleonsInNuclear : Multiset BoxInt StellarElement -> BoxInt
+totalNucleonsInNuclear = totalNucleonCount
+
+||| Synthesizes the primordial nuclear nuclide multiset from the condensed Elliptic VM token count (27 VM).
+||| At full Primorial 210 saturation (ellipticCount >= 27), yields canonicalNuclearState (75 H + 25 He = 175 nucleons).
+public export
+synthesizeNuclearFromEllipticCount : (ellipticCount : Nat) -> Multiset BoxInt StellarElement
+synthesizeNuclearFromEllipticCount count =
+  let vmDim = ellipticLatticeCapacity
+  in if count >= vmDim
+       then canonicalNuclearState
+       else if count == 0
+         then ZeroM
+         else
+           let cInt = cast {to = Integer} count
+               dimInt = cast {to = Integer} vmDim
+               base = canonicalNuclearState
+               hBase = unwrapBox (hydrogenProtonsInNuclear base)
+               heBase = unwrapBox (heliumAlphasInNuclear base)
+               hCount = (cInt * hBase) `div` dimInt
+               heCount = (cInt * heBase) `div` dimInt
+           in AddM ElemH (intToBoxInt hCount) (AddM ElemHe (intToBoxInt heCount) ZeroM)
+
+||| Start epoch of stellar nucleosynthesis burning phase (k = 11):
+public export
+stellarNucleosynthesisStartEpoch : Nat
+stellarNucleosynthesisStartEpoch = 11
+
+||| End epoch of stellar nucleosynthesis burning phase (k = 20):
+public export
+stellarNucleosynthesisEndEpoch : Nat
+stellarNucleosynthesisEndEpoch = 20
+
+||| Predicate classifying whether epoch index k falls within the stellar burning phase:
+public export
+isStellarNucleosynthesisEpoch : Nat -> Bool
+isStellarNucleosynthesisEpoch k =
+  k >= stellarNucleosynthesisStartEpoch && k <= stellarNucleosynthesisEndEpoch
 
 ||| Advances stellar nucleosynthesis during the stellar burning epoch (k ∈ [11, 20]):
 ||| Ignites Triple-Alpha fusion producing Carbon, Oxygen, Nitrogen, and Phosphorus,
@@ -371,13 +442,16 @@ canonicalNuclearState =
 public export
 stepStellarNucleosynthesis : (k : Nat) -> Multiset BoxInt StellarElement -> Multiset BoxInt StellarElement
 stepStellarNucleosynthesis k nuclides =
-  if k >= 11 && k <= 20
-    then case fireTripleAlphaMultiToken nuclides of
-           Just fusedC =>
-             case fireAlphaCaptureCarbonMultiToken fusedC of
-               Just fusedO => fusedO
-               Nothing => fusedC
-           Nothing =>
-             AddM ElemC (intToBoxInt 1) (AddM ElemO (intToBoxInt 1) nuclides)
+  if isStellarNucleosynthesisEpoch k
+    then let (s1, k1) = reactMultisetBox (intToBoxInt 1)
+                          (AddM ElemHe (intToBoxInt 3) ZeroM)
+                          (AddM ElemC (intToBoxInt 1) ZeroM)
+                          nuclides
+         in if k1 > intToBoxInt 0
+              then fst (reactMultisetBox (intToBoxInt 1)
+                         (AddM ElemC (intToBoxInt 1) (AddM ElemHe (intToBoxInt 1) ZeroM))
+                         (AddM ElemO (intToBoxInt 1) ZeroM)
+                         s1)
+              else nuclides
     else nuclides
 

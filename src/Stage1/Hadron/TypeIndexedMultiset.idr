@@ -231,7 +231,19 @@ observeRefinedNucleusTokens (MkRefinedNucleus tokens _) = tokens
 ||| Quarks (9) -> Hadrons (27) -> Alpha (108) -> Carbon-12 (324).
 public export
 auditTypeIndexedMultisetProof : Bool
-auditTypeIndexedMultisetProof = True
+auditTypeIndexedMultisetProof =
+  let uR = makeTypedUpQuark ColorRed
+      uG = makeTypedUpQuark ColorGreen
+      dB = makeTypedDownQuark ColorBlue
+      dG = makeTypedDownQuark ColorGreen
+      p1 = fuseProton uR uG dB
+      n1 = fuseNeutron uR dG dB
+      alpha = fuseAlphaCore p1 p1 n1 n1
+      c12 = fuseCarbon12Nucleus alpha alpha alpha
+  in boxEq (observeRefinedHadronMass p1) (Stage0.BoxInt.intToBoxInt 27) &&
+     boxEq (observeRefinedHadronMass n1) (Stage0.BoxInt.intToBoxInt 27) &&
+     boxEq (observeRefinedAlphaMass alpha) (Stage0.BoxInt.intToBoxInt 108) &&
+     boxEq (observeRefinedNucleusTokens c12) (Stage0.BoxInt.intToBoxInt 324)
 
 public export
 auditTypeIndexedMultisetProofBit : Bit

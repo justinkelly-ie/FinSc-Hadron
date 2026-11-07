@@ -384,7 +384,13 @@ prfStagedQuarkBaryonPipeline qs = inverseSpliceQuote (MkBaryonState (multisetSum
 ||| Proof witness exporter for Hadron ScaleTransform Plugin
 public export
 auditHadronScaleTransformProof : Bool
-auditHadronScaleTransformProof = True
+auditHadronScaleTransformProof =
+  let alphaTensor : MultisetTensor (AlphaFunctor Nat) Nat
+      alphaTensor = AddM (MkAlphaFunctor (MkAlphaDomain (intToBoxInt 108)) 1, 2) (intToBoxInt 1) ZeroM
+      roundTrip = alphaCarbonHomTensorInv (alphaCarbonHomTensorIso alphaTensor)
+      pushed : CarbonNucleusDomain
+      pushed = f_pushforward (MkAlphaDomain (intToBoxInt 108))
+  in roundTrip == alphaTensor && boxEq pushed.carbonTokens (intToBoxInt 324)
 
 --------------------------------------------------------------------------------
 -- 6. LOGARITHMIC O(log N) MULTISET-TREE CHARGE INDEXING

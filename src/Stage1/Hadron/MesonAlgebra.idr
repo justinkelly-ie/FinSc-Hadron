@@ -93,10 +93,12 @@ isMesonColorNeutral m =
 ||| Audits Meson Mass Token Conservation and Color Neutrality:
 ||| 1. Pion+ carries exactly 18 mass tokens (9 + 9).
 ||| 2. Pion+ is color-anticolor neutral.
-%inline
 public export
 auditMesonAlgebraProof : Bool
-auditMesonAlgebraProof = True
+auditMesonAlgebraProof =
+  boxEq (observeMesonMassTokens makePionPlusVexel) (intToBoxInt 18) &&
+  isMesonColorNeutral makePionPlusVexel &&
+  isMesonColorNeutral makeKaonPlusVexel
 
 ||| Erased compile-time witness: Pion+ net charge is +1e (2/3 + 1/3 = 3/3).
 public export

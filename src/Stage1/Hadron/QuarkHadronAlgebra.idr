@@ -6,6 +6,7 @@ import Stage0.StructuralFuel
 import public Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
 import Stage1.ExclusionPrinciple
+import Stage1.Carrier.BalanceArray
 import Stage1.Hadron.HadronicConfinement
 import Data.List
 import Data.Fin
@@ -124,7 +125,13 @@ observeHadronBaryonFraction b =
 ||| 4. Disjoint Balance Array Validation: hadronSingletBalanceArray.
 public export
 auditQuarkHadronAlgebraProof : Bool
-auditQuarkHadronAlgebraProof = True
+auditQuarkHadronAlgebraProof =
+  let protonBoxel = hadronizeQuarkVexels (makeUpQuarkVexel 1) (makeUpQuarkVexel 2) (makeDownQuarkVexel 3)
+      bFrac = observeHadronBaryonFraction protonBoxel
+  in boxEq (observeHadronMassTokens protonBoxel) (intToBoxInt 27) &&
+     observeHadronColorNeutrality protonBoxel &&
+     boxEq bFrac.num (intToBoxInt 27) &&
+     isDisjointBalance Stage1.Hadron.HadronicConfinement.hadronSingletBalanceArray
 
 ||| Quark electric charge in units of e/3 (+2 for Up, -1 for Down).
 public export
@@ -245,7 +252,7 @@ fusedComputeNetBaryonMassNat fuel triplets =
                            b = observeHadronBaryonFraction h
                            m = observeHadronMassTokens h
                        in Stage0.OnSeq.FusedStream.Yield (MkHadronStep idx b m) (idx + 1, rest))
-    (\step, acc => massBoxel step + acc)
+    (\step, acc => (baryonNum step).num + acc)
     (Stage0.BoxInt.intToBoxInt 0)
     (1, triplets)
 
