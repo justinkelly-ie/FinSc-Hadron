@@ -101,20 +101,6 @@ auditNuclideConstituentConservation : (elem : StellarElement) ->
   stellarNucleonCount elem = stellarAtomicNumber elem + stellarNeutronCount elem
 auditNuclideConstituentConservation _ = Refl
 
-||| Returns the valence capacity for covalent and polyphosphate bonding.
-public export
-stellarValenceCapacity : StellarElement -> Nat
-stellarValenceCapacity ElemH  = 1
-stellarValenceCapacity ElemHe = 0
-stellarValenceCapacity ElemC  = 4
-stellarValenceCapacity ElemN  = 3
-stellarValenceCapacity ElemO  = 2
-stellarValenceCapacity ElemNe = 0
-stellarValenceCapacity ElemMg = 2
-stellarValenceCapacity ElemSi = 4
-stellarValenceCapacity ElemP  = 5
-stellarValenceCapacity ElemFe = 2
-
 ||| Constructs a discrete 3-component Nuclide coordinate Vexel:
 ||| [1] = Z (protons), [2] = N (neutrons), [3] = A (mass number = Z + N).
 public export
