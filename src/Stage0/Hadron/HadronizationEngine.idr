@@ -5,6 +5,7 @@ import Stage0.BoxNat
 import Stage0.Multiset
 import Stage0.OnSeq.FusedStream
 import Stage1.Hadron.StandardModel
+import Stage1.ScalePipeline
 
 %default total
 
@@ -173,4 +174,189 @@ streamRLEParticleToEnergyPairs : FusedStream RLEParticleToken -> FusedStream (Bo
 streamRLEParticleToEnergyPairs strm =
   mapStream (\tok => (rleParticleEnergy tok, natToBoxInt (boxNatToNat (multiplicity tok)))) strm
 
+------------------------------------------------------------------------
+-- 5. DEFORESTED COLOR-SINGLET CONDENSATION STREAM TRANSDUCER
+------------------------------------------------------------------------
 
+||| Triplet Quark Color Charge (SU(3) fundamental representation 3).
+public export
+data TripletColor = ColorRed | ColorGreen | ColorBlue
+
+public export
+Eq TripletColor where
+  ColorRed   == ColorRed   = True
+  ColorGreen == ColorGreen = True
+  ColorBlue  == ColorBlue  = True
+  _          == _          = False
+
+public export
+Show TripletColor where
+  show ColorRed   = "R"
+  show ColorGreen = "G"
+  show ColorBlue  = "B"
+
+||| Antitriplet Antiquark Color Charge (SU(3) conjugate representation 3*).
+public export
+data AntiTripletColor = AntiRed | AntiGreen | AntiBlue
+
+public export
+Eq AntiTripletColor where
+  AntiRed   == AntiRed   = True
+  AntiGreen == AntiGreen = True
+  AntiBlue  == AntiBlue  = True
+  _         == _         = False
+
+public export
+Show AntiTripletColor where
+  show AntiRed   = "R_bar"
+  show AntiGreen = "G_bar"
+  show AntiBlue  = "B_bar"
+
+||| A colored parton entering the hadronization condensation stream.
+public export
+data ColoredParton =
+    QuarkParton SMFermion TripletColor
+  | AntiQuarkParton SMFermion AntiTripletColor
+  | GluonParton SMBoson
+
+public export
+Eq ColoredParton where
+  (QuarkParton f1 c1)     == (QuarkParton f2 c2)     = f1 == f2 && c1 == c2
+  (AntiQuarkParton f1 c1) == (AntiQuarkParton f2 c2) = f1 == f2 && c1 == c2
+  (GluonParton g1)        == (GluonParton g2)        = g1 == g2
+  _                       == _                       = False
+
+||| State buffer for single-pass color-singlet condensation.
+public export
+record ColorCondensationState where
+  constructor MkCondensationState
+  uR : Nat; uG : Nat; uB : Nat
+  dR : Nat; dG : Nat; dB : Nat
+  uBarR : Nat; uBarG : Nat; uBarB : Nat
+  dBarR : Nat; dBarG : Nat; dBarB : Nat
+
+public export
+initialCondensationState : ColorCondensationState
+initialCondensationState = MkCondensationState 0 0 0 0 0 0 0 0 0 0 0 0
+
+||| Ingests an incoming colored parton into the condensation buffer.
+public export
+ingestParton : ColorCondensationState -> ColoredParton -> ColorCondensationState
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (QuarkParton QuarkU ColorRed)   = MkCondensationState (S ur) ug ub dr dg db ubr ubg ubb dbr dbg dbb
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (QuarkParton QuarkU ColorGreen) = MkCondensationState ur (S ug) ub dr dg db ubr ubg ubb dbr dbg dbb
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (QuarkParton QuarkU ColorBlue)  = MkCondensationState ur ug (S ub) dr dg db ubr ubg ubb dbr dbg dbb
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (QuarkParton QuarkD ColorRed)   = MkCondensationState ur ug ub (S dr) dg db ubr ubg ubb dbr dbg dbb
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (QuarkParton QuarkD ColorGreen) = MkCondensationState ur ug ub dr (S dg) db ubr ubg ubb dbr dbg dbb
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (QuarkParton QuarkD ColorBlue)  = MkCondensationState ur ug ub dr dg (S db) ubr ubg ubb dbr dbg dbb
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (AntiQuarkParton AntiQuarkU AntiRed)   = MkCondensationState ur ug ub dr dg db (S ubr) ubg ubb dbr dbg dbb
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (AntiQuarkParton AntiQuarkU AntiGreen) = MkCondensationState ur ug ub dr dg db ubr (S ubg) ubb dbr dbg dbb
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (AntiQuarkParton AntiQuarkU AntiBlue)  = MkCondensationState ur ug ub dr dg db ubr ubg (S ubb) dbr dbg dbb
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (AntiQuarkParton AntiQuarkD AntiRed)   = MkCondensationState ur ug ub dr dg db ubr ubg ubb (S dbr) dbg dbb
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (AntiQuarkParton AntiQuarkD AntiGreen) = MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr (S dbg) dbb
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (AntiQuarkParton AntiQuarkD AntiBlue)  = MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg (S dbb)
+ingestParton (MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb) (GluonParton _) =
+  -- Gluon splits into u_R + u_bar_R pair in QGP
+  MkCondensationState (S ur) ug ub dr dg db (S ubr) ubg ubb dbr dbg dbb
+ingestParton st _ = st
+
+||| Attempts to condense a color-singlet meson or baryon from current buffer state:
+||| Returns (Just formedHadron, updatedBuffer) if a singlet forms, or (Nothing, buffer) if incomplete.
+public export
+tryCondenseSinglet : ColorCondensationState -> (Maybe HadronToken, ColorCondensationState)
+tryCondenseSinglet (MkCondensationState (S ur) ug ub dr dg db ubr ubg ubb (S dbr) dbg dbb) =
+  (Just PionPlusToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet (MkCondensationState ur (S ug) ub dr dg db ubr ubg ubb dbr (S dbg) dbb) =
+  (Just PionPlusToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet (MkCondensationState ur ug (S ub) dr dg db ubr ubg ubb dbr dbg (S dbb)) =
+  (Just PionPlusToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet (MkCondensationState ur ug ub (S dr) dg db (S ubr) ubg ubb dbr dbg dbb) =
+  (Just PionMinusToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet (MkCondensationState ur ug ub dr (S dg) db ubr (S ubg) ubb dbr dbg dbb) =
+  (Just PionMinusToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet (MkCondensationState ur ug ub dr dg (S db) ubr ubg (S ubb) dbr dbg dbb) =
+  (Just PionMinusToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet (MkCondensationState (S ur) ug ub dr dg db (S ubr) ubg ubb dbr dbg dbb) =
+  (Just NeutralPionToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet (MkCondensationState ur (S ug) ub dr dg db ubr (S ubg) ubb dbr dbg dbb) =
+  (Just NeutralPionToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet (MkCondensationState ur ug (S ub) dr dg db ubr ubg (S ubb) dbr dbg dbb) =
+  (Just NeutralPionToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+-- Proton: uud (R, G, B)
+tryCondenseSinglet (MkCondensationState (S ur) (S ug) ub dr dg (S db) ubr ubg ubb dbr dbg dbb) =
+  (Just ProtonToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet (MkCondensationState (S ur) ug (S ub) dr (S dg) db ubr ubg ubb dbr dbg dbb) =
+  (Just ProtonToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet (MkCondensationState ur (S ug) (S ub) (S dr) dg db ubr ubg ubb dbr dbg dbb) =
+  (Just ProtonToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+-- Neutron: udd (R, G, B)
+tryCondenseSinglet (MkCondensationState (S ur) ug ub dr (S dg) (S db) ubr ubg ubb dbr dbg dbb) =
+  (Just NeutronToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet (MkCondensationState ur (S ug) ub (S dr) dg (S db) ubr ubg ubb dbr dbg dbb) =
+  (Just NeutronToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet (MkCondensationState ur ug (S ub) (S dr) (S dg) db ubr ubg ubb dbr dbg dbb) =
+  (Just NeutronToken, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
+tryCondenseSinglet st = (Nothing, st)
+
+||| State transition step for the single-pass color-singlet condensation transducer.
+public export
+condensationStep : ColorCondensationState -> ColoredParton -> Step ColorCondensationState HadronToken
+condensationStep st parton =
+  let st' = ingestParton st parton
+  in case tryCondenseSinglet st' of
+       (Just hadron, nextSt) => Yield hadron nextSt
+       (Nothing, nextSt)     => Skip nextSt
+
+||| Deforested stream transducer condensing colored partons into color-singlet hadrons.
+public export
+hadronizationCondensationTransducer : StreamTransducer ColoredParton HadronToken
+hadronizationCondensationTransducer = MkTransducer condensationStep initialCondensationState
+
+||| Streams color-singlet condensation over a deforested stream of colored partons.
+public export
+streamHadronizationTransducer : FusedStream ColoredParton -> FusedStream HadronToken
+streamHadronizationTransducer = transduceStream hadronizationCondensationTransducer
+
+||| Evaluates hadronization condensation over Nat fuel.
+public export
+runHadronizationTransducerNat : (fuel : Nat) -> FusedStream ColoredParton -> List HadronToken
+runHadronizationTransducerNat fuel strm = runFueledStreamNat fuel (streamHadronizationTransducer strm)
+
+||| Audits that a color-triplet proton feed (u_R + u_G + d_B) condenses into a ProtonToken.
+public export
+auditProtonCondensationProof : Bool
+auditProtonCondensationProof =
+  let feed = [ QuarkParton QuarkU ColorRed
+             , QuarkParton QuarkU ColorGreen
+             , QuarkParton QuarkD ColorBlue
+             ]
+      result = runHadronizationTransducerNat 10 (stream feed)
+  in result == [ProtonToken]
+
+||| Audits that a color-triplet neutron feed (u_R + d_G + d_B) condenses into a NeutronToken.
+public export
+auditNeutronCondensationProof : Bool
+auditNeutronCondensationProof =
+  let feed = [ QuarkParton QuarkU ColorRed
+             , QuarkParton QuarkD ColorGreen
+             , QuarkParton QuarkD ColorBlue
+             ]
+      result = runHadronizationTransducerNat 10 (stream feed)
+  in result == [NeutronToken]
+
+||| Audits that a meson pair feed (u_R + d_bar_R) condenses into a PionPlusToken.
+public export
+auditPionCondensationProof : Bool
+auditPionCondensationProof =
+  let feed = [ QuarkParton QuarkU ColorRed
+             , AntiQuarkParton AntiQuarkD AntiRed
+             ]
+      result = runHadronizationTransducerNat 10 (stream feed)
+  in result == [PionPlusToken]
+
+||| Comprehensive audit of the streaming color-singlet condensation engine.
+public export
+auditColorSingletCondensationProof : Bool
+auditColorSingletCondensationProof =
+  auditProtonCondensationProof &&
+  auditNeutronCondensationProof &&
+  auditPionCondensationProof
