@@ -9,6 +9,7 @@ import Stage0.Hadron.NucleosynthesisStream
 import Stage0.Hadron.CosmicNucleosynthesis
 import Stage0.Hadron.ParticleScattering
 import Stage0.Hadron.AlphaReplication
+import Stage0.Hadron.StellarNucleosynthesis
 import Stage1.Hadron.NuclearBindingDepPoly
 import Language.Reflection
 
@@ -173,6 +174,27 @@ public export
 auditWignerAlphaCluster : Elab (Reflect.NuclearAuditor.auditWignerAlphaClusterProofExport = True)
 auditWignerAlphaCluster = pure Refl
 
+||| Audit 11: Authentic Multiset Hadron Carrier Conservation for all Stellar Nuclides.
+||| Audits that proton and neutron counts observed from constituent hadron multisets match atomic numbers.
+public export
+auditStellarNuclideMultisetConservationProofExport : Bool
+auditStellarNuclideMultisetConservationProofExport =
+  auditStellarNuclideMultisetProof ElemH &&
+  auditStellarNuclideMultisetProof ElemHe &&
+  auditStellarNuclideMultisetProof ElemC &&
+  auditStellarNuclideMultisetProof ElemN &&
+  auditStellarNuclideMultisetProof ElemO &&
+  auditStellarNuclideMultisetProof ElemNe &&
+  auditStellarNuclideMultisetProof ElemMg &&
+  auditStellarNuclideMultisetProof ElemSi &&
+  auditStellarNuclideMultisetProof ElemP &&
+  auditStellarNuclideMultisetProof ElemFe
+
+public export
+%macro
+auditStellarNuclideMultisetConservation : Elab (Reflect.NuclearAuditor.auditStellarNuclideMultisetConservationProofExport = True)
+auditStellarNuclideMultisetConservation = pure Refl
+
 ||| Batch nuclear auditor witnesses.
 public export
 nuclearAuditorWitnesses : List Bool
@@ -187,5 +209,6 @@ nuclearAuditorWitnesses =
   , auditNuclearBindingDepPolyProofExport
   , auditGellMannOkuboDecupletProofExport
   , auditWignerAlphaClusterProofExport
+  , auditStellarNuclideMultisetConservationProofExport
   ]
 

@@ -41,14 +41,15 @@ Show StellarNucleusSpec where
   show Iron56      = "56Fe (Iron-56)"
 
 ||| Canonical embedding of StellarNucleusSpec into the certified dependent Nuclide carrier:
+||| Genuinely derived from hadron multiset fusion reactions rather than hardcoded coordinate pairs.
 public export
 stellarNucleusSpecNuclide : StellarNucleusSpec -> (z : Nat ** n : Nat ** Nuclide z n)
-stellarNucleusSpecNuclide Beryllium7  = (4 ** 3 ** mkNuclide 4 3 "7Be")
-stellarNucleusSpecNuclide Boron8      = (5 ** 3 ** mkNuclide 5 3 "8B")
-stellarNucleusSpecNuclide Neon20      = (10 ** 10 ** alphaLadderNuclide 5 "20Ne")
-stellarNucleusSpecNuclide Magnesium24 = (12 ** 12 ** alphaLadderNuclide 6 "24Mg")
-stellarNucleusSpecNuclide Silicon28   = (14 ** 14 ** alphaLadderNuclide 7 "28Si")
-stellarNucleusSpecNuclide Iron56      = (26 ** 30 ** mkNuclide 26 30 "56Fe")
+stellarNucleusSpecNuclide Beryllium7  = (4 ** 3 ** beryllium7Nuclide)
+stellarNucleusSpecNuclide Boron8      = (5 ** 3 ** boron8Nuclide)
+stellarNucleusSpecNuclide Neon20      = (10 ** 10 ** neonNuclide)
+stellarNucleusSpecNuclide Magnesium24 = (12 ** 12 ** magnesiumNuclide)
+stellarNucleusSpecNuclide Silicon28   = (14 ** 14 ** siliconNuclide)
+stellarNucleusSpecNuclide Iron56      = (26 ** 30 ** ironNuclide)
 
 ||| Evaluates mass number A (nucleon count) of a stellar nucleus directly from dependent Nuclide.
 public export
