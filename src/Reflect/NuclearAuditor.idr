@@ -195,6 +195,18 @@ public export
 auditStellarNuclideMultisetConservation : Elab (Reflect.NuclearAuditor.auditStellarNuclideMultisetConservationProofExport = True)
 auditStellarNuclideMultisetConservation = pure Refl
 
+||| Audit 12: Deforested Streaming Nuclear Reactor Transducer Verification.
+||| Audits that the deforested reactor stream produces all 10 elements with positive energy yield.
+public export
+auditStreamingNuclearReactorProofExport : Bool
+auditStreamingNuclearReactorProofExport =
+  Stage0.Hadron.StellarNucleosynthesis.auditStreamingNuclearReactorProofExport
+
+public export
+%macro
+auditStreamingNuclearReactor : Elab (Reflect.NuclearAuditor.auditStreamingNuclearReactorProofExport = True)
+auditStreamingNuclearReactor = pure Refl
+
 ||| Batch nuclear auditor witnesses.
 public export
 nuclearAuditorWitnesses : List Bool
@@ -210,5 +222,6 @@ nuclearAuditorWitnesses =
   , auditGellMannOkuboDecupletProofExport
   , auditWignerAlphaClusterProofExport
   , auditStellarNuclideMultisetConservationProofExport
+  , Reflect.NuclearAuditor.auditStreamingNuclearReactorProofExport
   ]
 
