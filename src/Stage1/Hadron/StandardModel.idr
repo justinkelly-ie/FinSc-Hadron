@@ -5,7 +5,7 @@ import Stage0.BoxInt
 import Stage0.Multiset
 import Stage0.Token
 import Stage1.UnixelFraction
-import Stage1.FourGeometries
+import public Stage1.FourGeometries
 import Stage1.Multiset.PrimordialUnfolding
 import Stage0.OnSeq.FusedStream
 import Data.List
@@ -255,10 +255,25 @@ smFundamentalFieldCount = length smComponentsList
 smChiralFermionCount : Nat
 smChiralFermionCount = length chiralFermionsList
 
-||| Number of octonionic units e_1 ... e_7 governing Fano color decomposition.
+||| Grounded octonionic Fano units carrier list governing quark color degrees of freedom.
+%inline public export
+smOctonionUnitsList : List OctonionUnit
+smOctonionUnitsList = [E1, E2, E3, E4, E5, E6, E7]
+
+||| Definitional proof that the Standard Model octonionic color carrier is identical to Stage1.FourGeometries.octonionBasisList.
+public export
+0 prfOctonionBasisEquiv : Stage1.Hadron.StandardModel.smOctonionUnitsList = Stage1.FourGeometries.octonionBasisList
+prfOctonionBasisEquiv = Refl
+
+||| Number of octonionic units e_1 ... e_7 governing Fano color decomposition (7).
 %inline public export
 smOctonionGeneratorCount : Nat
-smOctonionGeneratorCount = cliffordGeneratorDim
+smOctonionGeneratorCount = length smOctonionUnitsList
+
+||| Definitional proof that smOctonionGeneratorCount matches cliffordGeneratorDim.
+public export
+0 prfOctonionGeneratorCountMatchesClifford : Stage1.Hadron.StandardModel.smOctonionGeneratorCount = Stage1.FourGeometries.cliffordGeneratorDim
+prfOctonionGeneratorCountMatchesClifford = Refl
 
 ------------------------------------------------------------------------
 -- 2B. ZERO-ALLOCATION DEFORESTED STREAM GENERATORS (Rule 04 §8)
