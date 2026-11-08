@@ -9,6 +9,8 @@ import Stage1.Hadron.QuarkHadronAlgebra
 import Stage0.Hadron.AlphaReplication
 import Stage0.Hadron.StellarNucleosynthesis
 import Stage1.Hadron.StandardModel
+import Stage0.OnSeq.FusedStream
+import Stage0.StructuralFuel
 import Data.List
 
 %default total
@@ -73,15 +75,28 @@ stellarNucleusQuarks spec =
 -- 2. SMART CONSTRUCTORS FOR STELLAR NUCLEI
 ------------------------------------------------------------------------
 
+||| Fuses a deforested stream of Alpha Cores into a Neon-20 nucleus in O(1) memory.
+public export
+streamFuseNeon20 : FusedStream Boxel -> Boxel
+streamFuseNeon20 strm =
+  foldStreamNat (gohSteps ellipticGohFuelModel) (\acc, b => acc <+> b) neutral strm
+
 ||| Fuses 5 Alpha Cores (5 * 108) into a Neon-20 nucleus (540 mass tokens).
 public export
 fuseNeon20 : List Boxel -> Boxel
-fuseNeon20 alphaCores = foldl (<+>) neutral alphaCores
+fuseNeon20 alphaCores = streamFuseNeon20 (stream alphaCores)
+
+||| Fuses a deforested stream of Nucleons into peak binding mass tokens in O(1) memory.
+public export
+streamFuseIron56Tokens : FusedStream HadronBoxel -> Stage0.BoxInt.BoxInt
+streamFuseIron56Tokens strm =
+  foldStreamNat (gohSteps masterSubstrateGohFuelModel)
+    (\acc, nuc => acc + totalCellMultisetWeight nuc) (Stage0.BoxInt.intToBoxInt 0) strm
 
 ||| Fuses 56 Nucleons (56 * 27) into an Iron-56 peak binding nucleus (1512 mass tokens).
 public export
 fuseIron56Tokens : List HadronBoxel -> Stage0.BoxInt.BoxInt
-fuseIron56Tokens nucleons = foldl (+) (Stage0.BoxInt.intToBoxInt 0) (map totalCellMultisetWeight nucleons)
+fuseIron56Tokens nucleons = streamFuseIron56Tokens (stream nucleons)
 
 ------------------------------------------------------------------------
 -- 3. FORMAL AUDIT PROOFS

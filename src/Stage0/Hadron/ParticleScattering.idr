@@ -103,12 +103,23 @@ weakVectorBosonFusionVertexM p1 p2 =
       Just (AddM (SMPBoson Higgs0) (intToBoxInt 1) (AddM (SMPBoson Photon) (intToBoxInt 1) ZeroM))
     _ => Nothing
 
-||| Converts a scattering product multiset into a deforested stream of (particle, count).
+||| Converts a scattering product multiset into a deforested stream of (particle, count)
+||| stepping directly through inductive Multiset constructors without intermediate List allocation.
 public export
 streamScatteringProducts : Multiset BoxInt StandardModelParticle -> FS.FusedStream (StandardModelParticle, BoxInt)
 streamScatteringProducts bag =
   FS.filterMapStream (\(p, w) => if boxIsNonZero w then Just (p, w) else Nothing)
-                     (FS.stream (multisetToList bag))
+                     (FS.multisetToStream bag)
+
+||| Deforested stream transducer executing 2-to-2 scattering vertex product streaming.
+public export
+streamScatteringVertexM : (StandardModelParticle -> StandardModelParticle -> Maybe (Multiset BoxInt StandardModelParticle)) ->
+                          StandardModelParticle -> StandardModelParticle ->
+                          FS.FusedStream (StandardModelParticle, BoxInt)
+streamScatteringVertexM vertexFn p1 p2 =
+  case vertexFn p1 p2 of
+    Just bag => streamScatteringProducts bag
+    Nothing  => FS.stream []
 
 ------------------------------------------------------------------------
 -- 3. CONSTRUCTIVE FORMAL INVARIANT AUDIT
@@ -126,7 +137,9 @@ auditParticleScatteringMultisetProof =
       okQED  = qedLeptonScatteringVertexM (SMPFermion LepE) (SMPFermion AntiLepE) == Just qedExpected
       okQCD  = qcdQuarkAnnihilationVertexM (SMPFermion QuarkU) (SMPFermion AntiQuarkU) == Just qcdExpected
       okWeak = weakVectorBosonFusionVertexM (SMPBoson WPlus) (SMPBoson WMinus) == Just weakExpected
-  in okQED && okQCD && okWeak
+      qedStrm = streamScatteringVertexM qedLeptonScatteringVertexM (SMPFermion LepE) (SMPFermion AntiLepE)
+      qedStreamWeight = FS.foldStreamNat 2 (\acc, (_, w) => addBox acc w) (intToBoxInt 0) qedStrm
+  in okQED && okQCD && okWeak && qedStreamWeight == intToBoxInt 2
 
 ||| Audits High-Energy 2-to-2 Particle Scattering Vertices:
 ||| 1. Verifies QED e+ e- -> mu+ mu- scattering output.

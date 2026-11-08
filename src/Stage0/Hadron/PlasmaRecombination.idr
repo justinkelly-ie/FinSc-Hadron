@@ -2,6 +2,7 @@ module Stage0.Hadron.PlasmaRecombination
 
 import Stage0.BoxInt
 import Stage1.Hadron.HadronicConfinement
+import Stage0.OnSeq.FusedStream
 import Data.Vect
 
 %default total
@@ -92,6 +93,11 @@ recombinePlasma (MkPlasmaCell p e) =
       remE = e `minus` bound
   in MkDecoupledGas bound bound remP remE
 
+||| Deforested stream transducer executing plasma recombination across spatial cells in O(1) memory.
+public export
+streamPlasmaRecombination : FusedStream PlasmaCell -> FusedStream DecoupledGas
+streamPlasmaRecombination = mapStream recombinePlasma
+
 ------------------------------------------------------------------------
 -- 3. CONSTRUCTIVE FORMAL AUDIT PROOFS
 ------------------------------------------------------------------------
@@ -105,9 +111,14 @@ auditPlasmaRecombinationDecouplingProof =
   let initial = MkPlasmaCell 100 100
       initialCharge = netPlasmaCharge initial
       result = recombinePlasma initial
+      strm = streamPlasmaRecombination (stream [initial])
+      streamOk = case foldStreamNat 1 (\_, g => neutralAtoms g == 100) False strm of
+                   True => True
+                   False => False
   in initialCharge == intToBoxInt 0 &&
      neutralAtoms result == 100 &&
      decoupledPhotons result == 100 &&
      residualProtons result == 0 &&
-     residualElectrons result == 0
+     residualElectrons result == 0 &&
+     streamOk
 

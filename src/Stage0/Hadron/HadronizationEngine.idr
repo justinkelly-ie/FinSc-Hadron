@@ -45,6 +45,17 @@ qgpDecayFiberMap : StandardModelParticle -> List StandardModelParticle
 qgpDecayFiberMap (SMPBoson GluonR) = [SMPFermion QuarkU, SMPFermion AntiQuarkU]
 qgpDecayFiberMap p                 = [p]
 
+||| Deforested stream-to-stream Galois fiber pullback QGP jet fragmentation.
+public export
+qgpDecayFiberStream : StandardModelParticle -> FusedStream StandardModelParticle
+qgpDecayFiberStream (SMPBoson GluonR) = stream [SMPFermion QuarkU, SMPFermion AntiQuarkU]
+qgpDecayFiberStream p                 = stream [p]
+
+||| Single-pass deforested QGP jet fragmentation operator streaming partons in O(1) memory.
+public export
+streamFragmentQGPJet : FusedStream StandardModelParticle -> FusedStream StandardModelParticle
+streamFragmentQGPJet = flatMapStream qgpDecayFiberStream
+
 ||| Multiset-powered Hadronized Jet State.
 public export
 record MultisetHadronizedJetState where
@@ -117,7 +128,9 @@ auditHadronizationEngineProof =
               (hadrons hadronState == [SMPFermion QuarkU, SMPFermion AntiQuarkU])
       tMultiset = (qgpPhase mState == ConfinementHadronGas) &&
                   (hadronBag mState == expectedBag)
-  in tList && tMultiset
+      strmJet = streamFragmentQGPJet (stream [SMPBoson GluonR])
+      strmCount = foldStreamNat 2 (\acc, _ => S acc) 0 strmJet
+  in tList && tMultiset && strmCount == 2
 
 ------------------------------------------------------------------------
 -- 4. RLE MULTIPLICITY STREAMING JET FRAGMENTATION (BoxNat)

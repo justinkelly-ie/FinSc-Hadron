@@ -218,49 +218,68 @@ Eq HadronStep where
   (MkHadronStep id1 b1 m1) == (MkHadronStep id2 b2 m2) =
     id1 == id2 && b1 == b2 && m1 == m2
 
+||| Single-pass deforested stream transducer evaluating net baryon number and mass over quark triplets in O(1) registers.
+public export
+streamHadronTriplets : FusedStream (QuarkVexel, QuarkVexel, QuarkVexel) -> FusedStream HadronStep
+streamHadronTriplets (MkStream {s} next seed) = MkStream step (1, seed)
+  where
+    step : (Int, s) -> Step (Int, s) HadronStep
+    step (idx, st) = case next st of
+      Done => Done
+      Skip st' => Skip (idx, st')
+      Yield (q1, q2, q3) st' =>
+        let h = hadronizeQuarkVexels q1 q2 q3
+            b = observeHadronBaryonFraction h
+            m = observeHadronMassTokens h
+        in Yield (MkHadronStep idx b m) (idx + 1, st')
+
+||| O(1) allocation deforested stream transducer folding total hadron mass directly across a FusedStream of quark triplets.
+public export
+fusedHadronizationStreamDirect : GohFuel cap -> FusedStream (QuarkVexel, QuarkVexel, QuarkVexel) -> Stage0.BoxInt.BoxInt
+fusedHadronizationStreamDirect fuel tripletStrm =
+  foldStreamNat (gohSteps fuel)
+    (\acc, step => massBoxel step + acc)
+    (Stage0.BoxInt.intToBoxInt 0)
+    (streamHadronTriplets tripletStrm)
+
+||| O(1) allocation deforested stream transducer evaluating net baryon number directly across a FusedStream of quark triplets.
+public export
+fusedComputeNetBaryonMassDirect : GohFuel cap -> FusedStream (QuarkVexel, QuarkVexel, QuarkVexel) -> Stage0.BoxInt.BoxInt
+fusedComputeNetBaryonMassDirect fuel tripletStrm =
+  foldStreamNat (gohSteps fuel)
+    (\acc, step => (baryonNum step).num + acc)
+    (Stage0.BoxInt.intToBoxInt 0)
+    (streamHadronTriplets tripletStrm)
+
 ||| O(1) allocation deforested stream transducer folding total hadron mass across quark triplets using total structural Nat fuel.
 public export
 fusedHadronizationStreamNat : Nat -> List (QuarkVexel, QuarkVexel, QuarkVexel) -> Stage0.BoxInt.BoxInt
 fusedHadronizationStreamNat fuel triplets =
-  Stage0.OnSeq.FusedStream.fusedHylomorphismNat fuel
-    (\(idx, st) => case st of
-                     [] => Stage0.OnSeq.FusedStream.Done
-                     (q1, q2, q3) :: rest =>
-                       let h = hadronizeQuarkVexels q1 q2 q3
-                           b = observeHadronBaryonFraction h
-                           m = observeHadronMassTokens h
-                       in Stage0.OnSeq.FusedStream.Yield (MkHadronStep idx b m) (idx + 1, rest))
-    (\step, acc => massBoxel step + acc)
+  foldStreamNat fuel
+    (\acc, step => massBoxel step + acc)
     (Stage0.BoxInt.intToBoxInt 0)
-    (1, triplets)
+    (streamHadronTriplets (stream triplets))
 
 ||| O(1) allocation deforested stream transducer folding total hadron mass across quark triplets using model-indexed GohFuel.
 public export
 fusedHadronizationStreamFuelModel : GohFuel cap -> List (QuarkVexel, QuarkVexel, QuarkVexel) -> Stage0.BoxInt.BoxInt
 fusedHadronizationStreamFuelModel fuel triplets =
-  fusedHadronizationStreamNat (gohSteps fuel) triplets
+  fusedHadronizationStreamDirect fuel (stream triplets)
 
 ||| O(1) allocation deforested stream transducer evaluating net baryon number numerator sum across hadron streams using total structural Nat fuel.
 public export
 fusedComputeNetBaryonMassNat : Nat -> List (QuarkVexel, QuarkVexel, QuarkVexel) -> Stage0.BoxInt.BoxInt
 fusedComputeNetBaryonMassNat fuel triplets =
-  Stage0.OnSeq.FusedStream.fusedHylomorphismNat fuel
-    (\(idx, st) => case st of
-                     [] => Stage0.OnSeq.FusedStream.Done
-                     (q1, q2, q3) :: rest =>
-                       let h = hadronizeQuarkVexels q1 q2 q3
-                           b = observeHadronBaryonFraction h
-                           m = observeHadronMassTokens h
-                       in Stage0.OnSeq.FusedStream.Yield (MkHadronStep idx b m) (idx + 1, rest))
-    (\step, acc => (baryonNum step).num + acc)
+  foldStreamNat fuel
+    (\acc, step => (baryonNum step).num + acc)
     (Stage0.BoxInt.intToBoxInt 0)
-    (1, triplets)
+    (streamHadronTriplets (stream triplets))
 
 ||| O(1) allocation deforested stream transducer evaluating net baryon number numerator sum across hadron streams using model-indexed GohFuel.
 public export
 fusedComputeNetBaryonMassFuelModel : GohFuel cap -> List (QuarkVexel, QuarkVexel, QuarkVexel) -> Stage0.BoxInt.BoxInt
 fusedComputeNetBaryonMassFuelModel fuel triplets =
-  fusedComputeNetBaryonMassNat (gohSteps fuel) triplets
+  fusedComputeNetBaryonMassDirect fuel (stream triplets)
 
 
 

@@ -64,6 +64,12 @@ fusedComputeTotalNucleosynthesisFluxFuelModel : GohFuel cap -> List AlphaCluster
 fusedComputeTotalNucleosynthesisFluxFuelModel fuel alphas =
   fusedComputeTotalNucleosynthesisFluxNatDirect (gohSteps fuel) (stream alphas)
 
+||| Direct model-indexed GohFuel stream accumulator for nucleosynthesis fusion flux over native FusedStream.
+public export
+fusedComputeTotalNucleosynthesisFluxStream : GohFuel cap -> FusedStream AlphaClusterState -> Stage0.BoxInt.BoxInt
+fusedComputeTotalNucleosynthesisFluxStream fuel strm =
+  fusedComputeTotalNucleosynthesisFluxNatDirect (gohSteps fuel) strm
+
 ||| Verification audit witness proving zero-allocation triple-alpha fusion energy flux computation.
 public export
 auditNucleosynthesisStreamProof : Bool
@@ -160,7 +166,39 @@ Show IsotopeToken where
   show Neutrino      = "nu"
   show GammaPhoton   = "gamma"
 
-||| Baryon number (B) weight table for all isotope tokens.
+||| Intrinsic O(1) Baryon number (B) observable of an isotope token.
+public export
+isotopeBaryonWeight : IsotopeToken -> BoxInt
+isotopeBaryonWeight Proton        = intToBoxInt 1
+isotopeBaryonWeight Neutron       = intToBoxInt 1
+isotopeBaryonWeight Deuteron      = intToBoxInt 2
+isotopeBaryonWeight Helium3       = intToBoxInt 3
+isotopeBaryonWeight AlphaParticle = intToBoxInt 4
+isotopeBaryonWeight Carbon12      = intToBoxInt 12
+isotopeBaryonWeight Nitrogen14    = intToBoxInt 14
+isotopeBaryonWeight Oxygen16      = intToBoxInt 16
+isotopeBaryonWeight Positron      = intToBoxInt 0
+isotopeBaryonWeight Electron      = intToBoxInt 0
+isotopeBaryonWeight Neutrino      = intToBoxInt 0
+isotopeBaryonWeight GammaPhoton   = intToBoxInt 0
+
+||| Intrinsic O(1) Electric charge (Q) observable of an isotope token.
+public export
+isotopeChargeWeight : IsotopeToken -> BoxInt
+isotopeChargeWeight Proton        = intToBoxInt 1
+isotopeChargeWeight Neutron       = intToBoxInt 0
+isotopeChargeWeight Deuteron      = intToBoxInt 1
+isotopeChargeWeight Helium3       = intToBoxInt 2
+isotopeChargeWeight AlphaParticle = intToBoxInt 2
+isotopeChargeWeight Carbon12      = intToBoxInt 6
+isotopeChargeWeight Nitrogen14    = intToBoxInt 7
+isotopeChargeWeight Oxygen16      = intToBoxInt 8
+isotopeChargeWeight Positron      = intToBoxInt 1
+isotopeChargeWeight Electron      = intToBoxInt (-1)
+isotopeChargeWeight Neutrino      = intToBoxInt 0
+isotopeChargeWeight GammaPhoton   = intToBoxInt 0
+
+||| Baryon number (B) weight table for all isotope tokens (backward compatible).
 public export
 baryonWeightTable : List (IsotopeToken, BoxInt)
 baryonWeightTable =
@@ -289,6 +327,16 @@ isConservativeNuclearDelta weights deltas =
                               Nothing => acc) (intToBoxInt 0) deltas
   in boxEq totalDelta (intToBoxInt 0)
 
+||| Audits reaction stoichiometry conservation directly across a deforested stream of deltas in O(1) space.
+public export
+streamConservativeNuclearDelta : (IsotopeToken -> BoxInt) -> FusedStream (StoichiometryDelta IsotopeToken) -> Bool
+streamConservativeNuclearDelta weightFn deltaStream =
+  let totalDelta = foldStreamNat (gohSteps masterSubstrateGohFuelModel)
+                     (\acc, (MkDelta sp ch) => addBox acc (mulBox (weightFn sp) ch))
+                     (intToBoxInt 0)
+                     deltaStream
+  in boxEq totalDelta (intToBoxInt 0)
+
 ------------------------------------------------------------------------
 -- 5. CONSERVATION LAW AUDITS & DEFORESTED STREAM TRANSDUCTION
 ------------------------------------------------------------------------
@@ -296,52 +344,52 @@ isConservativeNuclearDelta weights deltas =
 ||| Audits Baryon Number Conservation for pp-chain step 1.
 public export
 auditBaryonPP1 : Bool
-auditBaryonPP1 = isConservativeNuclearDelta baryonWeightTable ppStep1Channel.deltas
+auditBaryonPP1 = streamConservativeNuclearDelta isotopeBaryonWeight (stream ppStep1Channel.deltas)
 
 ||| Audits Electric Charge Conservation for pp-chain step 1.
 public export
 auditChargePP1 : Bool
-auditChargePP1 = isConservativeNuclearDelta chargeWeightTable ppStep1Channel.deltas
+auditChargePP1 = streamConservativeNuclearDelta isotopeChargeWeight (stream ppStep1Channel.deltas)
 
 ||| Audits Baryon Number Conservation for pp-chain step 2.
 public export
 auditBaryonPP2 : Bool
-auditBaryonPP2 = isConservativeNuclearDelta baryonWeightTable ppStep2Channel.deltas
+auditBaryonPP2 = streamConservativeNuclearDelta isotopeBaryonWeight (stream ppStep2Channel.deltas)
 
 ||| Audits Electric Charge Conservation for pp-chain step 2.
 public export
 auditChargePP2 : Bool
-auditChargePP2 = isConservativeNuclearDelta chargeWeightTable ppStep2Channel.deltas
+auditChargePP2 = streamConservativeNuclearDelta isotopeChargeWeight (stream ppStep2Channel.deltas)
 
 ||| Audits Baryon Number Conservation for pp-chain step 3.
 public export
 auditBaryonPP3 : Bool
-auditBaryonPP3 = isConservativeNuclearDelta baryonWeightTable ppStep3Channel.deltas
+auditBaryonPP3 = streamConservativeNuclearDelta isotopeBaryonWeight (stream ppStep3Channel.deltas)
 
 ||| Audits Electric Charge Conservation for pp-chain step 3.
 public export
 auditChargePP3 : Bool
-auditChargePP3 = isConservativeNuclearDelta chargeWeightTable ppStep3Channel.deltas
+auditChargePP3 = streamConservativeNuclearDelta isotopeChargeWeight (stream ppStep3Channel.deltas)
 
 ||| Audits Baryon Number Conservation for Triple-Alpha nucleosynthesis.
 public export
 auditBaryonTripleAlpha : Bool
-auditBaryonTripleAlpha = isConservativeNuclearDelta baryonWeightTable tripleAlphaChannel.deltas
+auditBaryonTripleAlpha = streamConservativeNuclearDelta isotopeBaryonWeight (stream tripleAlphaChannel.deltas)
 
 ||| Audits Electric Charge Conservation for Triple-Alpha nucleosynthesis.
 public export
 auditChargeTripleAlpha : Bool
-auditChargeTripleAlpha = isConservativeNuclearDelta chargeWeightTable tripleAlphaChannel.deltas
+auditChargeTripleAlpha = streamConservativeNuclearDelta isotopeChargeWeight (stream tripleAlphaChannel.deltas)
 
 ||| Audits Baryon Number Conservation for Carbon Alpha Capture.
 public export
 auditBaryonCarbonCapture : Bool
-auditBaryonCarbonCapture = isConservativeNuclearDelta baryonWeightTable carbonCaptureChannel.deltas
+auditBaryonCarbonCapture = streamConservativeNuclearDelta isotopeBaryonWeight (stream carbonCaptureChannel.deltas)
 
 ||| Audits Electric Charge Conservation for Carbon Alpha Capture.
 public export
 auditChargeCarbonCapture : Bool
-auditChargeCarbonCapture = isConservativeNuclearDelta chargeWeightTable carbonCaptureChannel.deltas
+auditChargeCarbonCapture = streamConservativeNuclearDelta isotopeChargeWeight (stream carbonCaptureChannel.deltas)
 
 ||| Comprehensive audit verifying all nuclear transition channels preserve both Baryon Number and Electric Charge.
 public export
