@@ -2,6 +2,11 @@ module Stage0.Hadron.CosmicNucleosynthesis
 
 import Stage0.BoxInt
 import Stage0.Multiset
+import Stage0.Token
+import Stage0.Singleton.Bit
+import Stage0.StructuralFuel
+import Stage0.FieldStream
+import Stage0.FluctuationStream
 import Stage0.OnSeq.FusedStream
 import public Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
@@ -83,10 +88,53 @@ public export
 fuseDeuteron : HadronBoxel -> HadronBoxel -> Boxel
 fuseDeuteron p n = p <+> n
 
-||| Fuses 3 Protons (81) and 4 Neutrons (108) into a Lithium-7 nucleus (189 tokens).
+||| Fuses an authentic HadronToken multiset into a composite nuclear Boxel in a single pass (Rule 04 §12).
+public export
+fuseHadronsToBoxel : Multiset BoxInt HadronToken -> Boxel
+fuseHadronsToBoxel bag =
+  foldStreamNat (boxToNat (absBox (multisetSum bag)))
+    (\acc, _ => acc <+> seedHadronBoxel)
+    emptyCellMultiset
+    (streamTokens bag)
+
+||| Fuses 3 Protons and 4 Neutrons from an authentic HadronToken multiset into a Lithium-7 Boxel.
+public export
+fuseLithium7Multiset : Multiset BoxInt HadronToken -> Boxel
+fuseLithium7Multiset = fuseHadronsToBoxel
+
+||| @deprecated Materializes nucleons into intermediate `List HadronBoxel` (violates Rule 04 §8).
+||| Use `fuseLithium7Multiset` or `fuseHadronsToBoxel` instead.
 public export
 fuseLithium7 : List HadronBoxel -> Boxel
 fuseLithium7 nucleons = foldl (<+>) emptyCellMultiset nucleons
+
+------------------------------------------------------------------------
+-- 2b. RADIATIVE CAPTURE PHOTON EMISSION (FINSC-ELECTROMAGNETISM)
+------------------------------------------------------------------------
+
+||| Single radiative capture reaction step: p + n -> d + gamma.
+||| Produces a certified Deuteron nuclide and an emitted discrete PhotonStateToken (FinSc-Electromagnetism).
+public export
+radiativeDeuteronCapture : HadronToken -> HadronToken -> Maybe (Nuclide 1 1, PhotonStateToken)
+radiativeDeuteronCapture ProtonToken NeutronToken =
+  Just (deuteronNuclide, MkPhotonToken One (intToBoxInt 2))
+radiativeDeuteronCapture NeutronToken ProtonToken =
+  Just (deuteronNuclide, MkPhotonToken One (intToBoxInt 2))
+radiativeDeuteronCapture _ _ = Nothing
+
+||| Streaming radiative deuteron capture emitting a deforested stream of photon tokens (Rule 04 §8).
+public export
+streamRadiativeDeuteronPhotons : FusedStream (HadronToken, HadronToken) -> FusedStream PhotonStateToken
+streamRadiativeDeuteronPhotons strm =
+  filterMapStream (\(h1, h2) => case radiativeDeuteronCapture h1 h2 of
+                                  Just (_, photon) => Just photon
+                                  Nothing          => Nothing) strm
+
+||| Evaluates total radiative energy released during cosmic deuteron synthesis directly in O(1) memory.
+public export
+evaluateCosmicRadiativeEnergy : (fuel : Nat) -> FusedStream PhotonStateToken -> BoxInt
+evaluateCosmicRadiativeEnergy fuel strm =
+  fusedComputePhotonStreamEnergyDirect (limit fuel) (fusedPhotonStateStream strm)
 
 ------------------------------------------------------------------------
 -- 3. COSMIC BBN REACTOR STREAM TRANSDUCER & MASS FRACTION REDUCTION
@@ -124,6 +172,18 @@ record BBNReactionStep where
   helium4Count     : Nat
   totalNucleons    : Nat
   observedHeliumYp : UnixelFraction
+
+------------------------------------------------------------------------
+-- 3b. BBN THERMODYNAMIC ENTROPY PRODUCTION (FINSC-THERMODYNAMICS)
+------------------------------------------------------------------------
+
+||| Represents the thermodynamic step of cosmic nucleosynthesis with energy release and entropy production.
+public export
+bbnThermodynamicFluctuation : BBNReactionStep -> FluctuationStep
+bbnThermodynamicFluctuation step =
+  let qYield = mulBox (natToBoxInt step.deuteronCount) (intToBoxInt 2)
+      heat = addBox qYield (mulBox (natToBoxInt step.helium4Count) (intToBoxInt 28))
+  in MkFluctuation (cast step.stepIndex) qYield heat
 
 public export
 record BBNReactorState where
@@ -297,3 +357,30 @@ auditBBNStreamNucleonConservationProof : Bool
 auditBBNStreamNucleonConservationProof =
   let steps = runFueledStreamNat 32 (streamBBNReactor (stream primordialFreezeOutFeed))
   in all stepNucleonConservation steps && (length steps == 16)
+
+||| Audits that streaming radiative deuteron capture emits valid photon energy tokens (FinSc-Electromagnetism).
+public export
+auditRadiativeDeuteronCaptureProof : Bool
+auditRadiativeDeuteronCaptureProof =
+  let pairStream = stream [(ProtonToken, NeutronToken), (NeutronToken, ProtonToken)]
+      photonStream = streamRadiativeDeuteronPhotons pairStream
+      totE = evaluateCosmicRadiativeEnergy 4 photonStream
+  in totE == intToBoxInt 6
+
+||| Audits that cosmic BBN open-system entropy production is non-negative at every step (FinSc-Thermodynamics).
+public export
+auditBBNThermodynamicEntropyProof : Bool
+auditBBNThermodynamicEntropyProof =
+  let steps = runFueledStreamNat 32 (streamBBNReactor (stream primordialFreezeOutFeed))
+      flucts = map bbnThermodynamicFluctuation steps
+      strm = linearEntropyTransducer.stepEntropyProduction (stream flucts)
+      results = runFueledStreamNat 32 strm
+  in all snd results
+
+||| Audits that Lithium-7 multiset fusion produces exact 189 fundamental mass tokens (7 * 27) without lists (Rule 04 §12).
+public export
+auditLithium7MultisetFusionProof : Bool
+auditLithium7MultisetFusionProof =
+  let (_ ** _ ** li7) = lightNucleusToNuclide Lithium7Li
+      boxel = fuseLithium7Multiset li7.hadrons
+  in totalCellMultisetWeight boxel == intToBoxInt 189

@@ -2,8 +2,11 @@ module Stage1.Hadron.NuclearBindingDepPoly
 
 import Data.Vect
 import Stage0.BoxInt
+import Stage0.Multiset
 import Stage1.Polynumber
 import Stage0.Hadron.StellarNucleosynthesis
+import Stage1.Hadron.HadronicConfinement
+import Stage1.ScalePipeline
 
 %default total
 
@@ -53,6 +56,16 @@ nuclideBindingFactors : Nuclide z n -> (BoxInt, BoxInt)
 nuclideBindingFactors nuc =
   (evalCoulombFactor nuc.protons, evalAsymmetryFactor (nuc.protons + nuc.neutrons) nuc.protons)
 
+||| Computes discrete Weizsäcker Liquid-Drop Binding factors directly observed
+||| from a constituent HadronToken multiset carrier (Rule 03 §8).
+public export
+observeHadronMultisetBindingFactors : Multiset BoxInt HadronToken -> (BoxInt, BoxInt)
+observeHadronMultisetBindingFactors hadrons =
+  let z = boxToNat (countProtonsBox hadrons)
+      n = boxToNat (countNeutronsBox hadrons)
+      a = z + n
+  in (evalCoulombFactor z, evalAsymmetryFactor a z)
+
 ||| Compile-time proof witness: Iron-56 (Z=26, N=30, A=56) binding factors are Coulomb=650, Asymmetry=16.
 public export
 0 prfIron56BindingFactors :
@@ -66,6 +79,17 @@ public export
   let (_ ** _ ** he) = stellarNuclide ElemHe
   in nuclideBindingFactors he = (intToBoxInt 2, intToBoxInt 0)
 prfHelium4BindingFactors = Refl
+
+||| Compile-time proof witness: Binding factors observed directly from hadron multisets match exact analytic values.
+public export
+auditObservedHadronMultisetBindingFactorsProof : Bool
+auditObservedHadronMultisetBindingFactorsProof =
+  let (_ ** _ ** fe) = stellarNuclide ElemFe
+      (cFe, aFe) = observeHadronMultisetBindingFactors fe.hadrons
+      (_ ** _ ** he) = stellarNuclide ElemHe
+      (cHe, aHe) = observeHadronMultisetBindingFactors he.hadrons
+  in cFe == intToBoxInt 650 && aFe == intToBoxInt 16 &&
+     cHe == intToBoxInt 2 && aHe == intToBoxInt 0
 
 ------------------------------------------------------------------------
 -- 2. GELL-MANN–OKUBO HADRON MASS MULTIPLET POLYNOMIALS

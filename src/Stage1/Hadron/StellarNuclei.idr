@@ -2,6 +2,9 @@ module Stage1.Hadron.StellarNuclei
 
 import Stage0.BoxInt
 import Stage0.Multiset
+import Stage0.Token
+import Stage0.Singleton.Bit
+import Stage0.FieldStream
 import public Stage1.Basis.Coordinate
 import Stage1.UnixelFraction
 import Stage1.Hadron.HadronicConfinement
@@ -9,6 +12,7 @@ import Stage1.Hadron.QuarkHadronAlgebra
 import Stage0.Hadron.AlphaReplication
 import Stage0.Hadron.StellarNucleosynthesis
 import Stage1.Hadron.StandardModel
+import Stage1.ScalePipeline
 import Stage0.OnSeq.FusedStream
 import Stage0.StructuralFuel
 import Data.List
@@ -75,13 +79,28 @@ stellarNucleusQuarks spec =
 -- 2. SMART CONSTRUCTORS FOR STELLAR NUCLEI
 ------------------------------------------------------------------------
 
+||| Fuses an authentic HadronToken multiset into a composite nuclear Boxel in a single pass (Rule 04 §12).
+public export
+fuseStellarHadronsToBoxel : Multiset BoxInt HadronToken -> Boxel
+fuseStellarHadronsToBoxel bag =
+  foldStreamNat (boxToNat (absBox (multisetSum bag)))
+    (\acc, _ => acc <+> seedHadronBoxel)
+    emptyCellMultiset
+    (streamTokens bag)
+
 ||| Fuses a deforested stream of Alpha Cores into a Neon-20 nucleus in O(1) memory.
 public export
 streamFuseNeon20 : FusedStream Boxel -> Boxel
 streamFuseNeon20 strm =
   foldStreamNat (gohSteps ellipticGohFuelModel) (\acc, b => acc <+> b) neutral strm
 
-||| Fuses 5 Alpha Cores (5 * 108) into a Neon-20 nucleus (540 mass tokens).
+||| Fuses 5 Alpha Cores (5 * 108) into a Neon-20 nucleus from a HadronToken multiset without lists (Rule 04 §12).
+public export
+fuseNeon20Multiset : Multiset BoxInt HadronToken -> Boxel
+fuseNeon20Multiset = fuseStellarHadronsToBoxel
+
+||| @deprecated Materializes alpha cores into intermediate List (violates Rule 04 §8).
+||| Use `fuseNeon20Multiset` or `streamFuseNeon20` instead.
 public export
 fuseNeon20 : List Boxel -> Boxel
 fuseNeon20 alphaCores = streamFuseNeon20 (stream alphaCores)
@@ -93,10 +112,28 @@ streamFuseIron56Tokens strm =
   foldStreamNat (gohSteps masterSubstrateGohFuelModel)
     (\acc, nuc => acc + totalCellMultisetWeight nuc) (Stage0.BoxInt.intToBoxInt 0) strm
 
-||| Fuses 56 Nucleons (56 * 27) into an Iron-56 peak binding nucleus (1512 mass tokens).
+||| Evaluates mass tokens of an authentic HadronToken multiset without list allocation.
+public export
+fuseHadronTokensMass : Multiset BoxInt HadronToken -> Stage0.BoxInt.BoxInt
+fuseHadronTokensMass hadrons =
+  mulBox (natToBoxInt 27) (addBox (countProtonsBox hadrons) (countNeutronsBox hadrons))
+
+||| @deprecated Materializes nucleons into intermediate List (violates Rule 04 §8).
+||| Use `streamFuseIron56Tokens` or `fuseHadronTokensMass` instead.
 public export
 fuseIron56Tokens : List HadronBoxel -> Stage0.BoxInt.BoxInt
 fuseIron56Tokens nucleons = streamFuseIron56Tokens (stream nucleons)
+
+------------------------------------------------------------------------
+-- 2b. RADIATIVE ALPHA CAPTURE PHOTON EMISSION (FINSC-ELECTROMAGNETISM)
+------------------------------------------------------------------------
+
+||| Single alpha-capture reaction with radiative photon emission (FinSc-Electromagnetism):
+||| A + alpha -> A' + gamma.
+public export
+alphaCaptureRadiative : Nuclide z n -> (Nuclide (2 + z) (2 + n), PhotonStateToken)
+alphaCaptureRadiative nuc =
+  (alphaCaptureNuclide nuc "", MkPhotonToken One (intToBoxInt 7))
 
 ------------------------------------------------------------------------
 -- 3. FORMAL AUDIT PROOFS
@@ -118,3 +155,14 @@ auditStellarNucleiProof =
   stellarNucleusMassTokens Magnesium24 == intToBoxInt 648 &&
   stellarNucleusMassTokens Silicon28   == intToBoxInt 756 &&
   stellarNucleusMassTokens Iron56      == intToBoxInt 1512
+
+||| Audits that Neon-20 and Iron-56 multiset fusion produces exact mass token counts without lists (Rule 04 §12).
+public export
+auditStellarMultisetFusionProof : Bool
+auditStellarMultisetFusionProof =
+  let (_ ** _ ** ne20) = stellarNucleusSpecNuclide Neon20
+      neBoxel = fuseNeon20Multiset ne20.hadrons
+      (_ ** _ ** fe56) = stellarNucleusSpecNuclide Iron56
+      feMass = fuseHadronTokensMass fe56.hadrons
+  in totalCellMultisetWeight neBoxel == intToBoxInt 540 &&
+     feMass == intToBoxInt 1512

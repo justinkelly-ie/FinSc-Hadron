@@ -36,29 +36,34 @@ public export
 fusedTripleAlphaFluxStream : FusedStream AlphaClusterState -> FusedStream Stage0.BoxInt.BoxInt
 fusedTripleAlphaFluxStream = mapStream (\alpha => totalAlphaFlux alpha * Stage0.BoxInt.intToBoxInt 3)
 
-||| Evaluates an Alpha cluster stream into a List container using model-indexed GohFuel.
+||| @deprecated Materializes stream into intermediate List (violates Rule 04 §8).
+||| Use FusedStream combinators directly.
 public export
 runAlphaStreamFuelModel : GohFuel cap -> FusedStream AlphaClusterState -> List AlphaClusterState
 runAlphaStreamFuelModel = runFueledStreamFuelModel
 
-||| Direct stream generation for triple-alpha Carbon fusion flux ($3 \times 108 \to 324$).
+||| @deprecated Takes intermediate List (violates Rule 04 §8).
+||| Use `fusedTripleAlphaFluxStream` directly.
 public export
 unfoldAlphaFusionStream : List AlphaClusterState -> FusedStream Stage0.BoxInt.BoxInt
 unfoldAlphaFusionStream alphas = fusedTripleAlphaFluxStream (stream alphas)
 
 ||| Direct stream accumulator for total triple-alpha nucleosynthesis fusion energy flux using foldStreamNat.
+%spec fuel
 public export
 fusedComputeTotalNucleosynthesisFluxNatDirect : (fuel : Nat) -> FusedStream AlphaClusterState -> Stage0.BoxInt.BoxInt
 fusedComputeTotalNucleosynthesisFluxNatDirect fuel strm =
   foldStreamNat fuel (\acc, alpha => addBox (mulBox (totalAlphaFlux alpha) (intToBoxInt 3)) acc) (intToBoxInt 0) strm
 
-||| Total triple-alpha nucleosynthesis fusion energy flux accumulation using foldStreamNat.
+||| @deprecated Materializes inputs into intermediate List (violates Rule 04 §8).
+||| Use `fusedComputeTotalNucleosynthesisFluxNatDirect` with FusedStream instead.
 public export
 fusedComputeTotalNucleosynthesisFluxNat : (fuel : Nat) -> List AlphaClusterState -> Stage0.BoxInt.BoxInt
 fusedComputeTotalNucleosynthesisFluxNat fuel alphas =
   fusedComputeTotalNucleosynthesisFluxNatDirect fuel (stream alphas)
 
-||| Total triple-alpha nucleosynthesis fusion energy flux accumulation using model-indexed GohFuel.
+||| @deprecated Materializes inputs into intermediate List (violates Rule 04 §8).
+||| Use `fusedComputeTotalNucleosynthesisFluxStream` with FusedStream instead.
 public export
 fusedComputeTotalNucleosynthesisFluxFuelModel : GohFuel cap -> List AlphaClusterState -> Stage0.BoxInt.BoxInt
 fusedComputeTotalNucleosynthesisFluxFuelModel fuel alphas =
@@ -318,6 +323,8 @@ lookupIsotopeMono _ [] = Nothing
 lookupIsotopeMono tok ((k, v) :: rest) =
   if isotopeEqMono tok k then Just v else lookupIsotopeMono tok rest
 
+||| @deprecated Materializes inputs into intermediate List (violates Rule 04 §8).
+||| Use `streamConservativeNuclearDelta` with FusedStream instead.
 public export
 isConservativeNuclearDelta : List (IsotopeToken, BoxInt) -> List (StoichiometryDelta IsotopeToken) -> Bool
 isConservativeNuclearDelta weights deltas =

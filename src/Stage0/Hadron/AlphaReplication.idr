@@ -1,11 +1,13 @@
 module Stage0.Hadron.AlphaReplication
 
 import Stage0.BoxInt
+import Stage0.Multiset
 import Stage0.PrimeMultiset
 import public Stage1.Basis.Coordinate
 import Stage1.Carrier.BalanceArray
 import Stage0.LatticeTopology
 import Stage1.Hadron.HadronicConfinement
+import Stage1.ScalePipeline
 import Stage0.UniverseState
 import Data.Vect
 import Data.Fin
@@ -189,5 +191,40 @@ public export
 auditTripleAlphaCarbonBalanceProof : Bool
 auditTripleAlphaCarbonBalanceProof =
   intToBoxInt (3 * 108) == intToBoxInt 324
+
+------------------------------------------------------------------------
+-- CONSTITUENT HADRON MULTISET GROUNDING FOR HOYLE TRIPLE-ALPHA (RULE 03 §8)
+------------------------------------------------------------------------
+
+||| Authentic constituent HadronToken multiset of an Alpha Cluster (2 protons + 2 neutrons):
+public export
+alphaClusterHadronMultiset : Multiset BoxInt HadronToken
+alphaClusterHadronMultiset =
+  AddM ProtonToken (intToBoxInt 2) (AddM NeutronToken (intToBoxInt 2) ZeroM)
+
+||| Observes total mass tokens across a HadronToken multiset (each nucleon = 27 tokens):
+public export
+observeHadronClusterMassTokens : Multiset BoxInt HadronToken -> BoxInt
+observeHadronClusterMassTokens bag =
+  mulBox (intToBoxInt 27) (multisetSum bag)
+
+||| Triple-Alpha Hoyle Fusion combining 3 Alpha cluster multisets into Carbon-12:
+public export
+tripleAlphaHoyleMultisetFusion :
+  Multiset BoxInt HadronToken ->
+  Multiset BoxInt HadronToken ->
+  Multiset BoxInt HadronToken ->
+  Multiset BoxInt HadronToken
+tripleAlphaHoyleMultisetFusion a1 a2 a3 = a1 <+> a2 <+> a3
+
+||| Audits that Hoyle state triple-alpha multiset fusion produces exact 12 nucleons and 324 mass tokens (Rule 03 §8).
+public export
+auditHoyleTripleAlphaMultisetProof : Bool
+auditHoyleTripleAlphaMultisetProof =
+  let a = alphaClusterHadronMultiset
+      c12 = tripleAlphaHoyleMultisetFusion a a a
+      nTot = boxToNat (absBox (multisetSum c12))
+      mTot = observeHadronClusterMassTokens c12
+  in natEq nTot 12 && boxEq mTot (intToBoxInt 324)
 
 

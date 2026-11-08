@@ -9,6 +9,7 @@ import Stage0.Hadron.NucleosynthesisStream
 import Stage0.Hadron.CosmicNucleosynthesis
 import Stage0.Hadron.ParticleScattering
 import Stage0.Hadron.AlphaReplication
+import Stage0.Hadron.PlasmaRecombination
 import Stage0.Hadron.StellarNucleosynthesis
 import Stage1.Hadron.NuclearBindingDepPoly
 import Language.Reflection
@@ -207,6 +208,42 @@ public export
 auditStreamingNuclearReactor : Elab (Reflect.NuclearAuditor.auditStreamingNuclearReactorProofExport = True)
 auditStreamingNuclearReactor = pure Refl
 
+||| Audit 13: Radiative Deuteron Capture with Discrete Photon Emission (FinSc-Electromagnetism).
+public export
+auditRadiativeDeuteronCaptureProofExport : Bool
+auditRadiativeDeuteronCaptureProofExport =
+  Stage0.Hadron.CosmicNucleosynthesis.auditRadiativeDeuteronCaptureProof
+
+||| Audit 14: Cosmic BBN Thermodynamic Free Energy & Entropy Production (FinSc-Thermodynamics).
+public export
+auditBBNThermodynamicEntropyProofExport : Bool
+auditBBNThermodynamicEntropyProofExport =
+  Stage0.Hadron.CosmicNucleosynthesis.auditBBNThermodynamicEntropyProof
+
+||| Audit 15: Stellar Nucleosynthesis Ladder Thermodynamics & Photon Emission (FinSc-Thermodynamics & Electromagnetism).
+public export
+auditStellarThermodynamicsProofExport : Bool
+auditStellarThermodynamicsProofExport =
+  Stage0.Hadron.StellarNucleosynthesis.auditStellarThermodynamicsProof
+
+||| Audit 16: Plasma Recombination Charge Neutrality & CMB Decoupling Photons.
+public export
+auditPlasmaMultisetDecouplingProofExport : Bool
+auditPlasmaMultisetDecouplingProofExport =
+  Stage0.Hadron.PlasmaRecombination.auditPlasmaMultisetDecouplingProof
+
+||| Audit 17: Hoyle Triple-Alpha Carbon-12 Grounding in Hadron Multiset Fusion (Rule 03 §8).
+public export
+auditHoyleTripleAlphaMultisetProofExport : Bool
+auditHoyleTripleAlphaMultisetProofExport =
+  Stage0.Hadron.AlphaReplication.auditHoyleTripleAlphaMultisetProof
+
+||| Audit 18: Weizsäcker Liquid-Drop Binding Factors Observed from Hadron Multisets (Rule 03 §8).
+public export
+auditObservedHadronMultisetBindingFactorsProofExport : Bool
+auditObservedHadronMultisetBindingFactorsProofExport =
+  Stage1.Hadron.NuclearBindingDepPoly.auditObservedHadronMultisetBindingFactorsProof
+
 ||| Batch nuclear auditor witnesses.
 public export
 nuclearAuditorWitnesses : List Bool
@@ -223,5 +260,11 @@ nuclearAuditorWitnesses =
   , auditWignerAlphaClusterProofExport
   , auditStellarNuclideMultisetConservationProofExport
   , Reflect.NuclearAuditor.auditStreamingNuclearReactorProofExport
+  , Reflect.NuclearAuditor.auditRadiativeDeuteronCaptureProofExport
+  , Reflect.NuclearAuditor.auditBBNThermodynamicEntropyProofExport
+  , Reflect.NuclearAuditor.auditStellarThermodynamicsProofExport
+  , Reflect.NuclearAuditor.auditPlasmaMultisetDecouplingProofExport
+  , Reflect.NuclearAuditor.auditHoyleTripleAlphaMultisetProofExport
+  , Reflect.NuclearAuditor.auditObservedHadronMultisetBindingFactorsProofExport
   ]
 

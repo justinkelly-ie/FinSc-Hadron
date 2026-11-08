@@ -1,6 +1,11 @@
 module Stage0.Hadron.PlasmaRecombination
 
 import Stage0.BoxInt
+import Stage0.Multiset
+import Stage0.Token
+import Stage0.Singleton.Bit
+import Stage0.FieldStream
+import Stage0.StructuralFuel
 import Stage1.Hadron.HadronicConfinement
 import Stage0.OnSeq.FusedStream
 import Data.Vect
@@ -99,6 +104,37 @@ streamPlasmaRecombination : FusedStream PlasmaCell -> FusedStream DecoupledGas
 streamPlasmaRecombination = mapStream recombinePlasma
 
 ------------------------------------------------------------------------
+-- 2b. MULTISET CHARGE OBSERVABLES & CMB PHOTON STREAMING (FINSC-ELECTROMAGNETISM)
+------------------------------------------------------------------------
+
+||| Observes net electric charge across a plasma multiset directly (Rule 03 §8):
+public export
+observePlasmaBagCharge : Multiset BoxInt ParticleCharge -> BoxInt
+observePlasmaBagCharge ZeroM = intToBoxInt 0
+observePlasmaBagCharge (AddM p w rest) =
+  addBox (mulBox (elementaryCharge p) w) (observePlasmaBagCharge rest)
+
+||| Converts a PlasmaCell into an authentic Multiset carrier (Rule 03 §8):
+public export
+plasmaCellToMultiset : PlasmaCell -> Multiset BoxInt ParticleCharge
+plasmaCellToMultiset (MkPlasmaCell p e) =
+  AddM ProtonPositive (natToBoxInt p) (AddM ElectronNegative (natToBoxInt e) ZeroM)
+
+||| Streams emitted CMB decoupling photons directly as PhotonStateToken into FusedStream (FinSc-Electromagnetism):
+public export
+streamDecoupledPhotons : DecoupledGas -> FusedStream PhotonStateToken
+streamDecoupledPhotons gas =
+  unfoldStream (\k => if k < gas.decoupledPhotons
+                        then Yield (MkPhotonToken One (intToBoxInt 1)) (S k)
+                        else Done) 0
+
+||| Evaluates total energy of CMB decoupling photon stream in O(1) registers (FinSc-Electromagnetism):
+public export
+evaluateDecouplingPhotonEnergy : (fuel : Nat) -> DecoupledGas -> BoxInt
+evaluateDecouplingPhotonEnergy fuel gas =
+  fusedComputePhotonStreamEnergyDirect (limit fuel) (fusedPhotonStateStream (streamDecoupledPhotons gas))
+
+------------------------------------------------------------------------
 -- 3. CONSTRUCTIVE FORMAL AUDIT PROOFS
 ------------------------------------------------------------------------
 
@@ -121,4 +157,15 @@ auditPlasmaRecombinationDecouplingProof =
      residualProtons result == 0 &&
      residualElectrons result == 0 &&
      streamOk
+
+||| Audits that plasma recombination multiset charge neutrality fold Q = 0 matches and emitted CMB photons stream valid energy tokens:
+public export
+auditPlasmaMultisetDecouplingProof : Bool
+auditPlasmaMultisetDecouplingProof =
+  let initial = MkPlasmaCell 100 100
+      bag = plasmaCellToMultiset initial
+      qNet = observePlasmaBagCharge bag
+      result = recombinePlasma initial
+      gasEnergy = evaluateDecouplingPhotonEnergy 120 result
+  in qNet == intToBoxInt 0 && gasEnergy == intToBoxInt 200
 

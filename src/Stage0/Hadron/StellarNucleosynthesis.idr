@@ -4,6 +4,9 @@ import Stage0.BoxInt
 import Stage0.Multiset
 import Stage0.TransitionNetwork
 import Stage0.OnSeq.FusedStream
+import Stage0.Singleton.Bit
+import Stage0.FieldStream
+import Stage0.FluctuationStream
 import public Stage1.Basis.Coordinate
 import Stage1.Hadron.HadronicConfinement
 import Stage0.Hadron.AlphaReplication
@@ -761,6 +764,36 @@ public export
 stellarLadderStepCount : (fuel : Nat) -> Nat
 stellarLadderStepCount fuel =
   foldStreamNat fuel (\acc, _ => S acc) 0 streamStellarLadderTransducer
+
+||| Emits a discrete photon token for an exothermic reaction step (FinSc-Electromagnetism):
+public export
+stepEmittedPhoton : NuclearReactionStep -> Maybe PhotonStateToken
+stepEmittedPhoton stp =
+  if stp.energyYieldQ > intToBoxInt 0
+    then Just (MkPhotonToken One stp.energyYieldQ)
+    else Nothing
+
+||| Streams emitted photons across the complete stellar nucleosynthesis ladder (Rule 04 §8):
+public export
+streamStellarLadderPhotons : FusedStream PhotonStateToken
+streamStellarLadderPhotons =
+  filterMapStream stepEmittedPhoton streamStellarLadderTransducer
+
+||| Bridges a NuclearReactionStep into a thermodynamic FluctuationStep (FinSc-Thermodynamics):
+public export
+stellarThermodynamicFluctuation : NuclearReactionStep -> FluctuationStep
+stellarThermodynamicFluctuation stp =
+  MkFluctuation (cast stp.stepIndex) stp.energyYieldQ stp.energyYieldQ
+
+||| Audits that all steps in the stellar nucleosynthesis ladder are strictly exothermic
+||| and produce non-negative entropy (Delta S >= 0) via LinearEntropyTransducer:
+public export
+auditStellarThermodynamicsProof : Bool
+auditStellarThermodynamicsProof =
+  let flucts = mapStream stellarThermodynamicFluctuation streamStellarLadderTransducer
+      strm = linearEntropyTransducer.stepEntropyProduction flucts
+      results = runFueledStreamNat 12 strm
+  in all snd results && (length results == 10)
 
 ||| Structural recursive evaluator for compile-time macro audit (Rule 01 §1):
 public export
