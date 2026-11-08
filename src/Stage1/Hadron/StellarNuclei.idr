@@ -8,6 +8,7 @@ import Stage1.Hadron.HadronicConfinement
 import Stage1.Hadron.QuarkHadronAlgebra
 import Stage0.Hadron.AlphaReplication
 import Stage0.Hadron.StellarNucleosynthesis
+import Stage1.Hadron.StandardModel
 import Data.List
 
 %default total
@@ -39,20 +40,33 @@ Show StellarNucleusSpec where
   show Silicon28   = "28Si (Silicon-28)"
   show Iron56      = "56Fe (Iron-56)"
 
-||| Evaluates mass number A (nucleon count) of a stellar nucleus.
+||| Canonical embedding of StellarNucleusSpec into the certified dependent Nuclide carrier:
+public export
+stellarNucleusSpecNuclide : StellarNucleusSpec -> (z : Nat ** n : Nat ** Nuclide z n)
+stellarNucleusSpecNuclide Beryllium7  = (4 ** 3 ** mkNuclide 4 3 "7Be")
+stellarNucleusSpecNuclide Boron8      = (5 ** 3 ** mkNuclide 5 3 "8B")
+stellarNucleusSpecNuclide Neon20      = (10 ** 10 ** alphaLadderNuclide 5 "20Ne")
+stellarNucleusSpecNuclide Magnesium24 = (12 ** 12 ** alphaLadderNuclide 6 "24Mg")
+stellarNucleusSpecNuclide Silicon28   = (14 ** 14 ** alphaLadderNuclide 7 "28Si")
+stellarNucleusSpecNuclide Iron56      = (26 ** 30 ** mkNuclide 26 30 "56Fe")
+
+||| Evaluates mass number A (nucleon count) of a stellar nucleus directly from dependent Nuclide.
 public export
 stellarNucleusMassNumber : StellarNucleusSpec -> Nat
-stellarNucleusMassNumber Beryllium7  = 7
-stellarNucleusMassNumber Boron8      = 8
-stellarNucleusMassNumber Neon20      = 20
-stellarNucleusMassNumber Magnesium24 = 24
-stellarNucleusMassNumber Silicon28   = 28
-stellarNucleusMassNumber Iron56      = 56
+stellarNucleusMassNumber spec =
+  let (z ** n ** _) = stellarNucleusSpecNuclide spec in z + n
 
-||| Evaluates fundamental mass token count (A * 27) of a stellar nucleus.
+||| Evaluates fundamental mass token count (A * 27) of a stellar nucleus from dependent Nuclide.
 public export
 stellarNucleusMassTokens : StellarNucleusSpec -> Stage0.BoxInt.BoxInt
-stellarNucleusMassTokens spec = Stage0.BoxInt.natToBoxInt (stellarNucleusMassNumber spec * 27)
+stellarNucleusMassTokens spec =
+  let (_ ** _ ** nuc) = stellarNucleusSpecNuclide spec in nuclideMassTokens nuc
+
+||| Evaluates constituent quark multiset of a stellar nucleus from dependent Nuclide.
+public export
+stellarNucleusQuarks : StellarNucleusSpec -> Multiset BoxInt Stage1.Hadron.StandardModel.SMFermion
+stellarNucleusQuarks spec =
+  let (_ ** _ ** nuc) = stellarNucleusSpecNuclide spec in nuclideQuarks nuc
 
 ------------------------------------------------------------------------
 -- 2. SMART CONSTRUCTORS FOR STELLAR NUCLEI

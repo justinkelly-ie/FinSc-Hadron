@@ -5,12 +5,16 @@ import Stage0.BoxInt
 import Stage0.Multiset
 import Stage0.Token
 import Stage1.UnixelFraction
+import Stage1.FourGeometries
+import Stage1.Multiset.PrimordialUnfolding
+import Stage0.OnSeq.FusedStream
 import Data.List
+import Data.Vect
 
 %default total
 
 ------------------------------------------------------------------------
--- 1. FULL STANDARD MODEL PARTICLE ENUMERATIONS (37 STATES)
+-- 1. PARTICLES, BOSONS & COMPONENTS CARRIER DEFINITIONS
 ------------------------------------------------------------------------
 
 ||| Standard Model Fermions (12 Quarks/Leptons + 12 Anti-Fermions).
@@ -49,12 +53,12 @@ Eq SMFermion where
   AntiLepNuTau == AntiLepNuTau = True
   _ == _ = False
 
-||| Standard Model Gauge Bosons & Higgs (13 Boson states).
+||| Standard Model Gauge Bosons & Higgs (13 Boson states: 8 Gluons + 4 EW + 1 Higgs).
 public export
 data SMBoson =
-    GluonR | GluonG | GluonB | GluonBarR | GluonBarG | GluonBarB | GluonOctet
+    GluonR | GluonG | GluonB | GluonBarR | GluonBarG | GluonBarB | Gluon7 | Gluon8
   | Photon | Z0 | WPlus | WMinus
-  | Higgs0 | HiggsCharged
+  | Higgs0
 
 public export
 Eq SMBoson where
@@ -64,16 +68,16 @@ Eq SMBoson where
   GluonBarR == GluonBarR = True
   GluonBarG == GluonBarG = True
   GluonBarB == GluonBarB = True
-  GluonOctet == GluonOctet = True
+  Gluon7 == Gluon7 = True
+  Gluon8 == Gluon8 = True
   Photon == Photon = True
   Z0 == Z0 = True
   WPlus == WPlus = True
   WMinus == WMinus = True
   Higgs0 == Higgs0 = True
-  HiggsCharged == HiggsCharged = True
   _ == _ = False
 
-||| Unified Standard Model State (37 States Total).
+||| Unified Standard Model State (37 States Total: 24 Fermions + 13 Bosons).
 public export
 data StandardModelParticle =
     SMPFermion SMFermion
@@ -85,34 +89,349 @@ Eq StandardModelParticle where
   (SMPBoson b1)   == (SMPBoson b2)   = b1 == b2
   _               == _               = False
 
+||| Enumeration of the 25 fundamental Standard Model component fields.
+public export
+data SMComponent =
+    -- 6 Fundamental Quarks (SU(3) Color Triplets)
+    CompQuarkU | CompQuarkD | CompQuarkC | CompQuarkS | CompQuarkT | CompQuarkB
+    -- 6 Fundamental Leptons (SU(3) Color Singlets)
+  | CompLepE   | CompLepMu   | CompLepTau | CompLepNuE | CompLepNuMu | CompLepNuTau
+    -- 8 Color Gluons (SU(3) Adjoint Octet)
+  | CompGluon1 | CompGluon2  | CompGluon3 | CompGluon4 | CompGluon5  | CompGluon6 | CompGluon7 | CompGluon8
+    -- 4 Electroweak Gauge Bosons (SU(2) x U(1) Adjoint)
+  | CompPhoton | CompZ0      | CompWPlus  | CompWMinus
+    -- 1 Higgs Scalar (Spin 0)
+  | CompHiggs0
+
+public export
+Eq SMComponent where
+  CompQuarkU   == CompQuarkU   = True
+  CompQuarkD   == CompQuarkD   = True
+  CompQuarkC   == CompQuarkC   = True
+  CompQuarkS   == CompQuarkS   = True
+  CompQuarkT   == CompQuarkT   = True
+  CompQuarkB   == CompQuarkB   = True
+  CompLepE     == CompLepE     = True
+  CompLepMu    == CompLepMu    = True
+  CompLepTau   == CompLepTau   = True
+  CompLepNuE   == CompLepNuE   = True
+  CompLepNuMu  == CompLepNuMu  = True
+  CompLepNuTau == CompLepNuTau = True
+  CompGluon1   == CompGluon1   = True
+  CompGluon2   == CompGluon2   = True
+  CompGluon3   == CompGluon3   = True
+  CompGluon4   == CompGluon4   = True
+  CompGluon5   == CompGluon5   = True
+  CompGluon6   == CompGluon6   = True
+  CompGluon7   == CompGluon7   = True
+  CompGluon8   == CompGluon8   = True
+  CompPhoton   == CompPhoton   = True
+  CompZ0       == CompZ0       = True
+  CompWPlus    == CompWPlus    = True
+  CompWMinus   == CompWMinus   = True
+  CompHiggs0   == CompHiggs0   = True
+  _            == _            = False
+
+||| Maps a fundamental SMComponent into its primary particle state.
+public export
+componentToParticle : SMComponent -> StandardModelParticle
+componentToParticle CompQuarkU   = SMPFermion QuarkU
+componentToParticle CompQuarkD   = SMPFermion QuarkD
+componentToParticle CompQuarkC   = SMPFermion QuarkC
+componentToParticle CompQuarkS   = SMPFermion QuarkS
+componentToParticle CompQuarkT   = SMPFermion QuarkT
+componentToParticle CompQuarkB   = SMPFermion QuarkB
+componentToParticle CompLepE     = SMPFermion LepE
+componentToParticle CompLepMu    = SMPFermion LepMu
+componentToParticle CompLepTau   = SMPFermion LepTau
+componentToParticle CompLepNuE   = SMPFermion LepNuE
+componentToParticle CompLepNuMu  = SMPFermion LepNuMu
+componentToParticle CompLepNuTau = SMPFermion LepNuTau
+componentToParticle CompGluon1   = SMPBoson GluonR
+componentToParticle CompGluon2   = SMPBoson GluonG
+componentToParticle CompGluon3   = SMPBoson GluonB
+componentToParticle CompGluon4   = SMPBoson GluonBarR
+componentToParticle CompGluon5   = SMPBoson GluonBarG
+componentToParticle CompGluon6   = SMPBoson GluonBarB
+componentToParticle CompGluon7   = SMPBoson Gluon7
+componentToParticle CompGluon8   = SMPBoson Gluon8
+componentToParticle CompPhoton   = SMPBoson Photon
+componentToParticle CompZ0       = SMPBoson Z0
+componentToParticle CompWPlus    = SMPBoson WPlus
+componentToParticle CompWMinus   = SMPBoson WMinus
+componentToParticle CompHiggs0   = SMPBoson Higgs0
+
 ------------------------------------------------------------------------
--- 2. DISCRETE CHARGE & SPIN METROLOGY
+-- 2. CARRIER BASIS MULTISETS & CARDINALITIES (NO ARITHMETIC MULTIPLIERS)
 ------------------------------------------------------------------------
+
+||| Carrier multiset list of the 6 fundamental quarks.
+%inline public export
+quarkFlavorsList : List SMFermion
+quarkFlavorsList = [QuarkU, QuarkD, QuarkC, QuarkS, QuarkT, QuarkB]
+
+||| Carrier multiset list of the 6 fundamental leptons.
+%inline public export
+leptonFlavorsList : List SMFermion
+leptonFlavorsList = [LepE, LepNuE, LepMu, LepNuMu, LepTau, LepNuTau]
+
+||| Carrier multiset list of all 12 fundamental matter fermions.
+||| Defined by the direct sum concatenation of the quark and lepton carrier multisets.
+%inline public export
+matterFermionsList : List SMFermion
+matterFermionsList = quarkFlavorsList ++ leptonFlavorsList
+
+||| Carrier multiset list of the 12 fundamental antimatter fermions.
+%inline public export
+antimatterFermionsList : List SMFermion
+antimatterFermionsList =
+  [ AntiQuarkU, AntiQuarkD, AntiQuarkC, AntiQuarkS, AntiQuarkT, AntiQuarkB
+  , AntiLepE, AntiLepNuE, AntiLepMu, AntiLepNuMu, AntiLepTau, AntiLepNuTau
+  ]
+
+||| Carrier multiset list of all 24 chiral fermions (matter + antimatter).
+%inline public export
+chiralFermionsList : List SMFermion
+chiralFermionsList = matterFermionsList ++ antimatterFermionsList
+
+||| Carrier multiset list of the 8 color gluons.
+%inline public export
+gluonBosonsList : List SMBoson
+gluonBosonsList = [GluonR, GluonG, GluonB, GluonBarR, GluonBarG, GluonBarB, Gluon7, Gluon8]
+
+||| Carrier multiset list of the 4 electroweak gauge vector bosons.
+%inline public export
+electroweakBosonsList : List SMBoson
+electroweakBosonsList = [Photon, Z0, WPlus, WMinus]
+
+||| Carrier multiset list of the 1 electroweak symmetry breaking scalar Higgs boson.
+%inline public export
+higgsBosonsList : List SMBoson
+higgsBosonsList = [Higgs0]
+
+||| Carrier multiset list of all 13 Standard Model bosons.
+%inline public export
+smBosonsList : List SMBoson
+smBosonsList = gluonBosonsList ++ electroweakBosonsList ++ higgsBosonsList
+
+||| The canonical list of all 25 fundamental Standard Model component fields.
+%inline public export
+smComponentsList : List SMComponent
+smComponentsList =
+  [ CompQuarkU, CompQuarkD, CompQuarkC, CompQuarkS, CompQuarkT, CompQuarkB
+  , CompLepE, CompLepMu, CompLepTau, CompLepNuE, CompLepNuMu, CompLepNuTau
+  , CompGluon1, CompGluon2, CompGluon3, CompGluon4, CompGluon5, CompGluon6, CompGluon7, CompGluon8
+  , CompPhoton, CompZ0, CompWPlus, CompWMinus
+  , CompHiggs0
+  ]
+
+||| Number of fundamental matter fermions (12), observed directly from the carrier multiset length.
+%inline public export
+smMatterFermionCount : Nat
+smMatterFermionCount = length matterFermionsList
+
+||| Number of SU(3) color gluons (8), observed directly from the gluon carrier multiset length.
+%inline public export
+smGluonCount : Nat
+smGluonCount = length gluonBosonsList
+
+||| Number of electroweak gauge vector bosons (4), observed directly from the EW carrier multiset length.
+%inline public export
+smElectroweakBosonCount : Nat
+smElectroweakBosonCount = length electroweakBosonsList
+
+||| Number of scalar Higgs bosons (1), observed directly from the Higgs carrier multiset length.
+%inline public export
+smHiggsCount : Nat
+smHiggsCount = length higgsBosonsList
+
+||| Total fundamental Standard Model component fields (25), observed directly from the component carrier multiset length.
+%inline public export
+smFundamentalFieldCount : Nat
+smFundamentalFieldCount = length smComponentsList
+
+||| Total chiral fermion states (24), observed directly from the chiral fermion carrier multiset length.
+%inline public export
+smChiralFermionCount : Nat
+smChiralFermionCount = length chiralFermionsList
+
+||| Number of octonionic units e_1 ... e_7 governing Fano color decomposition.
+%inline public export
+smOctonionGeneratorCount : Nat
+smOctonionGeneratorCount = cliffordGeneratorDim
+
+------------------------------------------------------------------------
+-- 2B. ZERO-ALLOCATION DEFORESTED STREAM GENERATORS (Rule 04 §8)
+------------------------------------------------------------------------
+
+||| Streams the 25 fundamental Standard Model component fields in O(1) auxiliary registers.
+public export
+streamSMComponents : FusedStream SMComponent
+streamSMComponents = stream smComponentsList
+
+||| Streams the 12 fundamental matter fermions in O(1) auxiliary registers.
+public export
+streamMatterFermions : FusedStream SMFermion
+streamMatterFermions = stream matterFermionsList
+
+||| Streams the 24 chiral fermions (matter + antimatter) in O(1) auxiliary registers.
+public export
+streamChiralFermions : FusedStream SMFermion
+streamChiralFermions = stream chiralFermionsList
+
+||| Streams the 13 Standard Model bosons in O(1) auxiliary registers.
+public export
+streamSMBosons : FusedStream SMBoson
+streamSMBosons = stream smBosonsList
+
+------------------------------------------------------------------------
+-- 2C. COMPILE-TIME PROOFS: CHROMOGEOMETRIC TRIAD UNIFICATION (Rule 03 §6)
+------------------------------------------------------------------------
+
+||| Compile-time proof: Total Standard Model field components match Q_Blue = 25.
+public export
+0 prfSMFieldCountEqualsQBlue :
+  let x = fst primordialGeneratorNat
+      y = snd primordialGeneratorNat
+  in Stage1.Hadron.StandardModel.smFundamentalFieldCount = (x * x) + (y * y)
+prfSMFieldCountEqualsQBlue = Refl
+
+||| Compile-time proof: Chiral fermion state count matches Q_Green = 24.
+public export
+0 prfChiralFermionCountEqualsQGreen :
+  let x = fst primordialGeneratorNat
+      y = snd primordialGeneratorNat
+  in Stage1.Hadron.StandardModel.smChiralFermionCount = 2 * x * y
+prfChiralFermionCountEqualsQGreen = Refl
+
+||| Compile-time proof: Octonionic color/flavor generators match Q_Red = 7.
+public export
+0 prfOctonionCountEqualsQRed :
+  let x = fst primordialGeneratorNat
+      y = snd primordialGeneratorNat
+  in Stage1.Hadron.StandardModel.smOctonionGeneratorCount = minus (x * x) (y * y)
+prfOctonionCountEqualsQRed = Refl
+
+||| Compile-time proof: Universal Pythagorean Triad Conservation (7^2 + 24^2 = 25^2).
+public export
+0 prfPythagoreanStandardModelConservation :
+  let qRed   = Stage1.Hadron.StandardModel.smOctonionGeneratorCount
+      qGreen = Stage1.Hadron.StandardModel.smChiralFermionCount
+      qBlue  = Stage1.Hadron.StandardModel.smFundamentalFieldCount
+  in (qRed * qRed) + (qGreen * qGreen) = (qBlue * qBlue)
+prfPythagoreanStandardModelConservation = Refl
+
+------------------------------------------------------------------------
+-- 3. EXACT DISCRETE QUANTUM NUMBERS
+------------------------------------------------------------------------
+
+||| Exact discrete quantum numbers characterizing a Standard Model state (Rule 03 §7).
+public export
+record SMQuantumNumbers where
+  constructor MkSMQuantumNumbers
+  chargeThirds        : BoxInt  -- Electric charge in 1/3 e units
+  weakIsospinDoubled  : BoxInt  -- 2 * I_3 (weak isospin)
+  colorDimension      : Nat     -- 1 = Singlet, 3 = Triplet, 8 = Octet
+  spinDoubled         : Nat     -- 2 * S (0 = Scalar, 1 = Fermion, 2 = Vector Boson)
+  baryonThirds        : BoxInt  -- 3 * B (Baryon number in 1/3 units)
+  leptonNumber        : BoxInt  -- Lepton number L
+  generationIndex     : Nat     -- 1, 2, 3 for matter fermions; 0 for bosons
+
+public export
+particleQuantumNumbers : StandardModelParticle -> SMQuantumNumbers
+-- Quarks (Gen 1)
+particleQuantumNumbers (SMPFermion QuarkU) =
+  MkSMQuantumNumbers (intToBoxInt 2) (intToBoxInt 1) 3 1 (intToBoxInt 1) (intToBoxInt 0) 1
+particleQuantumNumbers (SMPFermion QuarkD) =
+  MkSMQuantumNumbers (intToBoxInt (-1)) (intToBoxInt (-1)) 3 1 (intToBoxInt 1) (intToBoxInt 0) 1
+-- Quarks (Gen 2)
+particleQuantumNumbers (SMPFermion QuarkC) =
+  MkSMQuantumNumbers (intToBoxInt 2) (intToBoxInt 1) 3 1 (intToBoxInt 1) (intToBoxInt 0) 2
+particleQuantumNumbers (SMPFermion QuarkS) =
+  MkSMQuantumNumbers (intToBoxInt (-1)) (intToBoxInt (-1)) 3 1 (intToBoxInt 1) (intToBoxInt 0) 2
+-- Quarks (Gen 3)
+particleQuantumNumbers (SMPFermion QuarkT) =
+  MkSMQuantumNumbers (intToBoxInt 2) (intToBoxInt 1) 3 1 (intToBoxInt 1) (intToBoxInt 0) 3
+particleQuantumNumbers (SMPFermion QuarkB) =
+  MkSMQuantumNumbers (intToBoxInt (-1)) (intToBoxInt (-1)) 3 1 (intToBoxInt 1) (intToBoxInt 0) 3
+
+-- Antiquarks (Gen 1)
+particleQuantumNumbers (SMPFermion AntiQuarkU) =
+  MkSMQuantumNumbers (intToBoxInt (-2)) (intToBoxInt (-1)) 3 1 (intToBoxInt (-1)) (intToBoxInt 0) 1
+particleQuantumNumbers (SMPFermion AntiQuarkD) =
+  MkSMQuantumNumbers (intToBoxInt 1) (intToBoxInt 1) 3 1 (intToBoxInt (-1)) (intToBoxInt 0) 1
+-- Antiquarks (Gen 2)
+particleQuantumNumbers (SMPFermion AntiQuarkC) =
+  MkSMQuantumNumbers (intToBoxInt (-2)) (intToBoxInt (-1)) 3 1 (intToBoxInt (-1)) (intToBoxInt 0) 2
+particleQuantumNumbers (SMPFermion AntiQuarkS) =
+  MkSMQuantumNumbers (intToBoxInt 1) (intToBoxInt 1) 3 1 (intToBoxInt (-1)) (intToBoxInt 0) 2
+-- Antiquarks (Gen 3)
+particleQuantumNumbers (SMPFermion AntiQuarkT) =
+  MkSMQuantumNumbers (intToBoxInt (-2)) (intToBoxInt (-1)) 3 1 (intToBoxInt (-1)) (intToBoxInt 0) 3
+particleQuantumNumbers (SMPFermion AntiQuarkB) =
+  MkSMQuantumNumbers (intToBoxInt 1) (intToBoxInt 1) 3 1 (intToBoxInt (-1)) (intToBoxInt 0) 3
+
+-- Leptons (Gen 1)
+particleQuantumNumbers (SMPFermion LepE) =
+  MkSMQuantumNumbers (intToBoxInt (-3)) (intToBoxInt (-1)) 1 1 (intToBoxInt 0) (intToBoxInt 1) 1
+particleQuantumNumbers (SMPFermion LepNuE) =
+  MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 1) 1 1 (intToBoxInt 0) (intToBoxInt 1) 1
+-- Leptons (Gen 2)
+particleQuantumNumbers (SMPFermion LepMu) =
+  MkSMQuantumNumbers (intToBoxInt (-3)) (intToBoxInt (-1)) 1 1 (intToBoxInt 0) (intToBoxInt 1) 2
+particleQuantumNumbers (SMPFermion LepNuMu) =
+  MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 1) 1 1 (intToBoxInt 0) (intToBoxInt 1) 2
+-- Leptons (Gen 3)
+particleQuantumNumbers (SMPFermion LepTau) =
+  MkSMQuantumNumbers (intToBoxInt (-3)) (intToBoxInt (-1)) 1 1 (intToBoxInt 0) (intToBoxInt 1) 3
+particleQuantumNumbers (SMPFermion LepNuTau) =
+  MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 1) 1 1 (intToBoxInt 0) (intToBoxInt 1) 3
+
+-- Antileptons (Gen 1)
+particleQuantumNumbers (SMPFermion AntiLepE) =
+  MkSMQuantumNumbers (intToBoxInt 3) (intToBoxInt 1) 1 1 (intToBoxInt 0) (intToBoxInt (-1)) 1
+particleQuantumNumbers (SMPFermion AntiLepNuE) =
+  MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt (-1)) 1 1 (intToBoxInt 0) (intToBoxInt (-1)) 1
+-- Antileptons (Gen 2)
+particleQuantumNumbers (SMPFermion AntiLepMu) =
+  MkSMQuantumNumbers (intToBoxInt 3) (intToBoxInt 1) 1 1 (intToBoxInt 0) (intToBoxInt (-1)) 2
+particleQuantumNumbers (SMPFermion AntiLepNuMu) =
+  MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt (-1)) 1 1 (intToBoxInt 0) (intToBoxInt (-1)) 2
+-- Antileptons (Gen 3)
+particleQuantumNumbers (SMPFermion AntiLepTau) =
+  MkSMQuantumNumbers (intToBoxInt 3) (intToBoxInt 1) 1 1 (intToBoxInt 0) (intToBoxInt (-1)) 3
+particleQuantumNumbers (SMPFermion AntiLepNuTau) =
+  MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt (-1)) 1 1 (intToBoxInt 0) (intToBoxInt (-1)) 3
+
+-- Bosons: Gluons (Octet, Spin 1, Massless)
+particleQuantumNumbers (SMPBoson GluonR)    = MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 0) 8 2 (intToBoxInt 0) (intToBoxInt 0) 0
+particleQuantumNumbers (SMPBoson GluonG)    = MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 0) 8 2 (intToBoxInt 0) (intToBoxInt 0) 0
+particleQuantumNumbers (SMPBoson GluonB)    = MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 0) 8 2 (intToBoxInt 0) (intToBoxInt 0) 0
+particleQuantumNumbers (SMPBoson GluonBarR) = MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 0) 8 2 (intToBoxInt 0) (intToBoxInt 0) 0
+particleQuantumNumbers (SMPBoson GluonBarG) = MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 0) 8 2 (intToBoxInt 0) (intToBoxInt 0) 0
+particleQuantumNumbers (SMPBoson GluonBarB) = MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 0) 8 2 (intToBoxInt 0) (intToBoxInt 0) 0
+particleQuantumNumbers (SMPBoson Gluon7)    = MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 0) 8 2 (intToBoxInt 0) (intToBoxInt 0) 0
+particleQuantumNumbers (SMPBoson Gluon8)    = MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 0) 8 2 (intToBoxInt 0) (intToBoxInt 0) 0
+
+-- Bosons: Electroweak (Singlets under SU(3))
+particleQuantumNumbers (SMPBoson Photon)    = MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 0) 1 2 (intToBoxInt 0) (intToBoxInt 0) 0
+particleQuantumNumbers (SMPBoson Z0)        = MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt 0) 1 2 (intToBoxInt 0) (intToBoxInt 0) 0
+particleQuantumNumbers (SMPBoson WPlus)     = MkSMQuantumNumbers (intToBoxInt 3) (intToBoxInt 2) 1 2 (intToBoxInt 0) (intToBoxInt 0) 0
+particleQuantumNumbers (SMPBoson WMinus)    = MkSMQuantumNumbers (intToBoxInt (-3)) (intToBoxInt (-2)) 1 2 (intToBoxInt 0) (intToBoxInt 0) 0
+
+-- Scalar: Higgs Boson (Singlet under SU(3), Spin 0)
+particleQuantumNumbers (SMPBoson Higgs0)    = MkSMQuantumNumbers (intToBoxInt 0) (intToBoxInt (-1)) 1 0 (intToBoxInt 0) (intToBoxInt 0) 0
+
+||| Deforested transducer streaming particles paired with their exact discrete quantum numbers.
+public export
+streamSMQuantumNumbers : FusedStream (SMComponent, SMQuantumNumbers)
+streamSMQuantumNumbers =
+  mapStream (\c => (c, particleQuantumNumbers (componentToParticle c))) streamSMComponents
 
 ||| Returns the exact electrical charge (in 1/3 e units) of any Standard Model particle.
 public export
 electricChargeThirds : StandardModelParticle -> BoxInt
-electricChargeThirds (SMPFermion QuarkU) = intToBoxInt 2
-electricChargeThirds (SMPFermion QuarkC) = intToBoxInt 2
-electricChargeThirds (SMPFermion QuarkT) = intToBoxInt 2
-electricChargeThirds (SMPFermion QuarkD) = intToBoxInt (-1)
-electricChargeThirds (SMPFermion QuarkS) = intToBoxInt (-1)
-electricChargeThirds (SMPFermion QuarkB) = intToBoxInt (-1)
-electricChargeThirds (SMPFermion AntiQuarkU) = intToBoxInt (-2)
-electricChargeThirds (SMPFermion AntiQuarkC) = intToBoxInt (-2)
-electricChargeThirds (SMPFermion AntiQuarkT) = intToBoxInt (-2)
-electricChargeThirds (SMPFermion AntiQuarkD) = intToBoxInt 1
-electricChargeThirds (SMPFermion AntiQuarkS) = intToBoxInt 1
-electricChargeThirds (SMPFermion AntiQuarkB) = intToBoxInt 1
-electricChargeThirds (SMPFermion LepE)   = intToBoxInt (-3)
-electricChargeThirds (SMPFermion LepMu)  = intToBoxInt (-3)
-electricChargeThirds (SMPFermion LepTau) = intToBoxInt (-3)
-electricChargeThirds (SMPFermion AntiLepE)   = intToBoxInt 3
-electricChargeThirds (SMPFermion AntiLepMu)  = intToBoxInt 3
-electricChargeThirds (SMPFermion AntiLepTau) = intToBoxInt 3
-electricChargeThirds (SMPBoson WPlus)  = intToBoxInt 3
-electricChargeThirds (SMPBoson WMinus) = intToBoxInt (-3)
-electricChargeThirds _ = intToBoxInt 0
+electricChargeThirds p = (particleQuantumNumbers p).chargeThirds
 
 ||| Identifies whether a particle is a Up-type Quark (+2/3 e).
 public export
@@ -134,7 +453,39 @@ isLepton (SMPFermion LepNuTau)  = True
 isLepton _                      = False
 
 ------------------------------------------------------------------------
--- 2b. EXACT FRACTIONAL CHARGES AS TOKEN FRACTIONS
+-- 3B. GAUGE ANOMALY CANCELLATION WITNESSES
+------------------------------------------------------------------------
+
+||| Evaluates sum of electric charges across a fermion generation:
+||| 3 colors * (Q_u + Q_d) + Q_e + Q_nu = 3 * (2/3 - 1/3) + (-1) + 0 = 3 * (1/3) - 1 = 0.
+public export
+generationChargeSumThirds : (qu : SMFermion) -> (qd : SMFermion) -> (le : SMFermion) -> (ln : SMFermion) -> BoxInt
+generationChargeSumThirds qu qd le ln =
+  let quCharge = electricChargeThirds (SMPFermion qu)
+      qdCharge = electricChargeThirds (SMPFermion qd)
+      leCharge = electricChargeThirds (SMPFermion le)
+      lnCharge = electricChargeThirds (SMPFermion ln)
+      quarksSum = mulBox (intToBoxInt 3) (addBox quCharge qdCharge)
+      leptonsSum = addBox leCharge lnCharge
+  in addBox quarksSum leptonsSum
+
+||| Compile-time proof witness: Generation 1 gauge anomaly vanishes identically.
+public export
+0 prfGen1AnomalyFree : Stage1.Hadron.StandardModel.generationChargeSumThirds QuarkU QuarkD LepE LepNuE = intToBoxInt 0
+prfGen1AnomalyFree = Refl
+
+||| Compile-time proof witness: Generation 2 gauge anomaly vanishes identically.
+public export
+0 prfGen2AnomalyFree : Stage1.Hadron.StandardModel.generationChargeSumThirds QuarkC QuarkS LepMu LepNuMu = intToBoxInt 0
+prfGen2AnomalyFree = Refl
+
+||| Compile-time proof witness: Generation 3 gauge anomaly vanishes identically.
+public export
+0 prfGen3AnomalyFree : Stage1.Hadron.StandardModel.generationChargeSumThirds QuarkT QuarkB LepTau LepNuTau = intToBoxInt 0
+prfGen3AnomalyFree = Refl
+
+------------------------------------------------------------------------
+-- 4. EXACT FRACTIONAL CHARGES AS TOKEN FRACTIONS
 ------------------------------------------------------------------------
 
 ||| Returns the exact electrical charge as a fractional token over a Unixel denominator 3 (in units of e).
@@ -153,7 +504,7 @@ quarkDownChargeFraction : TokenFraction StandardModelParticle
 quarkDownChargeFraction = mkTokenFraction (toToken (SMPFermion QuarkD)) 3
 
 ------------------------------------------------------------------------
--- 3. STANDARD MODEL GAUGE INTERACTION VERTICES
+-- 5. STANDARD MODEL GAUGE INTERACTION VERTICES
 ------------------------------------------------------------------------
 
 ||| QED Annihilation Vertex: e⁻ + e⁺ -> γ + γ
@@ -175,7 +526,7 @@ higgsGaugeDecayVertex (SMPBoson Higgs0) = [SMPBoson WPlus, SMPBoson WMinus]
 higgsGaugeDecayVertex _ = []
 
 ------------------------------------------------------------------------
--- 3b. STRICT QTT LINEAR DECAY & INTERACTION VERTICES
+-- 6. STRICT QTT LINEAR DECAY & INTERACTION VERTICES
 ------------------------------------------------------------------------
 
 ||| QED Annihilation Vertex with exact QTT linear conservation (Rule 04 §1):
@@ -210,7 +561,7 @@ higgsGaugeDecayLinear (MkLToken h) =
   (MkLToken h, MkLToken (SMPBoson Photon))
 
 ------------------------------------------------------------------------
--- 4. FORMAL INVARIANT AUDIT WITNESSES
+-- 7. FORMAL INVARIANT AUDIT WITNESSES
 ------------------------------------------------------------------------
 
 ||| Pattern-matched verification of QTT linear decay conservation without dictionary dispatch (Rule 01 §3).
@@ -237,6 +588,7 @@ checkLinearDecays =
 ||| 4. Verifies Weak Beta decay vertex output ([QuarkU, LepE, AntiLepNuE]).
 ||| 5. Verifies Higgs vector gauge decay vertex output ([WPlus, WMinus]).
 ||| 6. Verifies QTT linear decay channel conservation (QED, Weak, Higgs).
+||| 7. Verifies fundamental field component count = 25.
 public export
 auditFullStandardModelCatalogProof : Bool
 auditFullStandardModelCatalogProof =
@@ -245,7 +597,10 @@ auditFullStandardModelCatalogProof =
   (qedAnnihilationVertex (SMPFermion LepE) (SMPFermion AntiLepE) == [SMPBoson Photon, SMPBoson Photon]) &&
   (weakBetaDecayVertex (SMPFermion QuarkD) == [SMPFermion QuarkU, SMPFermion LepE, SMPFermion AntiLepNuE]) &&
   (higgsGaugeDecayVertex (SMPBoson Higgs0) == [SMPBoson WPlus, SMPBoson WMinus]) &&
-  checkLinearDecays
+  checkLinearDecays &&
+  (smFundamentalFieldCount == 25) &&
+  (smChiralFermionCount == 24) &&
+  (smOctonionGeneratorCount == 7)
 
 export
 %macro

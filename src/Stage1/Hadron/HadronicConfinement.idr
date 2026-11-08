@@ -10,6 +10,7 @@ import Data.Vect
 import Data.Fin
 import public Stage1.Basis.Coordinate
 import Stage1.Carrier.BalanceArray
+import Stage1.Hadron.StandardModel
 
 %default total
 
@@ -154,3 +155,104 @@ quarkToBaryonTransform = mkTransformBox EllipticSector (mkUnixelFraction (Stage0
 public export
 0 prfQuarkToBaryonTransform : List.length [RedColor, GreenColor, BlueColor] = the Nat 3
 prfQuarkToBaryonTransform = Refl
+
+------------------------------------------------------------------------
+-- 6. CONSTRUCTIVE NUCLEON SPECIES & VALENCE QUARK DECOMPOSITION
+------------------------------------------------------------------------
+
+||| Nucleon species: Proton or Neutron.
+public export
+data NucleonSpecies = ProtonSpecies | NeutronSpecies
+
+public export
+Eq NucleonSpecies where
+  ProtonSpecies  == ProtonSpecies  = True
+  NeutronSpecies == NeutronSpecies = True
+  _              == _              = False
+
+public export
+Show NucleonSpecies where
+  show ProtonSpecies  = "Proton (uud)"
+  show NeutronSpecies = "Neutron (udd)"
+
+||| Constituent valence quarks for a Nucleon:
+||| Proton = (u, u, d)
+||| Neutron = (u, d, d)
+public export
+nucleonValenceQuarks : NucleonSpecies -> Vect 3 SMFermion
+nucleonValenceQuarks ProtonSpecies  = [QuarkU, QuarkU, QuarkD]
+nucleonValenceQuarks NeutronSpecies = [QuarkU, QuarkD, QuarkD]
+
+||| Net electric charge of a nucleon in fundamental units e (using exact integer thirds):
+||| Proton:  (+2/3) + (+2/3) + (-1/3) = +3/3 = +1 e
+||| Neutron: (+2/3) + (-1/3) + (-1/3) = 0/3  = 0 e
+public export
+nucleonElectricChargeThirds : NucleonSpecies -> Stage0.BoxInt.BoxInt
+nucleonElectricChargeThirds n =
+  foldl Stage0.BoxInt.addBox (Stage0.BoxInt.intToBoxInt 0)
+    (map (\q => electricChargeThirds (SMPFermion q)) (nucleonValenceQuarks n))
+
+||| Compile-time proof witness: Proton net electric charge is identically +1 e (+3 thirds).
+public export
+0 prfProtonElectricChargeThirds : Stage1.Hadron.HadronicConfinement.nucleonElectricChargeThirds ProtonSpecies = Stage0.BoxInt.intToBoxInt 3
+prfProtonElectricChargeThirds = Refl
+
+||| Compile-time proof witness: Neutron net electric charge is identically 0 e (0 thirds).
+public export
+0 prfNeutronElectricChargeThirds : Stage1.Hadron.HadronicConfinement.nucleonElectricChargeThirds NeutronSpecies = Stage0.BoxInt.intToBoxInt 0
+prfNeutronElectricChargeThirds = Refl
+
+||| Evaluates constituent Up-quark and Down-quark counts for any population of P protons and N neutrons:
+||| u = 2P + N
+||| d = P + 2N
+||| Total valence quarks = u + d = 3(P + N) = 3A.
+public export
+nucleonsToQuarks : (protons : Nat) -> (neutrons : Nat) -> (Nat, Nat, Nat)
+nucleonsToQuarks p n =
+  let u = (2 * p) + n
+      d = p + (2 * n)
+  in (u, d, u + d)
+
+||| Compile-time proof witness: Canonical Cosmic Baryon budget (P=125, N=50) yields exactly u=300, d=225, u+d=525.
+public export
+0 prfCanonicalQuarkBaryonCounts : Stage1.Hadron.HadronicConfinement.nucleonsToQuarks 125 50 = (300, 225, 525)
+prfCanonicalQuarkBaryonCounts = Refl
+
+------------------------------------------------------------------------
+-- 7. CONSTITUENT QUARK MULTISETS & STREAMING NUCLEONS (Rule 03 §7 & Rule 04 §8)
+------------------------------------------------------------------------
+
+||| A Nucleon represented as a pure multiset of constituent quarks.
+public export
+nucleonQuarkMultiset : NucleonSpecies -> Multiset BoxInt SMFermion
+nucleonQuarkMultiset ProtonSpecies  = AddM QuarkU (intToBoxInt 2) (AddM QuarkD (intToBoxInt 1) ZeroM)
+nucleonQuarkMultiset NeutronSpecies = AddM QuarkU (intToBoxInt 1) (AddM QuarkD (intToBoxInt 2) ZeroM)
+
+||| A Nuclide (Z protons, N neutrons) represented directly as a multiset of constituent valence quarks:
+||| u = 2Z + N
+||| d = Z + 2N
+public export
+nuclideQuarkMultiset : (protons : Nat) -> (neutrons : Nat) -> Multiset BoxInt SMFermion
+nuclideQuarkMultiset p n =
+  let u = (2 * p) + n
+      d = p + (2 * n)
+  in AddM QuarkU (natToBoxInt u) (AddM QuarkD (natToBoxInt d) ZeroM)
+
+||| Total electric charge (in 1/3 e units) computed directly over a multiset of quarks:
+public export
+quarkMultisetElectricChargeThirds : Multiset BoxInt SMFermion -> BoxInt
+quarkMultisetElectricChargeThirds ZeroM = intToBoxInt 0
+quarkMultisetElectricChargeThirds (AddM q count rest) =
+  addBox (mulBox (electricChargeThirds (SMPFermion q)) count) (quarkMultisetElectricChargeThirds rest)
+
+||| Definitional proof that the Proton quark multiset carries net charge +1 e (+3 thirds).
+public export
+0 prfProtonMultisetCharge : Stage1.Hadron.HadronicConfinement.quarkMultisetElectricChargeThirds (Stage1.Hadron.HadronicConfinement.nucleonQuarkMultiset ProtonSpecies) = intToBoxInt 3
+prfProtonMultisetCharge = Refl
+
+||| Definitional proof that the Neutron quark multiset carries net charge 0 e (0 thirds).
+public export
+0 prfNeutronMultisetCharge : Stage1.Hadron.HadronicConfinement.quarkMultisetElectricChargeThirds (Stage1.Hadron.HadronicConfinement.nucleonQuarkMultiset NeutronSpecies) = intToBoxInt 0
+prfNeutronMultisetCharge = Refl
+
+

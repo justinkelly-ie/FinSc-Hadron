@@ -21,6 +21,62 @@ import Stage1.ScalePipeline
 -- 1. STELLAR TRIPLE-ALPHA PROCESS & ELEMENTAL GENESIS (EPOCHS 11 TO 20)
 ------------------------------------------------------------------------
 
+||| A Certified Dependent Nuclide indexed by exact proton count Z and neutron count N (Rule 03 §7).
+||| Carrier for all nuclear matter states across stellar and cosmic nucleosynthesis.
+public export
+record Nuclide (z : Nat) (n : Nat) where
+  constructor MkNuclide
+  elementSymbol : String
+  protons       : Nat
+  neutrons      : Nat
+  0 prfZ        : protons = z
+  0 prfN        : neutrons = n
+
+public export
+mkNuclide : (z : Nat) -> (n : Nat) -> String -> Nuclide z n
+mkNuclide z n sym = MkNuclide sym z n Refl Refl
+
+public export
+alphaLadderNuclide : (k : Nat) -> (sym : String) -> Nuclide (2 * k) (2 * k)
+alphaLadderNuclide k sym = mkNuclide (2 * k) (2 * k) sym
+
+public export
+Show (Nuclide z n) where
+  show nuc = nuc.elementSymbol ++ " (Z=" ++ show nuc.protons ++ ", N=" ++ show nuc.neutrons ++ ", A=" ++ show (nuc.protons + nuc.neutrons) ++ ")"
+
+||| Evaluates mass number A (nucleon count) for any Nuclide: A = Z + N.
+public export
+nuclideMassNumber : Nuclide z n -> Nat
+nuclideMassNumber nuc = nuc.protons + nuc.neutrons
+
+||| Evaluates total Up-quarks and Down-quarks for any Nuclide:
+||| Up = 2Z + N
+||| Down = Z + 2N
+||| Total quarks = 3(Z + N) = 3A.
+public export
+nuclideQuarkCounts : Nuclide z n -> (Nat, Nat, Nat)
+nuclideQuarkCounts nuc =
+  let u = (2 * nuc.protons) + nuc.neutrons
+      d = nuc.protons + (2 * nuc.neutrons)
+  in (u, d, u + d)
+
+||| Constituent valence quarks multiset for any Nuclide:
+public export
+nuclideQuarks : Nuclide z n -> Multiset BoxInt SMFermion
+nuclideQuarks nuc = nuclideQuarkMultiset nuc.protons nuc.neutrons
+
+||| Constituent Hadron multiset (Protons + Neutrons) for any Nuclide:
+public export
+nuclideHadrons : Nuclide z n -> Multiset BoxInt HadronToken
+nuclideHadrons nuc =
+  AddM ProtonToken (natToBoxInt nuc.protons)
+    (AddM NeutronToken (natToBoxInt nuc.neutrons) ZeroM)
+
+||| Mass tokens (A * 27) for any Nuclide:
+public export
+nuclideMassTokens : Nuclide z n -> BoxInt
+nuclideMassTokens nuc = natToBoxInt ((nuc.protons + nuc.neutrons) * 27)
+
 ||| Extended Chemical Elements synthesized in stellar interiors.
 public export
 data StellarElement =
@@ -62,44 +118,76 @@ Show StellarElement where
   show ElemP  = "P (Z=15)"
   show ElemFe = "Fe (Z=26)"
 
+||| Canonical embedding of StellarElement into the certified dependent Nuclide carrier:
+public export
+stellarNuclide : (elem : StellarElement) -> (z : Nat ** n : Nat ** Nuclide z n)
+stellarNuclide ElemH  = (1 ** 0 ** mkNuclide 1 0 "H")
+stellarNuclide ElemHe = (2 ** 2 ** alphaLadderNuclide 1 "He")
+stellarNuclide ElemC  = (6 ** 6 ** alphaLadderNuclide 3 "C")
+stellarNuclide ElemN  = (7 ** 7 ** mkNuclide 7 7 "N")
+stellarNuclide ElemO  = (8 ** 8 ** alphaLadderNuclide 4 "O")
+stellarNuclide ElemNe = (10 ** 10 ** alphaLadderNuclide 5 "Ne")
+stellarNuclide ElemMg = (12 ** 12 ** alphaLadderNuclide 6 "Mg")
+stellarNuclide ElemSi = (14 ** 14 ** alphaLadderNuclide 7 "Si")
+stellarNuclide ElemP  = (15 ** 16 ** mkNuclide 15 16 "P")
+stellarNuclide ElemFe = (26 ** 30 ** mkNuclide 26 30 "Fe")
+
 ||| Canonical constituent hadron multiset for every stellar nuclide (Rule 03 §7):
-||| Grounded directly in prior-layer HadronTokens (ProtonToken, NeutronToken).
+||| Grounded directly in prior-layer HadronTokens via the dependent Nuclide carrier.
 public export
 elementToHadrons : StellarElement -> Multiset BoxInt HadronToken
-elementToHadrons ElemH  = AddM ProtonToken (intToBoxInt 1) ZeroM
-elementToHadrons ElemHe = AddM ProtonToken (intToBoxInt 2) (AddM NeutronToken (intToBoxInt 2) ZeroM)                 -- 1 * Alpha (2p, 2n)
-elementToHadrons ElemC  = AddM ProtonToken (intToBoxInt 6) (AddM NeutronToken (intToBoxInt 6) ZeroM)                 -- 3 * Alpha (6p, 6n)
-elementToHadrons ElemN  = AddM ProtonToken (intToBoxInt 7) (AddM NeutronToken (intToBoxInt 7) ZeroM)                 -- CNO cycle (7p, 7n)
-elementToHadrons ElemO  = AddM ProtonToken (intToBoxInt 8) (AddM NeutronToken (intToBoxInt 8) ZeroM)                 -- 4 * Alpha (8p, 8n)
-elementToHadrons ElemNe = AddM ProtonToken (intToBoxInt 10) (AddM NeutronToken (intToBoxInt 10) ZeroM)               -- 5 * Alpha (10p, 10n)
-elementToHadrons ElemMg = AddM ProtonToken (intToBoxInt 12) (AddM NeutronToken (intToBoxInt 12) ZeroM)               -- 6 * Alpha (12p, 12n)
-elementToHadrons ElemSi = AddM ProtonToken (intToBoxInt 14) (AddM NeutronToken (intToBoxInt 14) ZeroM)               -- 7 * Alpha (14p, 14n)
-elementToHadrons ElemP  = AddM ProtonToken (intToBoxInt 15) (AddM NeutronToken (intToBoxInt 16) ZeroM)               -- (15p, 16n)
-elementToHadrons ElemFe = AddM ProtonToken (intToBoxInt 26) (AddM NeutronToken (intToBoxInt 30) ZeroM)               -- Silicon burning peak (26p, 30n)
+elementToHadrons elem =
+  let (_ ** _ ** nuc) = stellarNuclide elem
+  in nuclideHadrons nuc
+
+||| Canonical constituent quark multiset for every stellar nuclide:
+||| Grounded directly in Standard Model quarks via the dependent Nuclide carrier.
+public export
+elementToQuarks : StellarElement -> Multiset BoxInt SMFermion
+elementToQuarks elem =
+  let (_ ** _ ** nuc) = stellarNuclide elem
+  in nuclideQuarks nuc
 
 ||| Returns the atomic number Z (number of protons) observed from constituent hadrons:
 public export
 stellarAtomicNumber : StellarElement -> Nat
 stellarAtomicNumber elem =
-  boxToNat (lookupCountBox ProtonToken (elementToHadrons elem))
+  let (z ** _ ** _) = stellarNuclide elem
+  in z
 
 ||| Returns the neutron count N observed from constituent hadrons:
 public export
 stellarNeutronCount : StellarElement -> Nat
 stellarNeutronCount elem =
-  boxToNat (lookupCountBox NeutronToken (elementToHadrons elem))
+  let (_ ** n ** _) = stellarNuclide elem
+  in n
 
 ||| Returns the mass number A (total nucleons = Z + N) observed from constituent hadrons:
 public export
 stellarNucleonCount : StellarElement -> Nat
 stellarNucleonCount elem =
-  stellarAtomicNumber elem + stellarNeutronCount elem
+  let (z ** n ** _) = stellarNuclide elem
+  in z + n
 
 ||| Compile-time proof witness auditing that mass number A identically equals Z + N:
 public export
 auditNuclideConstituentConservation : (elem : StellarElement) ->
   stellarNucleonCount elem = stellarAtomicNumber elem + stellarNeutronCount elem
-auditNuclideConstituentConservation _ = Refl
+auditNuclideConstituentConservation ElemH  = Refl
+auditNuclideConstituentConservation ElemHe = Refl
+auditNuclideConstituentConservation ElemC  = Refl
+auditNuclideConstituentConservation ElemN  = Refl
+auditNuclideConstituentConservation ElemO  = Refl
+auditNuclideConstituentConservation ElemNe = Refl
+auditNuclideConstituentConservation ElemMg = Refl
+auditNuclideConstituentConservation ElemSi = Refl
+auditNuclideConstituentConservation ElemP  = Refl
+auditNuclideConstituentConservation ElemFe = Refl
+
+||| Universal theorem auditing that mass number A identically equals Z + N for ANY Nuclide:
+public export
+0 prfNuclideConservationTheorem : (nuc : Nuclide z n) -> nuclideMassNumber nuc = nuc.protons + nuc.neutrons
+prfNuclideConservationTheorem _ = Refl
 
 ||| Constructs a discrete 3-component Nuclide coordinate Vexel:
 ||| [1] = Z (protons), [2] = N (neutrons), [3] = A (mass number = Z + N).

@@ -3,6 +3,7 @@ module Stage1.Hadron.NuclearBindingDepPoly
 import Data.Vect
 import Stage0.BoxInt
 import Stage1.Polynumber
+import Stage0.Hadron.StellarNucleosynthesis
 
 %default total
 
@@ -44,6 +45,27 @@ public export
 evalAsymmetryFactor : (a : Nat) -> (z : Nat) -> BoxInt
 evalAsymmetryFactor a z =
   evalDepPolynumber (weizsackerAsymmetryDepPoly a) (natToBoxInt z)
+
+||| Computes discrete Weizsäcker Liquid-Drop Binding factors for any certified Nuclide:
+||| Evaluates Coulomb factor Z(Z-1) and Asymmetry factor (A - 2Z)^2.
+public export
+nuclideBindingFactors : Nuclide z n -> (BoxInt, BoxInt)
+nuclideBindingFactors nuc =
+  (evalCoulombFactor nuc.protons, evalAsymmetryFactor (nuc.protons + nuc.neutrons) nuc.protons)
+
+||| Compile-time proof witness: Iron-56 (Z=26, N=30, A=56) binding factors are Coulomb=650, Asymmetry=16.
+public export
+0 prfIron56BindingFactors :
+  let (_ ** _ ** fe) = stellarNuclide ElemFe
+  in nuclideBindingFactors fe = (intToBoxInt 650, intToBoxInt 16)
+prfIron56BindingFactors = Refl
+
+||| Compile-time proof witness: Alpha core Helium-4 (Z=2, N=2, A=4) binding factors are Coulomb=2, Asymmetry=0.
+public export
+0 prfHelium4BindingFactors :
+  let (_ ** _ ** he) = stellarNuclide ElemHe
+  in nuclideBindingFactors he = (intToBoxInt 2, intToBoxInt 0)
+prfHelium4BindingFactors = Refl
 
 ------------------------------------------------------------------------
 -- 2. GELL-MANN–OKUBO HADRON MASS MULTIPLET POLYNOMIALS
