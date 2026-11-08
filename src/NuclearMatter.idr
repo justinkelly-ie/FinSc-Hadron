@@ -22,5 +22,6 @@ import public Stage1.Hadron.StellarNuclei
 import public Stage1.Hadron.TypeIndexedMultiset
 import public Stage1.Hadron.NuclearRepIso
 import public Stage1.Hadron.NuclearBindingDepPoly
+import public Stage1.Hadron.CertifiedHadron
 
 %default total

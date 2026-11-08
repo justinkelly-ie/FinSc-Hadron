@@ -218,7 +218,7 @@ auditHadronizationEngineProof =
       tDirect   = (qgpPhase mDirect == ConfinementHadronGas) &&
                   (hadronBag mDirect == expectedBag)
       strmJet = streamFragmentQGPJet (stream [SMPBoson GluonR])
-      strmCount = foldStreamNat 2 (\acc, _ => S acc) 0 strmJet
+      strmCount = foldStream (\acc, _ => S acc) 0 strmJet
   in tList && tMultiset && tDirect && strmCount == 2
 
 ------------------------------------------------------------------------
