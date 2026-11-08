@@ -189,6 +189,7 @@ auditStellarNuclideMultisetConservationProofExport =
   auditStellarNuclideMultisetProof ElemMg &&
   auditStellarNuclideMultisetProof ElemSi &&
   auditStellarNuclideMultisetProof ElemP &&
+  auditStellarNuclideMultisetProof ElemS &&
   auditStellarNuclideMultisetProof ElemFe
 
 public export

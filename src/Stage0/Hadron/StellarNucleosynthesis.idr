@@ -159,6 +159,11 @@ phosphorusNuclide : Nuclide 15 16
 phosphorusNuclide =
   fuseNuclides (fuseNuclides (fuseNuclides siliconNuclide protonNuclide "") neutronNuclide "") neutronNuclide "P"
 
+||| Sulfur-32 (16p + 16n) formed by alpha capture on Silicon (28Si + 4He -> 32S):
+public export
+sulfurNuclide : Nuclide 16 16
+sulfurNuclide = alphaCaptureNuclide siliconNuclide "S"
+
 ||| Nickel-56 (28p + 28n) core formed by Silicon burning (28Si + 28Si -> 56Ni):
 public export
 nickel56Nuclide : Nuclide 28 28
@@ -180,8 +185,9 @@ alphaLadderNuclide 4 sym = oxygenNuclide
 alphaLadderNuclide 5 sym = neonNuclide
 alphaLadderNuclide 6 sym = magnesiumNuclide
 alphaLadderNuclide 7 sym = siliconNuclide
-alphaLadderNuclide (S (S (S (S (S (S (S (S k)))))))) sym =
-  MkNuclide sym ZeroM (2 * (8 + k)) (2 * (8 + k)) Refl Refl
+alphaLadderNuclide 8 sym = sulfurNuclide
+alphaLadderNuclide (S (S (S (S (S (S (S (S (S k))))))))) sym =
+  MkNuclide sym ZeroM (2 * (9 + k)) (2 * (9 + k)) Refl Refl
 
 public export
 Show (Nuclide z n) where
@@ -231,6 +237,7 @@ data StellarElement =
   | ElemMg  -- Magnesium (Z=12, Valence=2, Alpha Capture on Neon)
   | ElemSi  -- Silicon (Z=14, Valence=4, Alpha Capture on Magnesium)
   | ElemP   -- Phosphorus (Z=15, Valence=5, Polyphosphate Backbone)
+  | ElemS   -- Sulfur (Z=16, Valence=2, Alpha Capture on Silicon)
   | ElemFe  -- Iron (Z=26, Valence=2, Silicon Burning Peak)
 
 public export
@@ -244,6 +251,7 @@ Eq StellarElement where
   ElemMg == ElemMg = True
   ElemSi == ElemSi = True
   ElemP  == ElemP  = True
+  ElemS  == ElemS  = True
   ElemFe == ElemFe = True
   _      == _      = False
 
@@ -258,6 +266,7 @@ Show StellarElement where
   show ElemMg = "Mg (Z=12)"
   show ElemSi = "Si (Z=14)"
   show ElemP  = "P (Z=15)"
+  show ElemS  = "S (Z=16)"
   show ElemFe = "Fe (Z=26)"
 
 ||| Canonical embedding of StellarElement into the certified dependent Nuclide carrier:
@@ -273,6 +282,7 @@ stellarNuclide ElemNe = (10 ** 10 ** neonNuclide)
 stellarNuclide ElemMg = (12 ** 12 ** magnesiumNuclide)
 stellarNuclide ElemSi = (14 ** 14 ** siliconNuclide)
 stellarNuclide ElemP  = (15 ** 16 ** phosphorusNuclide)
+stellarNuclide ElemS  = (16 ** 16 ** sulfurNuclide)
 stellarNuclide ElemFe = (26 ** 30 ** ironNuclide)
 
 ||| Audits that every stellar nuclide's multiset hadron counts match its atomic numbers:
@@ -295,6 +305,7 @@ prfAuditStellarNuclides ElemNe = Refl
 prfAuditStellarNuclides ElemMg = Refl
 prfAuditStellarNuclides ElemSi = Refl
 prfAuditStellarNuclides ElemP  = Refl
+prfAuditStellarNuclides ElemS  = Refl
 prfAuditStellarNuclides ElemFe = Refl
 
 ||| Canonical constituent hadron multiset for every stellar nuclide (Rule 03 §7):
@@ -347,6 +358,7 @@ auditNuclideConstituentConservation ElemNe = Refl
 auditNuclideConstituentConservation ElemMg = Refl
 auditNuclideConstituentConservation ElemSi = Refl
 auditNuclideConstituentConservation ElemP  = Refl
+auditNuclideConstituentConservation ElemS  = Refl
 auditNuclideConstituentConservation ElemFe = Refl
 
 ||| Universal theorem auditing that mass number A identically equals Z + N for ANY Nuclide:
