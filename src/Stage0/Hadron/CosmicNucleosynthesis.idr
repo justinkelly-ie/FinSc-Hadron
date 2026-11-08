@@ -131,6 +131,7 @@ streamRadiativeDeuteronPhotons strm =
                                   Nothing          => Nothing) strm
 
 ||| Evaluates total radiative energy released during cosmic deuteron synthesis directly in O(1) memory.
+%spec fuel
 public export
 evaluateCosmicRadiativeEnergy : (fuel : Nat) -> FusedStream PhotonStateToken -> BoxInt
 evaluateCosmicRadiativeEnergy fuel strm =
@@ -184,6 +185,16 @@ bbnThermodynamicFluctuation step =
   let qYield = mulBox (natToBoxInt step.deuteronCount) (intToBoxInt 2)
       heat = addBox qYield (mulBox (natToBoxInt step.helium4Count) (intToBoxInt 28))
   in MkFluctuation (cast step.stepIndex) qYield heat
+
+||| Streams concurrent (work/energy yield, bath heat) fluctuation steps from the BBN reactor stream
+||| via FinSc-Thermodynamics zipSystemBathFluctuations (Rule 03 §8):
+public export
+streamBBNFluctuationPairs : FusedStream BBNReactionStep -> FusedStream FluctuationStep
+streamBBNFluctuationPairs strm =
+  let workStrm = mapStream (\s => mulBox (natToBoxInt s.deuteronCount) (intToBoxInt 2)) strm
+      heatStrm = mapStream (\s => addBox (mulBox (natToBoxInt s.deuteronCount) (intToBoxInt 2))
+                                         (mulBox (natToBoxInt s.helium4Count) (intToBoxInt 28))) strm
+  in zipSystemBathFluctuations workStrm heatStrm
 
 public export
 record BBNReactorState where
@@ -375,7 +386,8 @@ auditBBNThermodynamicEntropyProof =
       flucts = map bbnThermodynamicFluctuation steps
       strm = linearEntropyTransducer.stepEntropyProduction (stream flucts)
       results = runFueledStreamNat 32 strm
-  in all snd results
+      bbnPairs = runFueledStreamNat 32 (streamBBNFluctuationPairs (stream steps))
+  in all snd results && (length bbnPairs == 16)
 
 ||| Audits that Lithium-7 multiset fusion produces exact 189 fundamental mass tokens (7 * 27) without lists (Rule 04 §12).
 public export

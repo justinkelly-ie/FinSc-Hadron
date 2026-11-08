@@ -5,6 +5,7 @@ import Stage0.Multiset
 import Stage0.Token
 import Stage0.Singleton.Bit
 import Stage0.FieldStream
+import Stage0.FluctuationStream
 import Stage0.StructuralFuel
 import Stage1.Hadron.HadronicConfinement
 import Stage0.OnSeq.FusedStream
@@ -61,7 +62,7 @@ Show PlasmaCell where
 public export
 netPlasmaCharge : PlasmaCell -> BoxInt
 netPlasmaCharge (MkPlasmaCell p e) =
-  (natToBoxInt p * intToBoxInt 1) + (natToBoxInt e * intToBoxInt (-1))
+  addBox (mulBox (natToBoxInt p) (intToBoxInt 1)) (mulBox (natToBoxInt e) (intToBoxInt (-1)))
 
 ------------------------------------------------------------------------
 -- 2. RECOMBINATION & PHOTON DECOUPLING TRANSITION
@@ -129,10 +130,28 @@ streamDecoupledPhotons gas =
                         else Done) 0
 
 ||| Evaluates total energy of CMB decoupling photon stream in O(1) registers (FinSc-Electromagnetism):
+%spec fuel
 public export
 evaluateDecouplingPhotonEnergy : (fuel : Nat) -> DecoupledGas -> BoxInt
 evaluateDecouplingPhotonEnergy fuel gas =
   fusedComputePhotonStreamEnergyDirect (limit fuel) (fusedPhotonStateStream (streamDecoupledPhotons gas))
+
+||| Thermodynamic fluctuation step representing binding energy release and photon decoupling during recombination:
+public export
+recombinationThermodynamicFluctuation : DecoupledGas -> FluctuationStep
+recombinationThermodynamicFluctuation gas =
+  let bindWork = mulBox (natToBoxInt gas.neutralAtoms) (intToBoxInt 1)
+      photHeat = mulBox (natToBoxInt gas.decoupledPhotons) (intToBoxInt 1)
+  in MkFluctuation 1 bindWork photHeat
+
+||| Streams concurrent (binding work, radiative heat) fluctuation steps from plasma recombination
+||| via FinSc-Thermodynamics zipSystemBathFluctuations (Rule 03 §8):
+public export
+streamRecombinationFluctuations : FusedStream DecoupledGas -> FusedStream FluctuationStep
+streamRecombinationFluctuations gases =
+  let workStrm = mapStream (\g => mulBox (natToBoxInt g.neutralAtoms) (intToBoxInt 1)) gases
+      heatStrm = mapStream (\g => mulBox (natToBoxInt g.decoupledPhotons) (intToBoxInt 1)) gases
+  in zipSystemBathFluctuations workStrm heatStrm
 
 ------------------------------------------------------------------------
 -- 3. CONSTRUCTIVE FORMAL AUDIT PROOFS
@@ -167,5 +186,6 @@ auditPlasmaMultisetDecouplingProof =
       qNet = observePlasmaBagCharge bag
       result = recombinePlasma initial
       gasEnergy = evaluateDecouplingPhotonEnergy 120 result
-  in qNet == intToBoxInt 0 && gasEnergy == intToBoxInt 200
+      recombFlucts = runFueledStreamNat 5 (streamRecombinationFluctuations (stream [result]))
+  in qNet == intToBoxInt 0 && gasEnergy == intToBoxInt 200 && (length recombFlucts == 1)
 

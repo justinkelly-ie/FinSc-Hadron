@@ -77,6 +77,46 @@ exoticMassTokens spec =
                (exoticConstituentQuarks spec)
 
 ------------------------------------------------------------------------
+-- 1B. CERTIFIED DEPENDENT EXOTIC MULTIQUARK CARRIER (Rule 03 §7, §8)
+------------------------------------------------------------------------
+
+||| Expected valence quark count for an exotic multiquark species:
+public export
+expectedExoticValence : ExoticMultiquarkSpec -> BoxInt
+expectedExoticValence TetraquarkX3872  = intToBoxInt 4
+expectedExoticValence PentaquarkPcPlus = intToBoxInt 5
+expectedExoticValence HDibaryon        = intToBoxInt 6
+
+||| Certified Dependent Exotic Multiquark Carrier (Rule 03 §7, §8).
+||| Bundles the underlying multiset carrier with QTT multiplicity 0 proof that
+||| total constituent quarks match exact physical valence (4 for Tetraquark, 5 for Pentaquark, 6 for Dibaryon).
+public export
+record CertifiedExoticMultiquark (spec : ExoticMultiquarkSpec) where
+  constructor MkCertifiedExotic
+  quarks            : Multiset BoxInt SMFermion
+  0 prfValenceMatch : multisetSum quarks = expectedExoticValence spec
+
+||| Canonical certified Tetraquark X(3872) state (4 quarks: c c_bar u u_bar):
+public export
+certifiedTetraquark : CertifiedExoticMultiquark TetraquarkX3872
+certifiedTetraquark = MkCertifiedExotic (exoticConstituentQuarks TetraquarkX3872) Refl
+
+||| Canonical certified Pentaquark P_c+ state (5 quarks: u u d c c_bar):
+public export
+certifiedPentaquark : CertifiedExoticMultiquark PentaquarkPcPlus
+certifiedPentaquark = MkCertifiedExotic (exoticConstituentQuarks PentaquarkPcPlus) Refl
+
+||| Canonical certified H-Dibaryon state (6 quarks: u u d d s s):
+public export
+certifiedHDibaryon : CertifiedExoticMultiquark HDibaryon
+certifiedHDibaryon = MkCertifiedExotic (exoticConstituentQuarks HDibaryon) Refl
+
+||| Constructively observes constituent valence directly from the certified carrier in O(1) memory:
+public export
+exoticValenceCount : CertifiedExoticMultiquark spec -> BoxInt
+exoticValenceCount (MkCertifiedExotic q _) = multisetSum q
+
+------------------------------------------------------------------------
 -- 2. SMART CONSTRUCTORS FOR EXOTIC MULTIQUARKS
 ------------------------------------------------------------------------
 
@@ -136,4 +176,8 @@ auditExoticMultiquarksProof =
      (exoticElectricChargeThirds PentaquarkPcPlus == intToBoxInt 3) &&
      (exoticMassTokens HDibaryon == intToBoxInt 54) &&
      (exoticBaryonThirds HDibaryon == intToBoxInt 6) &&
-     (exoticElectricChargeThirds HDibaryon == intToBoxInt 0)
+     (exoticElectricChargeThirds HDibaryon == intToBoxInt 0) &&
+     -- Certified dependent multiquark valence proofs:
+     (exoticValenceCount certifiedTetraquark == intToBoxInt 4) &&
+     (exoticValenceCount certifiedPentaquark == intToBoxInt 5) &&
+     (exoticValenceCount certifiedHDibaryon == intToBoxInt 6)

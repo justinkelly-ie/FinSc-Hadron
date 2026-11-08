@@ -3,11 +3,14 @@ module Stage0.Hadron.ParticleScattering
 import Stage0.BoxInt
 import Stage1.UnixelFraction
 import Stage0.Multiset
+import Stage0.Token
 import Stage1.Hadron.StandardModel
 import Stage0.BoxNat
 import Stage0.OnSeq.FusedStream as FS
 import Stage0.ActionPrinciple
 import Stage1.FourGeometries
+import Stage0.FieldStream
+import Stage0.Singleton.Bit
 
 %default total
 
@@ -126,6 +129,34 @@ streamScatteringVertexM vertexFn p1 p2 =
     Just bag => streamScatteringProducts bag
     Nothing  => FS.stream []
 
+||| Streams atomic tokens directly from 2-to-2 scattering products in O(1) registers (Rule 04 §12).
+public export
+streamScatteringTokens : (StandardModelParticle -> StandardModelParticle -> Maybe (Multiset BoxInt StandardModelParticle)) ->
+                         StandardModelParticle -> StandardModelParticle ->
+                         FS.FusedStream (Token StandardModelParticle)
+streamScatteringTokens vertexFn p1 p2 =
+  case vertexFn p1 p2 of
+    Just bag => FS.streamTokens bag
+    Nothing  => FS.stream []
+
+||| Bremsstrahlung radiative photon emission from inelastic scattering of charged leptons (FinSc-Electromagnetism):
+public export
+bremsstrahlungEmission : StandardModelParticle -> (StandardModelParticle, PhotonStateToken)
+bremsstrahlungEmission (SMPFermion LepE) =
+  (SMPFermion LepE, MkPhotonToken One (intToBoxInt 1))
+bremsstrahlungEmission (SMPFermion AntiLepE) =
+  (SMPFermion AntiLepE, MkPhotonToken One (intToBoxInt 1))
+bremsstrahlungEmission p =
+  (p, MkPhotonToken Zero (intToBoxInt 0))
+
+||| Deforested stream transducer emitting discrete bremsstrahlung photon tokens from charged particle streams (Rule 04 §8):
+public export
+streamBremsstrahlungPhotons : FS.FusedStream StandardModelParticle -> FS.FusedStream PhotonStateToken
+streamBremsstrahlungPhotons strm =
+  FS.filterMapStream (\p => let (_, phot) = bremsstrahlungEmission p
+                            in if phot.frequency > intToBoxInt 0 then Just phot else Nothing)
+                     strm
+
 ------------------------------------------------------------------------
 -- 3. CONSTRUCTIVE FORMAL INVARIANT AUDIT
 ------------------------------------------------------------------------
@@ -144,7 +175,11 @@ auditParticleScatteringMultisetProof =
       okWeak = weakVectorBosonFusionVertexM (SMPBoson WPlus) (SMPBoson WMinus) == Just weakExpected
       qedStrm = streamScatteringVertexM qedLeptonScatteringVertexM (SMPFermion LepE) (SMPFermion AntiLepE)
       qedStreamWeight = FS.foldStreamNat 2 (\acc, (_, w) => addBox acc w) (intToBoxInt 0) qedStrm
-  in okQED && okQCD && okWeak && qedStreamWeight == intToBoxInt 2
+      qedTokensStrm = streamScatteringTokens qedLeptonScatteringVertexM (SMPFermion LepE) (SMPFermion AntiLepE)
+      qedTokenCount = FS.foldStreamNat 4 (\acc, _ => S acc) 0 qedTokensStrm
+      bremStrm = streamBremsstrahlungPhotons (FS.stream [SMPFermion LepE, SMPBoson GluonR, SMPFermion AntiLepE])
+      bremCount = FS.foldStreamNat 4 (\acc, _ => S acc) 0 bremStrm
+  in okQED && okQCD && okWeak && (qedStreamWeight == intToBoxInt 2) && (qedTokenCount == 2) && (bremCount == 2)
 
 ||| Audits High-Energy 2-to-2 Particle Scattering Vertices:
 ||| 1. Verifies QED e+ e- -> mu+ mu- scattering output.

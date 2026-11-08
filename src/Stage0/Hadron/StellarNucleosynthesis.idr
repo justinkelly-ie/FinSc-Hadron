@@ -748,18 +748,21 @@ streamStellarLadderTransducer =
                         Nothing  => Done) 0
 
 ||| Evaluates total mass number (nucleons) across the streaming ladder using foldStreamNat.
+%spec fuel
 public export
 totalStellarLadderNucleons : (fuel : Nat) -> Nat
 totalStellarLadderNucleons fuel =
   foldStreamNat fuel (\acc, stp => acc + stp.massNumberA) 0 streamStellarLadderTransducer
 
 ||| Evaluates total cumulative energy yield across the streaming ladder in O(1) registers.
+%spec fuel
 public export
 totalStellarLadderEnergyYield : (fuel : Nat) -> BoxInt
 totalStellarLadderEnergyYield fuel =
   foldStreamNat fuel (\acc, stp => addBox acc stp.energyYieldQ) (intToBoxInt 0) streamStellarLadderTransducer
 
 ||| Step count of the complete stellar nucleosynthesis ladder (10 elements):
+%spec fuel
 public export
 stellarLadderStepCount : (fuel : Nat) -> Nat
 stellarLadderStepCount fuel =
@@ -785,6 +788,15 @@ stellarThermodynamicFluctuation : NuclearReactionStep -> FluctuationStep
 stellarThermodynamicFluctuation stp =
   MkFluctuation (cast stp.stepIndex) stp.energyYieldQ stp.energyYieldQ
 
+||| Streams concurrent (energy yield, dissipation heat) fluctuation steps across the stellar ladder
+||| via FinSc-Thermodynamics zipSystemBathFluctuations (Rule 03 §8):
+public export
+streamStellarFluctuationPairs : FusedStream FluctuationStep
+streamStellarFluctuationPairs =
+  let qYieldStrm = mapStream (\stp => stp.energyYieldQ) streamStellarLadderTransducer
+      heatStrm   = mapStream (\stp => stp.energyYieldQ) streamStellarLadderTransducer
+  in zipSystemBathFluctuations qYieldStrm heatStrm
+
 ||| Audits that all steps in the stellar nucleosynthesis ladder are strictly exothermic
 ||| and produce non-negative entropy (Delta S >= 0) via LinearEntropyTransducer:
 public export
@@ -793,7 +805,8 @@ auditStellarThermodynamicsProof =
   let flucts = mapStream stellarThermodynamicFluctuation streamStellarLadderTransducer
       strm = linearEntropyTransducer.stepEntropyProduction flucts
       results = runFueledStreamNat 12 strm
-  in all snd results && (length results == 10)
+      stellarPairs = runFueledStreamNat 24 streamStellarFluctuationPairs
+  in all snd results && (length results == 10) && (length stellarPairs == 10)
 
 ||| Structural recursive evaluator for compile-time macro audit (Rule 01 §1):
 public export
