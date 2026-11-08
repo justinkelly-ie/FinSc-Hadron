@@ -72,10 +72,10 @@ nuclideHadrons nuc =
   AddM ProtonToken (natToBoxInt nuc.protons)
     (AddM NeutronToken (natToBoxInt nuc.neutrons) ZeroM)
 
-||| Mass tokens (A * 27) for any Nuclide:
+||| Mass tokens (A * 27) for any Nuclide, grounded in the 27-state elliptic lattice capacity:
 public export
 nuclideMassTokens : Nuclide z n -> BoxInt
-nuclideMassTokens nuc = natToBoxInt ((nuc.protons + nuc.neutrons) * 27)
+nuclideMassTokens nuc = natToBoxInt ((nuc.protons + nuc.neutrons) * ellipticLatticeCapacity)
 
 ||| Extended Chemical Elements synthesized in stellar interiors.
 public export

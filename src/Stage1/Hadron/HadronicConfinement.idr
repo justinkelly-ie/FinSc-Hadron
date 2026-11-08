@@ -40,10 +40,10 @@ seedHadronEpoch3 =
           BlueColor  => Stage0.BoxInt.intToBoxInt 1)
   in MkHadronState grid
 
-||| Deforested direct vector slice sum of 9 cells from an offset.
+||| Deforested direct vector slice sum of cells spanning one color plane (sliceColorCapacity = 9 cells).
 private
-sum9From : Nat -> Vect 27 Stage0.BoxInt.BoxInt -> Stage0.BoxInt.BoxInt
-sum9From offset grid = go 9 offset (Stage0.BoxInt.intToBoxInt 0)
+sumColorSlice : Nat -> Vect 27 Stage0.BoxInt.BoxInt -> Stage0.BoxInt.BoxInt
+sumColorSlice offset grid = go sliceColorCapacity offset (Stage0.BoxInt.intToBoxInt 0)
   where
     go : Nat -> Nat -> Stage0.BoxInt.BoxInt -> Stage0.BoxInt.BoxInt
     go Z _ acc = acc
@@ -55,9 +55,9 @@ sum9From offset grid = go 9 offset (Stage0.BoxInt.intToBoxInt 0)
 ||| Computes the net color charge sum of a sector via deforested direct vector slices.
 public export
 sectorColorSum : ColorCharge -> HadronState -> Stage0.BoxInt.BoxInt
-sectorColorSum RedColor (MkHadronState grid)   = sum9From 0 grid
-sectorColorSum GreenColor (MkHadronState grid) = sum9From 9 grid
-sectorColorSum BlueColor (MkHadronState grid)  = sum9From 18 grid
+sectorColorSum RedColor (MkHadronState grid)   = sumColorSlice 0 grid
+sectorColorSum GreenColor (MkHadronState grid) = sumColorSlice sliceColorCapacity grid
+sectorColorSum BlueColor (MkHadronState grid)  = sumColorSlice (2 * sliceColorCapacity) grid
 
 ||| Color Neutrality (White / Singlet State) Predicate:
 ||| A hadron is confined and color-neutral if and only if Red Sum == Green Sum == Blue Sum.
@@ -142,10 +142,10 @@ Eq HadronSector where
 
 ||| Hadronic Confinement Transform Multiset (G ⊗ Z ⊗ J):
 ||| G: EllipticSector (Bound State Confinement)
-||| Z: 1 / [27] (Exact 27-cell normalization)
+||| Z: 1 / [ellipticLatticeCapacity] (Exact 27-cell normalization)
 ||| J: ColorCharge -> BaryonSinglet (Pushforward Contraction Map)
 quarkToBaryonTransform : MaxelTransform ColorCharge HadronSector
-quarkToBaryonTransform = mkTransformBox EllipticSector (mkUnixelFraction (Stage0.BoxInt.intToBoxInt 1) 27)
+quarkToBaryonTransform = mkTransformBox EllipticSector (mkUnixelFraction (Stage0.BoxInt.intToBoxInt 1) (cast ellipticLatticeCapacity))
   [ ((RedColor, BaryonSinglet), Stage0.BoxInt.intToBoxInt 1)
   , ((GreenColor, BaryonSinglet), Stage0.BoxInt.intToBoxInt 1)
   , ((BlueColor, BaryonSinglet), Stage0.BoxInt.intToBoxInt 1)
