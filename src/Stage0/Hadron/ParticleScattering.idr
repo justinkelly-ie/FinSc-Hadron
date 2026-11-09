@@ -10,7 +10,7 @@ import Stage0.OnSeq.FusedStream as FS
 import Stage0.ActionPrinciple
 import Stage1.FourGeometries
 import Stage0.FieldStream
-import Stage0.Singleton.Bit
+import Stage0.Bit
 
 %default total
 

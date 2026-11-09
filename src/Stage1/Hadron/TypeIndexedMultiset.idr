@@ -1,7 +1,7 @@
 module Stage1.Hadron.TypeIndexedMultiset
 
 import Language.Reflection
-import Stage0.Singleton.Bit
+import Stage0.Bit
 import Stage0.BoxInt
 import Stage0.Multiset
 import public Stage1.Basis.Coordinate

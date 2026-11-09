@@ -4,7 +4,7 @@ import Stage0.BoxInt
 import Stage0.Multiset
 import Stage0.TransitionNetwork
 import Stage0.OnSeq.FusedStream
-import Stage0.Singleton.Bit
+import Stage0.Bit
 import Stage0.FieldStream
 import Stage0.FluctuationStream
 import public Stage1.Basis.Coordinate

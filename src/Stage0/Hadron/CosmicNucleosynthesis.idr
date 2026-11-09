@@ -3,7 +3,7 @@ module Stage0.Hadron.CosmicNucleosynthesis
 import Stage0.BoxInt
 import Stage0.Multiset
 import Stage0.Token
-import Stage0.Singleton.Bit
+import Stage0.Bit
 import Stage0.StructuralFuel
 import Stage0.FieldStream
 import Stage0.FluctuationStream
