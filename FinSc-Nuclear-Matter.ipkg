@@ -1,7 +1,7 @@
 package FinSc-Nuclear-Matter
 version = 0.3.1
 authors = "Justin Kelly"
-brief   = "Layer 5b Hadronic Confinement, Quark Trapping & Stellar Nucleosynthesis Engine."
+brief   = "Layer 12 Hadronic Confinement, Quark Trapping & Stellar Nucleosynthesis Engine"
 
 depends = FinSc-Geometry, FinSc-Multiset, FinSc-Metric-Substrate, FinSc-Phase-Unfolding, FinSc-Action-Dynamics, FinSc-Electromagnetism, FinSc-Quantum-Coherence, FinSc-Thermodynamics, base, linear
 sourcedir = "src"
