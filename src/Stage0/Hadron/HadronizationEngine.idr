@@ -514,44 +514,66 @@ clusterPionZero ColorRed   = AddM (QuarkParton QuarkU ColorRed) (intToBoxInt 1) 
 clusterPionZero ColorGreen = AddM (QuarkParton QuarkU ColorGreen) (intToBoxInt 1) (AddM (AntiQuarkParton AntiQuarkU AntiGreen) (intToBoxInt 1) ZeroM)
 clusterPionZero ColorBlue  = AddM (QuarkParton QuarkU ColorBlue) (intToBoxInt 1) (AddM (AntiQuarkParton AntiQuarkU AntiBlue) (intToBoxInt 1) ZeroM)
 
+||| Structural positivity test on a colour-buffer count (Z => False, S _ => True).
+public export
+hasColorCount : Nat -> Bool
+hasColorCount Z     = False
+hasColorCount (S _) = True
+
+||| Structural decrement of a colour-buffer count (only applied to counts proven positive by `hasColorCount`).
+public export
+decColorCount : Nat -> Nat
+decColorCount Z     = Z
+decColorCount (S k) = k
+
 ||| Attempts to condense a color-singlet meson or baryon from current buffer state:
 ||| Derives the resulting HadronToken directly from Layer L-1 reduced observables (Rule 03 §8).
 ||| Returns (Just formedHadron, updatedBuffer) if a singlet forms, or (Nothing, buffer) if incomplete.
+|||
+||| Implemented as a linear first-match guard chain over field projections rather than
+||| 15 overlapping 12-ary constructor patterns: the latter forces the case-tree compiler
+||| into a combinatorial split over all 12 Nat fields (multi-GB elaboration stall).
+||| Priority order is preserved exactly: pi+ (R,G,B), pi- (R,G,B), pi0 (R,G,B),
+||| proton (RGD, RDB, GDB), neutron (RDD, GDD, BDD).
 public export
 tryCondenseSinglet : ColorCondensationState -> (Maybe HadronToken, ColorCondensationState)
-tryCondenseSinglet (MkCondensationState (S ur) ug ub dr dg db ubr ubg ubb (S dbr) dbg dbb) =
-  (condenseClusterByObservables (clusterPionPlus ColorRed), MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet (MkCondensationState ur (S ug) ub dr dg db ubr ubg ubb dbr (S dbg) dbb) =
-  (condenseClusterByObservables (clusterPionPlus ColorGreen), MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet (MkCondensationState ur ug (S ub) dr dg db ubr ubg ubb dbr dbg (S dbb)) =
-  (condenseClusterByObservables (clusterPionPlus ColorBlue), MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet (MkCondensationState ur ug ub (S dr) dg db (S ubr) ubg ubb dbr dbg dbb) =
-  (condenseClusterByObservables (clusterPionMinus ColorRed), MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet (MkCondensationState ur ug ub dr (S dg) db ubr (S ubg) ubb dbr dbg dbb) =
-  (condenseClusterByObservables (clusterPionMinus ColorGreen), MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet (MkCondensationState ur ug ub dr dg (S db) ubr ubg (S ubb) dbr dbg dbb) =
-  (condenseClusterByObservables (clusterPionMinus ColorBlue), MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet (MkCondensationState (S ur) ug ub dr dg db (S ubr) ubg ubb dbr dbg dbb) =
-  (condenseClusterByObservables (clusterPionZero ColorRed), MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet (MkCondensationState ur (S ug) ub dr dg db ubr (S ubg) ubb dbr dbg dbb) =
-  (condenseClusterByObservables (clusterPionZero ColorGreen), MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet (MkCondensationState ur ug (S ub) dr dg db ubr ubg (S ubb) dbr dbg dbb) =
-  (condenseClusterByObservables (clusterPionZero ColorBlue), MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
--- Proton: uud (R, G, B)
-tryCondenseSinglet (MkCondensationState (S ur) (S ug) ub dr dg (S db) ubr ubg ubb dbr dbg dbb) =
-  (condenseClusterByObservables clusterProtonRGD, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet (MkCondensationState (S ur) ug (S ub) dr (S dg) db ubr ubg ubb dbr dbg dbb) =
-  (condenseClusterByObservables clusterProtonRDB, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet (MkCondensationState ur (S ug) (S ub) (S dr) dg db ubr ubg ubb dbr dbg dbb) =
-  (condenseClusterByObservables clusterProtonGDB, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
--- Neutron: udd (R, G, B)
-tryCondenseSinglet (MkCondensationState (S ur) ug ub dr (S dg) (S db) ubr ubg ubb dbr dbg dbb) =
-  (condenseClusterByObservables clusterNeutronRDD, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet (MkCondensationState ur (S ug) ub (S dr) dg (S db) ubr ubg ubb dbr dbg dbb) =
-  (condenseClusterByObservables clusterNeutronGDD, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet (MkCondensationState ur ug (S ub) (S dr) (S dg) db ubr ubg ubb dbr dbg dbb) =
-  (condenseClusterByObservables clusterNeutronBDD, MkCondensationState ur ug ub dr dg db ubr ubg ubb dbr dbg dbb)
-tryCondenseSinglet st = (Nothing, st)
+tryCondenseSinglet st =
+  -- Pion+: u + d_bar
+  if hasColorCount st.uR && hasColorCount st.dBarR then
+    (condenseClusterByObservables (clusterPionPlus ColorRed), { uR $= decColorCount, dBarR $= decColorCount } st)
+  else if hasColorCount st.uG && hasColorCount st.dBarG then
+    (condenseClusterByObservables (clusterPionPlus ColorGreen), { uG $= decColorCount, dBarG $= decColorCount } st)
+  else if hasColorCount st.uB && hasColorCount st.dBarB then
+    (condenseClusterByObservables (clusterPionPlus ColorBlue), { uB $= decColorCount, dBarB $= decColorCount } st)
+  -- Pion-: d + u_bar
+  else if hasColorCount st.dR && hasColorCount st.uBarR then
+    (condenseClusterByObservables (clusterPionMinus ColorRed), { dR $= decColorCount, uBarR $= decColorCount } st)
+  else if hasColorCount st.dG && hasColorCount st.uBarG then
+    (condenseClusterByObservables (clusterPionMinus ColorGreen), { dG $= decColorCount, uBarG $= decColorCount } st)
+  else if hasColorCount st.dB && hasColorCount st.uBarB then
+    (condenseClusterByObservables (clusterPionMinus ColorBlue), { dB $= decColorCount, uBarB $= decColorCount } st)
+  -- Pion0: u + u_bar
+  else if hasColorCount st.uR && hasColorCount st.uBarR then
+    (condenseClusterByObservables (clusterPionZero ColorRed), { uR $= decColorCount, uBarR $= decColorCount } st)
+  else if hasColorCount st.uG && hasColorCount st.uBarG then
+    (condenseClusterByObservables (clusterPionZero ColorGreen), { uG $= decColorCount, uBarG $= decColorCount } st)
+  else if hasColorCount st.uB && hasColorCount st.uBarB then
+    (condenseClusterByObservables (clusterPionZero ColorBlue), { uB $= decColorCount, uBarB $= decColorCount } st)
+  -- Proton: uud (R, G, B)
+  else if hasColorCount st.uR && hasColorCount st.uG && hasColorCount st.dB then
+    (condenseClusterByObservables clusterProtonRGD, { uR $= decColorCount, uG $= decColorCount, dB $= decColorCount } st)
+  else if hasColorCount st.uR && hasColorCount st.uB && hasColorCount st.dG then
+    (condenseClusterByObservables clusterProtonRDB, { uR $= decColorCount, uB $= decColorCount, dG $= decColorCount } st)
+  else if hasColorCount st.uG && hasColorCount st.uB && hasColorCount st.dR then
+    (condenseClusterByObservables clusterProtonGDB, { uG $= decColorCount, uB $= decColorCount, dR $= decColorCount } st)
+  -- Neutron: udd (R, G, B)
+  else if hasColorCount st.uR && hasColorCount st.dG && hasColorCount st.dB then
+    (condenseClusterByObservables clusterNeutronRDD, { uR $= decColorCount, dG $= decColorCount, dB $= decColorCount } st)
+  else if hasColorCount st.uG && hasColorCount st.dR && hasColorCount st.dB then
+    (condenseClusterByObservables clusterNeutronGDD, { uG $= decColorCount, dR $= decColorCount, dB $= decColorCount } st)
+  else if hasColorCount st.uB && hasColorCount st.dR && hasColorCount st.dG then
+    (condenseClusterByObservables clusterNeutronBDD, { uB $= decColorCount, dR $= decColorCount, dG $= decColorCount } st)
+  else (Nothing, st)
 
 ||| State transition step for the single-pass color-singlet condensation transducer.
 public export
