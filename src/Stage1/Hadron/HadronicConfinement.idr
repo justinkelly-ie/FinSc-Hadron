@@ -140,6 +140,10 @@ public export
 Eq HadronSector where
   BaryonSinglet == BaryonSinglet = True
 
+public export
+Ord HadronSector where
+  compare BaryonSinglet BaryonSinglet = EQ
+
 ||| Hadronic Confinement Transform Multiset (G ⊗ Z ⊗ J):
 ||| G: EllipticSector (Bound State Confinement)
 ||| Z: 1 / [ellipticLatticeCapacity] (Exact 27-cell normalization)
