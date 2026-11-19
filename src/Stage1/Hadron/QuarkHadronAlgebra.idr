@@ -166,7 +166,7 @@ prfQuarkHadronAlgebra = Refl
 
 ||| Evaluates hadronic Maxel matrix product in O(1) stack allocations using Fused Stream Fusion.
 ||| Deforests non-matching color cross-sector terms to zero-allocation Skip steps.
-%inline public export
+public export
 fusedHadronicMatrixProduct : FusedStream GeometricPixel -> FusedStream GeometricPixel -> FusedStream GeometricPixel
 fusedHadronicMatrixProduct = multiplyGeometricPixels
 
@@ -287,21 +287,20 @@ fusedComputeNetBaryonMassFuelModel fuel triplets =
 -- 9. 2LTT STAGED QUARK HADRON FLAVOR COMBINATORICS
 ------------------------------------------------------------------------
 
-||| Evaluates total quark flavor multiplicity count from a multiset stream
+||| Evaluates total quark flavor multiplicity count from an indexed Carrier
 public export
-hadronFlavorMultisetSum : Multiset BoxInt String -> BoxInt
-hadronFlavorMultisetSum ZeroM = intToBoxInt 0
-hadronFlavorMultisetSum (AddM _ c rest) = addBox c (hadronFlavorMultisetSum rest)
+hadronFlavorMultisetSum : Carrier String -> BoxInt
+hadronFlavorMultisetSum = totalMassBox
 
-||| 2LTT Staged Hadron Flavor Combinatorics: Pre-evaluates quark flavor multiplicity sums over multiset token streams
+||| 2LTT Staged Hadron Flavor Combinatorics: Pre-evaluates quark flavor multiplicity sums over indexed Carriers
 ||| at compile-time Stage 1 (U_1) and splices out the unboxed scalar BoxInt to Stage 0 (U_0).
-%inline public export
-stagedHadronFlavorCombinatorics : Lift (Multiset BoxInt String) -> BoxInt
+public export
+stagedHadronFlavorCombinatorics : Lift (Carrier String) -> BoxInt
 stagedHadronFlavorCombinatorics liftedStream = hadronFlavorMultisetSum (splice liftedStream)
 
 ||| QTT 0 Erased Proof Witness: Staged Hadron Flavor Combinatorics Invariant
 public export
-0 prfStagedHadronFlavor : (m : Multiset BoxInt String) -> splice (quote m) = m
+0 prfStagedHadronFlavor : (m : Carrier String) -> splice (quote m) = m
 prfStagedHadronFlavor m = inverseSpliceQuote m
 
 ------------------------------------------------------------------------

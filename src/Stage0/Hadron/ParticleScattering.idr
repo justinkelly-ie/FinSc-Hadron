@@ -3,6 +3,7 @@ module Stage0.Hadron.ParticleScattering
 import Stage0.BoxInt
 import Stage1.UnixelFraction
 import Stage0.Multiset
+import Stage1.MultisetTree
 import Stage0.Token
 import Stage1.Hadron.StandardModel
 import Stage0.BoxNat
@@ -84,44 +85,44 @@ weakVectorBosonFusionVertex p1 p2 =
 
 ||| Pure Multiset QED Lepton Scattering Vertex: e+ + e- -> mu+ + mu-.
 public export
-qedLeptonScatteringVertexM : StandardModelParticle -> StandardModelParticle -> Maybe (Multiset BoxInt StandardModelParticle)
+qedLeptonScatteringVertexM : StandardModelParticle -> StandardModelParticle -> Maybe (Carrier StandardModelParticle)
 qedLeptonScatteringVertexM p1 p2 =
   case (p1, p2) of
     (SMPFermion LepE, SMPFermion AntiLepE) =>
-      Just (AddM (SMPFermion LepMu) (intToBoxInt 1) (AddM (SMPFermion AntiLepMu) (intToBoxInt 1) ZeroM))
+      Just (singletonCarrier (SMPFermion LepMu) (intToBoxInt 1) <+> singletonCarrier (SMPFermion AntiLepMu) (intToBoxInt 1))
     _ => Nothing
 
 ||| Pure Multiset QCD Quark-Antiquark Annihilation to Gluon Pair: q + q_bar -> 2 g.
 public export
-qcdQuarkAnnihilationVertexM : StandardModelParticle -> StandardModelParticle -> Maybe (Multiset BoxInt StandardModelParticle)
+qcdQuarkAnnihilationVertexM : StandardModelParticle -> StandardModelParticle -> Maybe (Carrier StandardModelParticle)
 qcdQuarkAnnihilationVertexM p1 p2 =
   case (p1, p2) of
     (SMPFermion QuarkU, SMPFermion AntiQuarkU) =>
-      Just (AddM (SMPBoson GluonR) (intToBoxInt 2) ZeroM)
+      Just (singletonCarrier (SMPBoson GluonR) (intToBoxInt 2))
     (SMPFermion QuarkD, SMPFermion AntiQuarkD) =>
-      Just (AddM (SMPBoson GluonR) (intToBoxInt 2) ZeroM)
+      Just (singletonCarrier (SMPBoson GluonR) (intToBoxInt 2))
     _ => Nothing
 
 ||| Pure Multiset Weak Vector Boson Fusion Vertex: W+ + W- -> H0 + gamma.
 public export
-weakVectorBosonFusionVertexM : StandardModelParticle -> StandardModelParticle -> Maybe (Multiset BoxInt StandardModelParticle)
+weakVectorBosonFusionVertexM : StandardModelParticle -> StandardModelParticle -> Maybe (Carrier StandardModelParticle)
 weakVectorBosonFusionVertexM p1 p2 =
   case (p1, p2) of
     (SMPBoson WPlus, SMPBoson WMinus) =>
-      Just (AddM (SMPBoson Higgs0) (intToBoxInt 1) (AddM (SMPBoson Photon) (intToBoxInt 1) ZeroM))
+      Just (singletonCarrier (SMPBoson Higgs0) (intToBoxInt 1) <+> singletonCarrier (SMPBoson Photon) (intToBoxInt 1))
     _ => Nothing
 
-||| Converts a scattering product multiset into a deforested stream of (particle, count)
-||| stepping directly through inductive Multiset constructors without intermediate List allocation.
+||| Converts a scattering product carrier into a deforested stream of (particle, count)
+||| stepping directly through AVL nodes without intermediate List allocation.
 public export
-streamScatteringProducts : Multiset BoxInt StandardModelParticle -> FS.FusedStream (StandardModelParticle, BoxInt)
+streamScatteringProducts : Carrier StandardModelParticle -> FS.FusedStream (StandardModelParticle, BoxInt)
 streamScatteringProducts bag =
   FS.filterMapStream (\(p, w) => if boxIsNonZero w then Just (p, w) else Nothing)
-                     (FS.multisetToStream bag)
+                     (streamBoxMultisetTree bag)
 
 ||| Deforested stream transducer executing 2-to-2 scattering vertex product streaming.
 public export
-streamScatteringVertexM : (StandardModelParticle -> StandardModelParticle -> Maybe (Multiset BoxInt StandardModelParticle)) ->
+streamScatteringVertexM : (StandardModelParticle -> StandardModelParticle -> Maybe (Carrier StandardModelParticle)) ->
                           StandardModelParticle -> StandardModelParticle ->
                           FS.FusedStream (StandardModelParticle, BoxInt)
 streamScatteringVertexM vertexFn p1 p2 =
@@ -131,12 +132,17 @@ streamScatteringVertexM vertexFn p1 p2 =
 
 ||| Streams atomic tokens directly from 2-to-2 scattering products in O(1) registers (Rule 04 §12).
 public export
-streamScatteringTokens : (StandardModelParticle -> StandardModelParticle -> Maybe (Multiset BoxInt StandardModelParticle)) ->
+streamScatteringTokens : (StandardModelParticle -> StandardModelParticle -> Maybe (Carrier StandardModelParticle)) ->
                          StandardModelParticle -> StandardModelParticle ->
                          FS.FusedStream (Token StandardModelParticle)
 streamScatteringTokens vertexFn p1 p2 =
   case vertexFn p1 p2 of
-    Just bag => FS.streamTokens bag
+    Just bag =>
+      FS.flatMapStream
+        (\(p, w) =>
+          let n = if w > intToBoxInt 0 then boxToNat w else 0
+          in FS.unfoldStream (\k => case k of Z => FS.Done; S k' => FS.Yield (MkToken p) k') n)
+        (streamBoxMultisetTree bag)
     Nothing  => FS.stream []
 
 ||| Bremsstrahlung radiative photon emission from inelastic scattering of charged leptons (FinSc-Electromagnetism):
@@ -166,19 +172,19 @@ streamBremsstrahlungPhotons strm =
 public export
 auditParticleScatteringMultisetProof : Bool
 auditParticleScatteringMultisetProof =
-  let qedExpected = AddM (SMPFermion LepMu) (intToBoxInt 1) (AddM (SMPFermion AntiLepMu) (intToBoxInt 1) ZeroM)
-      qcdExpected = AddM (SMPBoson GluonR) (intToBoxInt 2) ZeroM
-      weakExpected = AddM (SMPBoson Higgs0) (intToBoxInt 1) (AddM (SMPBoson Photon) (intToBoxInt 1) ZeroM)
+  let qedExpected = singletonCarrier (SMPFermion LepMu) (intToBoxInt 1) <+> singletonCarrier (SMPFermion AntiLepMu) (intToBoxInt 1)
+      qcdExpected = singletonCarrier (SMPBoson GluonR) (intToBoxInt 2)
+      weakExpected = singletonCarrier (SMPBoson Higgs0) (intToBoxInt 1) <+> singletonCarrier (SMPBoson Photon) (intToBoxInt 1)
       
       okQED  = qedLeptonScatteringVertexM (SMPFermion LepE) (SMPFermion AntiLepE) == Just qedExpected
       okQCD  = qcdQuarkAnnihilationVertexM (SMPFermion QuarkU) (SMPFermion AntiQuarkU) == Just qcdExpected
       okWeak = weakVectorBosonFusionVertexM (SMPBoson WPlus) (SMPBoson WMinus) == Just weakExpected
       qedStrm = streamScatteringVertexM qedLeptonScatteringVertexM (SMPFermion LepE) (SMPFermion AntiLepE)
-      qedStreamWeight = FS.foldStreamNat 2 (\acc, (_, w) => addBox acc w) (intToBoxInt 0) qedStrm
+      qedStreamWeight = FS.foldStreamNat 16 (\acc, (_, w) => addBox acc w) (intToBoxInt 0) qedStrm
       qedTokensStrm = streamScatteringTokens qedLeptonScatteringVertexM (SMPFermion LepE) (SMPFermion AntiLepE)
-      qedTokenCount = FS.foldStreamNat 4 (\acc, _ => S acc) 0 qedTokensStrm
+      qedTokenCount = FS.foldStreamNat 16 (\acc, _ => S acc) 0 qedTokensStrm
       bremStrm = streamBremsstrahlungPhotons (FS.stream [SMPFermion LepE, SMPBoson GluonR, SMPFermion AntiLepE])
-      bremCount = FS.foldStreamNat 4 (\acc, _ => S acc) 0 bremStrm
+      bremCount = FS.foldStreamNat 16 (\acc, _ => S acc) 0 bremStrm
   in okQED && okQCD && okWeak && (qedStreamWeight == intToBoxInt 2) && (qedTokenCount == 2) && (bremCount == 2)
 
 ||| Audits High-Energy 2-to-2 Particle Scattering Vertices:

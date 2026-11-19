@@ -42,22 +42,22 @@ Show StandardBaryonSpec where
 
 ||| Constituent valence quark multiset representation for standard baryons (Rule 03 §8).
 public export
-baryonConstituentQuarks : StandardBaryonSpec -> Multiset BoxInt SMFermion
-baryonConstituentQuarks ProtonBaryon  = AddM QuarkU (intToBoxInt 2) (AddM QuarkD (intToBoxInt 1) ZeroM)
-baryonConstituentQuarks NeutronBaryon = AddM QuarkU (intToBoxInt 1) (AddM QuarkD (intToBoxInt 2) ZeroM)
-baryonConstituentQuarks LambdaBaryon  = AddM QuarkU (intToBoxInt 1) (AddM QuarkD (intToBoxInt 1) (AddM QuarkS (intToBoxInt 1) ZeroM))
-baryonConstituentQuarks SigmaBaryon   = AddM QuarkU (intToBoxInt 2) (AddM QuarkS (intToBoxInt 1) ZeroM)
-baryonConstituentQuarks XiBaryon      = AddM QuarkU (intToBoxInt 1) (AddM QuarkS (intToBoxInt 2) ZeroM)
-baryonConstituentQuarks OmegaBaryon   = AddM QuarkS (intToBoxInt 3) ZeroM
+baryonConstituentQuarks : StandardBaryonSpec -> Carrier SMFermion
+baryonConstituentQuarks ProtonBaryon  = singletonCarrier QuarkU (intToBoxInt 2) <+> singletonCarrier QuarkD (intToBoxInt 1)
+baryonConstituentQuarks NeutronBaryon = singletonCarrier QuarkU (intToBoxInt 1) <+> singletonCarrier QuarkD (intToBoxInt 2)
+baryonConstituentQuarks LambdaBaryon  = singletonCarrier QuarkU (intToBoxInt 1) <+> singletonCarrier QuarkD (intToBoxInt 1) <+> singletonCarrier QuarkS (intToBoxInt 1)
+baryonConstituentQuarks SigmaBaryon   = singletonCarrier QuarkU (intToBoxInt 2) <+> singletonCarrier QuarkS (intToBoxInt 1)
+baryonConstituentQuarks XiBaryon      = singletonCarrier QuarkU (intToBoxInt 1) <+> singletonCarrier QuarkS (intToBoxInt 2)
+baryonConstituentQuarks OmegaBaryon   = singletonCarrier QuarkS (intToBoxInt 3)
 
 ||| Certified Dependent Baryon Carrier (Rule 03 §7, §8).
-||| Bundles the underlying multiset carrier with QTT multiplicity 0 proof that
+||| Bundles the underlying Carrier with QTT multiplicity 0 proof that
 ||| total constituent quarks match exact baryon valence (3 quarks).
 public export
 record CertifiedBaryon (spec : StandardBaryonSpec) where
   constructor MkCertifiedBaryon
-  quarks       : Multiset BoxInt SMFermion
-  0 prfValence : multisetSum quarks = intToBoxInt 3
+  quarks       : Carrier SMFermion
+  0 prfValence : totalMassBox quarks = intToBoxInt 3
 
 ||| Canonical certified Proton state (2 u + 1 d = 3 quarks):
 public export
@@ -124,22 +124,22 @@ Show StandardMesonSpec where
 
 ||| Constituent valence quark multiset representation for standard mesons (Rule 03 §8).
 public export
-mesonConstituentQuarks : StandardMesonSpec -> Multiset BoxInt SMFermion
-mesonConstituentQuarks PionPlusMeson    = AddM QuarkU (intToBoxInt 1) (AddM AntiQuarkD (intToBoxInt 1) ZeroM)
-mesonConstituentQuarks PionMinusMeson   = AddM AntiQuarkU (intToBoxInt 1) (AddM QuarkD (intToBoxInt 1) ZeroM)
-mesonConstituentQuarks NeutralPionMeson = AddM QuarkU (intToBoxInt 1) (AddM AntiQuarkU (intToBoxInt 1) ZeroM)
-mesonConstituentQuarks KaonPlusMeson    = AddM QuarkU (intToBoxInt 1) (AddM AntiQuarkS (intToBoxInt 1) ZeroM)
-mesonConstituentQuarks KaonMinusMeson   = AddM AntiQuarkU (intToBoxInt 1) (AddM QuarkS (intToBoxInt 1) ZeroM)
-mesonConstituentQuarks NeutralKaonMeson = AddM QuarkD (intToBoxInt 1) (AddM AntiQuarkS (intToBoxInt 1) ZeroM)
+mesonConstituentQuarks : StandardMesonSpec -> Carrier SMFermion
+mesonConstituentQuarks PionPlusMeson    = singletonCarrier QuarkU (intToBoxInt 1) <+> singletonCarrier AntiQuarkD (intToBoxInt 1)
+mesonConstituentQuarks PionMinusMeson   = singletonCarrier AntiQuarkU (intToBoxInt 1) <+> singletonCarrier QuarkD (intToBoxInt 1)
+mesonConstituentQuarks NeutralPionMeson = singletonCarrier QuarkU (intToBoxInt 1) <+> singletonCarrier AntiQuarkU (intToBoxInt 1)
+mesonConstituentQuarks KaonPlusMeson    = singletonCarrier QuarkU (intToBoxInt 1) <+> singletonCarrier AntiQuarkS (intToBoxInt 1)
+mesonConstituentQuarks KaonMinusMeson   = singletonCarrier AntiQuarkU (intToBoxInt 1) <+> singletonCarrier QuarkS (intToBoxInt 1)
+mesonConstituentQuarks NeutralKaonMeson = singletonCarrier QuarkD (intToBoxInt 1) <+> singletonCarrier AntiQuarkS (intToBoxInt 1)
 
 ||| Certified Dependent Meson Carrier (Rule 03 §7, §8).
-||| Bundles the underlying multiset carrier with QTT multiplicity 0 proof that
+||| Bundles the underlying Carrier with QTT multiplicity 0 proof that
 ||| total constituent quarks match exact meson valence (2 quarks).
 public export
 record CertifiedMeson (spec : StandardMesonSpec) where
   constructor MkCertifiedMeson
-  quarks       : Multiset BoxInt SMFermion
-  0 prfValence : multisetSum quarks = intToBoxInt 2
+  quarks       : Carrier SMFermion
+  0 prfValence : totalMassBox quarks = intToBoxInt 2
 
 ||| Canonical certified Pion+ state (1 u + 1 d_bar = 2 quarks):
 public export
@@ -178,12 +178,12 @@ certifiedNeutralKaon = MkCertifiedMeson (mesonConstituentQuarks NeutralKaonMeson
 ||| Observes exact valence count from certified baryon carrier in O(1) memory:
 public export
 baryonValenceCount : CertifiedBaryon spec -> BoxInt
-baryonValenceCount (MkCertifiedBaryon q _) = multisetSum q
+baryonValenceCount (MkCertifiedBaryon q _) = totalMassBox q
 
 ||| Observes exact valence count from certified meson carrier in O(1) memory:
 public export
 mesonValenceCount : CertifiedMeson spec -> BoxInt
-mesonValenceCount (MkCertifiedMeson q _) = multisetSum q
+mesonValenceCount (MkCertifiedMeson q _) = totalMassBox q
 
 ||| Audit witness verifying that all canonical baryons and mesons satisfy exact valence:
 public export
@@ -199,13 +199,13 @@ auditCertifiedHadronsProof =
 
 ||| Compile-time QTT erased proof witness for canonical baryon and meson valence:
 public export
-0 prfCertifiedProtonValence : multisetSum (baryonConstituentQuarks ProtonBaryon) = intToBoxInt 3
+0 prfCertifiedProtonValence : totalMassBox (baryonConstituentQuarks ProtonBaryon) = intToBoxInt 3
 prfCertifiedProtonValence = Refl
 
 public export
-0 prfCertifiedNeutronValence : multisetSum (baryonConstituentQuarks NeutronBaryon) = intToBoxInt 3
+0 prfCertifiedNeutronValence : totalMassBox (baryonConstituentQuarks NeutronBaryon) = intToBoxInt 3
 prfCertifiedNeutronValence = Refl
 
 public export
-0 prfCertifiedPionPlusValence : multisetSum (mesonConstituentQuarks PionPlusMeson) = intToBoxInt 2
+0 prfCertifiedPionPlusValence : totalMassBox (mesonConstituentQuarks PionPlusMeson) = intToBoxInt 2
 prfCertifiedPionPlusValence = Refl

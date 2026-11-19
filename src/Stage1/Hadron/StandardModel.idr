@@ -53,6 +53,39 @@ Eq SMFermion where
   AntiLepNuTau == AntiLepNuTau = True
   _ == _ = False
 
+public export
+Ord SMFermion where
+  compare x y = compare (tag x) (tag y)
+    where
+      tag : SMFermion -> Nat
+      tag QuarkU       = 0
+      tag QuarkD       = 1
+      tag QuarkC       = 2
+      tag QuarkS       = 3
+      tag QuarkT       = 4
+      tag QuarkB       = 5
+      tag AntiQuarkU   = 6
+      tag AntiQuarkD   = 7
+      tag AntiQuarkC   = 8
+      tag AntiQuarkS   = 9
+      tag AntiQuarkT   = 10
+      tag AntiQuarkB   = 11
+      tag LepE         = 12
+      tag LepMu        = 13
+      tag LepTau       = 14
+      tag LepNuE       = 15
+      tag LepNuMu      = 16
+      tag LepNuTau     = 17
+      tag AntiLepE     = 18
+      tag AntiLepMu    = 19
+      tag AntiLepTau   = 20
+      tag AntiLepNuE   = 21
+      tag AntiLepNuMu  = 22
+      tag AntiLepNuTau = 23
+
+public export
+DiscreteCoord SMFermion where
+
 ||| Standard Model Gauge Bosons & Higgs (13 Boson states: 8 Gluons + 4 EW + 1 Higgs).
 public export
 data SMBoson =
@@ -88,6 +121,38 @@ Eq StandardModelParticle where
   (SMPFermion f1) == (SMPFermion f2) = f1 == f2
   (SMPBoson b1)   == (SMPBoson b2)   = b1 == b2
   _               == _               = False
+
+public export
+Ord SMBoson where
+  compare x y = compare (tag x) (tag y)
+    where
+      tag : SMBoson -> Nat
+      tag GluonR    = 0
+      tag GluonG    = 1
+      tag GluonB    = 2
+      tag GluonBarR = 3
+      tag GluonBarG = 4
+      tag GluonBarB = 5
+      tag Gluon7    = 6
+      tag Gluon8    = 7
+      tag Photon    = 8
+      tag Z0        = 9
+      tag WPlus     = 10
+      tag WMinus    = 11
+      tag Higgs0    = 12
+
+public export
+DiscreteCoord SMBoson where
+
+public export
+Ord StandardModelParticle where
+  compare (SMPFermion f1) (SMPFermion f2) = compare f1 f2
+  compare (SMPFermion _)  (SMPBoson _)    = LT
+  compare (SMPBoson _)    (SMPFermion _)  = GT
+  compare (SMPBoson b1)   (SMPBoson b2)   = compare b1 b2
+
+public export
+DiscreteCoord StandardModelParticle where
 
 ||| Enumeration of the 25 fundamental Standard Model component fields.
 public export
@@ -166,23 +231,23 @@ componentToParticle CompHiggs0   = SMPBoson Higgs0
 ------------------------------------------------------------------------
 
 ||| Carrier multiset list of the 6 fundamental quarks.
-%inline public export
+public export
 quarkFlavorsList : List SMFermion
 quarkFlavorsList = [QuarkU, QuarkD, QuarkC, QuarkS, QuarkT, QuarkB]
 
 ||| Carrier multiset list of the 6 fundamental leptons.
-%inline public export
+public export
 leptonFlavorsList : List SMFermion
 leptonFlavorsList = [LepE, LepNuE, LepMu, LepNuMu, LepTau, LepNuTau]
 
 ||| Carrier multiset list of all 12 fundamental matter fermions.
 ||| Defined by the direct sum concatenation of the quark and lepton carrier multisets.
-%inline public export
+public export
 matterFermionsList : List SMFermion
 matterFermionsList = quarkFlavorsList ++ leptonFlavorsList
 
 ||| Carrier multiset list of the 12 fundamental antimatter fermions.
-%inline public export
+public export
 antimatterFermionsList : List SMFermion
 antimatterFermionsList =
   [ AntiQuarkU, AntiQuarkD, AntiQuarkC, AntiQuarkS, AntiQuarkT, AntiQuarkB
@@ -190,32 +255,32 @@ antimatterFermionsList =
   ]
 
 ||| Carrier multiset list of all 24 chiral fermions (matter + antimatter).
-%inline public export
+public export
 chiralFermionsList : List SMFermion
 chiralFermionsList = matterFermionsList ++ antimatterFermionsList
 
 ||| Carrier multiset list of the 8 color gluons.
-%inline public export
+public export
 gluonBosonsList : List SMBoson
 gluonBosonsList = [GluonR, GluonG, GluonB, GluonBarR, GluonBarG, GluonBarB, Gluon7, Gluon8]
 
 ||| Carrier multiset list of the 4 electroweak gauge vector bosons.
-%inline public export
+public export
 electroweakBosonsList : List SMBoson
 electroweakBosonsList = [Photon, Z0, WPlus, WMinus]
 
 ||| Carrier multiset list of the 1 electroweak symmetry breaking scalar Higgs boson.
-%inline public export
+public export
 higgsBosonsList : List SMBoson
 higgsBosonsList = [Higgs0]
 
 ||| Carrier multiset list of all 13 Standard Model bosons.
-%inline public export
+public export
 smBosonsList : List SMBoson
 smBosonsList = gluonBosonsList ++ electroweakBosonsList ++ higgsBosonsList
 
 ||| The canonical list of all 25 fundamental Standard Model component fields.
-%inline public export
+public export
 smComponentsList : List SMComponent
 smComponentsList =
   [ CompQuarkU, CompQuarkD, CompQuarkC, CompQuarkS, CompQuarkT, CompQuarkB
@@ -226,37 +291,37 @@ smComponentsList =
   ]
 
 ||| Number of fundamental matter fermions (12), observed directly from the carrier multiset length.
-%inline public export
+public export
 smMatterFermionCount : Nat
 smMatterFermionCount = length matterFermionsList
 
 ||| Number of SU(3) color gluons (8), observed directly from the gluon carrier multiset length.
-%inline public export
+public export
 smGluonCount : Nat
 smGluonCount = length gluonBosonsList
 
 ||| Number of electroweak gauge vector bosons (4), observed directly from the EW carrier multiset length.
-%inline public export
+public export
 smElectroweakBosonCount : Nat
 smElectroweakBosonCount = length electroweakBosonsList
 
 ||| Number of scalar Higgs bosons (1), observed directly from the Higgs carrier multiset length.
-%inline public export
+public export
 smHiggsCount : Nat
 smHiggsCount = length higgsBosonsList
 
 ||| Total fundamental Standard Model component fields (25), observed directly from the component carrier multiset length.
-%inline public export
+public export
 smFundamentalFieldCount : Nat
 smFundamentalFieldCount = length smComponentsList
 
 ||| Total chiral fermion states (24), observed directly from the chiral fermion carrier multiset length.
-%inline public export
+public export
 smChiralFermionCount : Nat
 smChiralFermionCount = length chiralFermionsList
 
 ||| Grounded octonionic Fano units carrier list governing quark color degrees of freedom.
-%inline public export
+public export
 smOctonionUnitsList : List OctonionUnit
 smOctonionUnitsList = [E1, E2, E3, E4, E5, E6, E7]
 
@@ -266,7 +331,7 @@ public export
 prfOctonionBasisEquiv = Refl
 
 ||| Number of octonionic units e_1 ... e_7 governing Fano color decomposition (7).
-%inline public export
+public export
 smOctonionGeneratorCount : Nat
 smOctonionGeneratorCount = length smOctonionUnitsList
 

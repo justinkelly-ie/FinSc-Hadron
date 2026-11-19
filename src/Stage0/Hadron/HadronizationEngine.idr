@@ -3,6 +3,7 @@ module Stage0.Hadron.HadronizationEngine
 import Stage0.BoxInt
 import Stage0.BoxNat
 import Stage0.Multiset
+import Stage1.MultisetTree
 import Stage0.Token
 import Stage0.OnSeq.FusedStream
 import Stage1.Hadron.StandardModel
@@ -121,30 +122,39 @@ streamFragmentQGPJetWeights = flatMapStream qgpDecayWeightStream
 public export
 record MultisetHadronizedJetState where
   constructor MkMultisetHadronizedJetState
-  hadronBag : Multiset BoxInt StandardModelParticle
+  hadronBag : Carrier StandardModelParticle
   qgpPhase  : QGPPhase
 
-||| Pure Galois Fiber Pullback (f^*) QGP jet fragmentation operator over Multiset BoxInt StandardModelParticle.
-|||
-||| @deprecated Relies on fiberPullback with intermediate List conversions. Prefer `fragmentQGPJetStreamDirect`.
+||| QGP jet fragmentation operator over indexed `Carrier StandardModelParticle`.
 public export
-fragmentQGPJetMultiset : Multiset BoxInt StandardModelParticle -> MultisetHadronizedJetState
+fragmentQGPJetMultiset : Carrier StandardModelParticle -> MultisetHadronizedJetState
 fragmentQGPJetMultiset jetBag =
-  let hadronBag = fiberPullback qgpDecayFiberMap jetBag
+  let hadronBag : Carrier StandardModelParticle
+      hadronBag = foldBoxTreeL
+                    (\acc, (p, w) =>
+                      if boxIsNonZero w
+                        then foldl (\a, p' => a <+> singletonCarrier p' w) acc (qgpDecayFiberMap p)
+                        else acc)
+                    (the (Carrier StandardModelParticle) BoxLeaf)
+                    jetBag
   in MkMultisetHadronizedJetState hadronBag ConfinementHadronGas
 
-||| Deforested streaming QGP jet fragmentation directly consuming and producing multisets (Rule 04 §12).
-||| Eliminates all intermediate List allocations by streaming tokens in O(1) auxiliary registers.
+||| Deforested streaming QGP jet fragmentation directly consuming and producing Carriers (Rule 04 §12).
+||| Eliminates all intermediate List allocations by streaming key-weights in O(1) auxiliary registers.
 public export
-fragmentQGPJetStreamDirect : Multiset BoxInt StandardModelParticle -> MultisetHadronizedJetState
+fragmentQGPJetStreamDirect : Carrier StandardModelParticle -> MultisetHadronizedJetState
 fragmentQGPJetStreamDirect jetBag =
-  let hadronBag = streamTokensToMultiset (streamFragmentQGPJetTokens (streamTokens jetBag))
+  let hadronBag : Carrier StandardModelParticle
+      hadronBag = foldStream
+                    (\acc, (p, w) => acc <+> singletonCarrier p w)
+                    (the (Carrier StandardModelParticle) BoxLeaf)
+                    (streamFragmentQGPJetWeights (streamBoxMultisetTree jetBag))
   in MkMultisetHadronizedJetState hadronBag ConfinementHadronGas
 
 ||| Strict QTT Linear State Evolution for QGP Hadronization pairing state with hadron yields (Rule 04 §1).
 public export
 stepHadronizationLinearPair : (1 state : MultisetHadronizedJetState) ->
-                              LinearStatePair MultisetHadronizedJetState (Multiset BoxInt StandardModelParticle)
+                              LinearStatePair MultisetHadronizedJetState (Carrier StandardModelParticle)
 stepHadronizationLinearPair (MkMultisetHadronizedJetState bag _) =
   let nextState = fragmentQGPJetStreamDirect bag
   in MkLStatePair nextState (hadronBag nextState)
@@ -204,12 +214,12 @@ auditHadronizationEngineProof =
   let jet = [SMPBoson GluonR]
       hadronState = fragmentQGPJet jet
       
-      initJet : Multiset BoxInt StandardModelParticle
-      initJet = AddM (SMPBoson GluonR) (intToBoxInt 1) ZeroM
+      initJet : Carrier StandardModelParticle
+      initJet = singletonCarrier (SMPBoson GluonR) (intToBoxInt 1)
       mState  = fragmentQGPJetMultiset initJet
       mDirect = fragmentQGPJetStreamDirect initJet
-      expectedBag : Multiset BoxInt StandardModelParticle
-      expectedBag = AddM (SMPFermion QuarkU) (intToBoxInt 1) (AddM (SMPFermion AntiQuarkU) (intToBoxInt 1) ZeroM)
+      expectedBag : Carrier StandardModelParticle
+      expectedBag = singletonCarrier (SMPFermion QuarkU) (intToBoxInt 1) <+> singletonCarrier (SMPFermion AntiQuarkU) (intToBoxInt 1)
       
       tList = (isColorConlinedState hadronState == True) &&
               (hadrons hadronState == [SMPFermion QuarkU, SMPFermion AntiQuarkU])
@@ -237,34 +247,24 @@ Eq RLEParticleToken where
   (MkRLEParticle p1 m1) == (MkRLEParticle p2 m2) =
     p1 == p2 && boxNatToNat m1 == boxNatToNat m2
 
-||| Streams a hadron bag as a zero-allocation deforested RLE stream of (particle, BoxNat).
-|||
-||| @deprecated Manual loop over AddM constructors. Prefer `multisetToRLEStream` or native `multisetToStream` (Rule 04 §12).
+||| Deforested stream mapping from indexed Carrier stream directly into RLEParticleTokens (Rule 04 §12).
 public export
-streamHadronBagRLE : Multiset BoxInt StandardModelParticle -> FusedStream RLEParticleToken
-streamHadronBagRLE bag =
-  unfoldStream step bag
-  where
-    step : Multiset BoxInt StandardModelParticle -> Step (Multiset BoxInt StandardModelParticle) RLEParticleToken
-    step ZeroM = Done
-    step (AddM p w rest) =
-      let m = natToBoxNat (boxToNat (absBox w))
-      in Yield (MkRLEParticle p m) rest
-
-||| Deforested stream mapping from native multiset stream directly into RLEParticleTokens (Rule 04 §12).
-public export
-multisetToRLEStream : Multiset BoxInt StandardModelParticle -> FusedStream RLEParticleToken
+multisetToRLEStream : Carrier StandardModelParticle -> FusedStream RLEParticleToken
 multisetToRLEStream bag =
-  mapStream (\(p, w) => MkRLEParticle p (natToBoxNat (boxToNat (absBox w)))) (multisetToStream bag)
+  mapStream (\(p, w) => MkRLEParticle p (natToBoxNat (boxToNat (absBox w)))) (streamBoxMultisetTree bag)
 
-||| Folds an RLE particle stream back into an algebraic Multiset with explicit fuel bound (Rule 04 §12).
-%spec fuel
+||| Streams a hadron bag as a zero-allocation deforested RLE stream of (particle, BoxNat).
 public export
-streamRLEToMultiset : (fuel : Nat) -> FusedStream RLEParticleToken -> Multiset BoxInt StandardModelParticle
+streamHadronBagRLE : Carrier StandardModelParticle -> FusedStream RLEParticleToken
+streamHadronBagRLE = multisetToRLEStream
+
+||| Folds an RLE particle stream back into an indexed Carrier with explicit fuel bound (Rule 04 §12).
+public export
+streamRLEToMultiset : (fuel : Nat) -> FusedStream RLEParticleToken -> Carrier StandardModelParticle
 streamRLEToMultiset fuel strm =
   foldStreamNat fuel
-    (\bag, (MkRLEParticle p m) => insertItemBox p (natToBoxInt (boxNatToNat m)) bag)
-    ZeroM
+    (\bag, (MkRLEParticle p m) => bag <+> singletonCarrier p (natToBoxInt (boxNatToNat m)))
+    BoxLeaf
     strm
 
 ||| RLE decay fiber stream for QGP jet fragmentation.
@@ -317,6 +317,18 @@ Eq TripletColor where
   _          == _          = False
 
 public export
+Ord TripletColor where
+  compare x y = compare (tag x) (tag y)
+    where
+      tag : TripletColor -> Nat
+      tag ColorRed   = 0
+      tag ColorGreen = 1
+      tag ColorBlue  = 2
+
+public export
+DiscreteCoord TripletColor where
+
+public export
 Show TripletColor where
   show ColorRed   = "R"
   show ColorGreen = "G"
@@ -332,6 +344,18 @@ Eq AntiTripletColor where
   AntiGreen == AntiGreen = True
   AntiBlue  == AntiBlue  = True
   _         == _         = False
+
+public export
+Ord AntiTripletColor where
+  compare x y = compare (tag x) (tag y)
+    where
+      tag : AntiTripletColor -> Nat
+      tag AntiRed   = 0
+      tag AntiGreen = 1
+      tag AntiBlue  = 2
+
+public export
+DiscreteCoord AntiTripletColor where
 
 public export
 Show AntiTripletColor where
@@ -352,6 +376,19 @@ Eq ColoredParton where
   (AntiQuarkParton f1 c1) == (AntiQuarkParton f2 c2) = f1 == f2 && c1 == c2
   (GluonParton g1)        == (GluonParton g2)        = g1 == g2
   _                       == _                       = False
+
+public export
+Ord ColoredParton where
+  compare (QuarkParton f1 c1)     (QuarkParton f2 c2)     = compare f1 f2 <+> compare c1 c2
+  compare (QuarkParton _ _)       _                       = LT
+  compare _                       (QuarkParton _ _)       = GT
+  compare (AntiQuarkParton f1 c1) (AntiQuarkParton f2 c2) = compare f1 f2 <+> compare c1 c2
+  compare (AntiQuarkParton _ _)   (GluonParton _)         = LT
+  compare (GluonParton _)         (AntiQuarkParton _ _)   = GT
+  compare (GluonParton g1)        (GluonParton g2)        = compare g1 g2
+
+public export
+DiscreteCoord ColoredParton where
 
 ||| State buffer for single-pass color-singlet condensation.
 public export
@@ -437,18 +474,18 @@ partonMassTokens (GluonParton _)        = intToBoxInt 0
 
 ||| Observes total electrical charge of a candidate parton multiset via monomorphic reduction (Rule 03 §8).
 public export
-observePartonBagChargeThirds : Multiset BoxInt ColoredParton -> BoxInt
-observePartonBagChargeThirds = foldMultiset (\p, w, acc => addBox (mulBox w (partonChargeThirds p)) acc) (intToBoxInt 0)
+observePartonBagChargeThirds : Carrier ColoredParton -> BoxInt
+observePartonBagChargeThirds = foldBoxTreeL (\acc, (p, w) => addBox (mulBox w (partonChargeThirds p)) acc) (intToBoxInt 0)
 
 ||| Observes total baryon number of a candidate parton multiset via monomorphic reduction (Rule 03 §8).
 public export
-observePartonBagBaryonThirds : Multiset BoxInt ColoredParton -> BoxInt
-observePartonBagBaryonThirds = foldMultiset (\p, w, acc => addBox (mulBox w (partonBaryonThirds p)) acc) (intToBoxInt 0)
+observePartonBagBaryonThirds : Carrier ColoredParton -> BoxInt
+observePartonBagBaryonThirds = foldBoxTreeL (\acc, (p, w) => addBox (mulBox w (partonBaryonThirds p)) acc) (intToBoxInt 0)
 
 ||| Observes total mass tokens of a candidate parton multiset via monomorphic reduction (Rule 03 §8).
 public export
-observePartonBagMassTokens : Multiset BoxInt ColoredParton -> BoxInt
-observePartonBagMassTokens = foldMultiset (\p, w, acc => addBox (mulBox w (partonMassTokens p)) acc) (intToBoxInt 0)
+observePartonBagMassTokens : Carrier ColoredParton -> BoxInt
+observePartonBagMassTokens = foldBoxTreeL (\acc, (p, w) => addBox (mulBox w (partonMassTokens p)) acc) (intToBoxInt 0)
 
 ||| Constructively classifies a color-singlet cluster into a HadronToken by observing its conserved charges (Rule 03 §8).
 ||| All macroscopic hadron identities emerge strictly from the algebra of observables of Layer L-1.
@@ -463,56 +500,56 @@ classifyHadronByObservables _           _               = Nothing
 
 ||| Measures a candidate cluster and classifies its emergent HadronToken from L-1 observables (Rule 03 §8).
 public export
-condenseClusterByObservables : Multiset BoxInt ColoredParton -> Maybe HadronToken
+condenseClusterByObservables : Carrier ColoredParton -> Maybe HadronToken
 condenseClusterByObservables cluster =
   let b = observePartonBagBaryonThirds cluster
       q = observePartonBagChargeThirds cluster
   in classifyHadronByObservables b q
 
-clusterProtonRGD : Multiset BoxInt ColoredParton
-clusterProtonRGD = AddM (QuarkParton QuarkU ColorRed) (intToBoxInt 1)
-                  (AddM (QuarkParton QuarkU ColorGreen) (intToBoxInt 1)
-                  (AddM (QuarkParton QuarkD ColorBlue) (intToBoxInt 1) ZeroM))
+clusterProtonRGD : Carrier ColoredParton
+clusterProtonRGD = singletonCarrier (QuarkParton QuarkU ColorRed) (intToBoxInt 1)
+               <+> singletonCarrier (QuarkParton QuarkU ColorGreen) (intToBoxInt 1)
+               <+> singletonCarrier (QuarkParton QuarkD ColorBlue) (intToBoxInt 1)
 
-clusterProtonRDB : Multiset BoxInt ColoredParton
-clusterProtonRDB = AddM (QuarkParton QuarkU ColorRed) (intToBoxInt 1)
-                  (AddM (QuarkParton QuarkU ColorBlue) (intToBoxInt 1)
-                  (AddM (QuarkParton QuarkD ColorGreen) (intToBoxInt 1) ZeroM))
+clusterProtonRDB : Carrier ColoredParton
+clusterProtonRDB = singletonCarrier (QuarkParton QuarkU ColorRed) (intToBoxInt 1)
+               <+> singletonCarrier (QuarkParton QuarkU ColorBlue) (intToBoxInt 1)
+               <+> singletonCarrier (QuarkParton QuarkD ColorGreen) (intToBoxInt 1)
 
-clusterProtonGDB : Multiset BoxInt ColoredParton
-clusterProtonGDB = AddM (QuarkParton QuarkU ColorGreen) (intToBoxInt 1)
-                  (AddM (QuarkParton QuarkU ColorBlue) (intToBoxInt 1)
-                  (AddM (QuarkParton QuarkD ColorRed) (intToBoxInt 1) ZeroM))
+clusterProtonGDB : Carrier ColoredParton
+clusterProtonGDB = singletonCarrier (QuarkParton QuarkU ColorGreen) (intToBoxInt 1)
+               <+> singletonCarrier (QuarkParton QuarkU ColorBlue) (intToBoxInt 1)
+               <+> singletonCarrier (QuarkParton QuarkD ColorRed) (intToBoxInt 1)
 
-clusterNeutronRDD : Multiset BoxInt ColoredParton
-clusterNeutronRDD = AddM (QuarkParton QuarkU ColorRed) (intToBoxInt 1)
-                   (AddM (QuarkParton QuarkD ColorGreen) (intToBoxInt 1)
-                   (AddM (QuarkParton QuarkD ColorBlue) (intToBoxInt 1) ZeroM))
+clusterNeutronRDD : Carrier ColoredParton
+clusterNeutronRDD = singletonCarrier (QuarkParton QuarkU ColorRed) (intToBoxInt 1)
+                <+> singletonCarrier (QuarkParton QuarkD ColorGreen) (intToBoxInt 1)
+                <+> singletonCarrier (QuarkParton QuarkD ColorBlue) (intToBoxInt 1)
 
-clusterNeutronGDD : Multiset BoxInt ColoredParton
-clusterNeutronGDD = AddM (QuarkParton QuarkU ColorGreen) (intToBoxInt 1)
-                   (AddM (QuarkParton QuarkD ColorRed) (intToBoxInt 1)
-                   (AddM (QuarkParton QuarkD ColorBlue) (intToBoxInt 1) ZeroM))
+clusterNeutronGDD : Carrier ColoredParton
+clusterNeutronGDD = singletonCarrier (QuarkParton QuarkU ColorGreen) (intToBoxInt 1)
+                <+> singletonCarrier (QuarkParton QuarkD ColorRed) (intToBoxInt 1)
+                <+> singletonCarrier (QuarkParton QuarkD ColorBlue) (intToBoxInt 1)
 
-clusterNeutronBDD : Multiset BoxInt ColoredParton
-clusterNeutronBDD = AddM (QuarkParton QuarkU ColorBlue) (intToBoxInt 1)
-                   (AddM (QuarkParton QuarkD ColorRed) (intToBoxInt 1)
-                   (AddM (QuarkParton QuarkD ColorGreen) (intToBoxInt 1) ZeroM))
+clusterNeutronBDD : Carrier ColoredParton
+clusterNeutronBDD = singletonCarrier (QuarkParton QuarkU ColorBlue) (intToBoxInt 1)
+                <+> singletonCarrier (QuarkParton QuarkD ColorRed) (intToBoxInt 1)
+                <+> singletonCarrier (QuarkParton QuarkD ColorGreen) (intToBoxInt 1)
 
-clusterPionPlus : TripletColor -> Multiset BoxInt ColoredParton
-clusterPionPlus ColorRed   = AddM (QuarkParton QuarkU ColorRed) (intToBoxInt 1) (AddM (AntiQuarkParton AntiQuarkD AntiRed) (intToBoxInt 1) ZeroM)
-clusterPionPlus ColorGreen = AddM (QuarkParton QuarkU ColorGreen) (intToBoxInt 1) (AddM (AntiQuarkParton AntiQuarkD AntiGreen) (intToBoxInt 1) ZeroM)
-clusterPionPlus ColorBlue  = AddM (QuarkParton QuarkU ColorBlue) (intToBoxInt 1) (AddM (AntiQuarkParton AntiQuarkD AntiBlue) (intToBoxInt 1) ZeroM)
+clusterPionPlus : TripletColor -> Carrier ColoredParton
+clusterPionPlus ColorRed   = singletonCarrier (QuarkParton QuarkU ColorRed) (intToBoxInt 1) <+> singletonCarrier (AntiQuarkParton AntiQuarkD AntiRed) (intToBoxInt 1)
+clusterPionPlus ColorGreen = singletonCarrier (QuarkParton QuarkU ColorGreen) (intToBoxInt 1) <+> singletonCarrier (AntiQuarkParton AntiQuarkD AntiGreen) (intToBoxInt 1)
+clusterPionPlus ColorBlue  = singletonCarrier (QuarkParton QuarkU ColorBlue) (intToBoxInt 1) <+> singletonCarrier (AntiQuarkParton AntiQuarkD AntiBlue) (intToBoxInt 1)
 
-clusterPionMinus : TripletColor -> Multiset BoxInt ColoredParton
-clusterPionMinus ColorRed   = AddM (QuarkParton QuarkD ColorRed) (intToBoxInt 1) (AddM (AntiQuarkParton AntiQuarkU AntiRed) (intToBoxInt 1) ZeroM)
-clusterPionMinus ColorGreen = AddM (QuarkParton QuarkD ColorGreen) (intToBoxInt 1) (AddM (AntiQuarkParton AntiQuarkU AntiGreen) (intToBoxInt 1) ZeroM)
-clusterPionMinus ColorBlue  = AddM (QuarkParton QuarkD ColorBlue) (intToBoxInt 1) (AddM (AntiQuarkParton AntiQuarkU AntiBlue) (intToBoxInt 1) ZeroM)
+clusterPionMinus : TripletColor -> Carrier ColoredParton
+clusterPionMinus ColorRed   = singletonCarrier (QuarkParton QuarkD ColorRed) (intToBoxInt 1) <+> singletonCarrier (AntiQuarkParton AntiQuarkU AntiRed) (intToBoxInt 1)
+clusterPionMinus ColorGreen = singletonCarrier (QuarkParton QuarkD ColorGreen) (intToBoxInt 1) <+> singletonCarrier (AntiQuarkParton AntiQuarkU AntiGreen) (intToBoxInt 1)
+clusterPionMinus ColorBlue  = singletonCarrier (QuarkParton QuarkD ColorBlue) (intToBoxInt 1) <+> singletonCarrier (AntiQuarkParton AntiQuarkU AntiBlue) (intToBoxInt 1)
 
-clusterPionZero : TripletColor -> Multiset BoxInt ColoredParton
-clusterPionZero ColorRed   = AddM (QuarkParton QuarkU ColorRed) (intToBoxInt 1) (AddM (AntiQuarkParton AntiQuarkU AntiRed) (intToBoxInt 1) ZeroM)
-clusterPionZero ColorGreen = AddM (QuarkParton QuarkU ColorGreen) (intToBoxInt 1) (AddM (AntiQuarkParton AntiQuarkU AntiGreen) (intToBoxInt 1) ZeroM)
-clusterPionZero ColorBlue  = AddM (QuarkParton QuarkU ColorBlue) (intToBoxInt 1) (AddM (AntiQuarkParton AntiQuarkU AntiBlue) (intToBoxInt 1) ZeroM)
+clusterPionZero : TripletColor -> Carrier ColoredParton
+clusterPionZero ColorRed   = singletonCarrier (QuarkParton QuarkU ColorRed) (intToBoxInt 1) <+> singletonCarrier (AntiQuarkParton AntiQuarkU AntiRed) (intToBoxInt 1)
+clusterPionZero ColorGreen = singletonCarrier (QuarkParton QuarkU ColorGreen) (intToBoxInt 1) <+> singletonCarrier (AntiQuarkParton AntiQuarkU AntiGreen) (intToBoxInt 1)
+clusterPionZero ColorBlue  = singletonCarrier (QuarkParton QuarkU ColorBlue) (intToBoxInt 1) <+> singletonCarrier (AntiQuarkParton AntiQuarkU AntiBlue) (intToBoxInt 1)
 
 ||| Structural positivity test on a colour-buffer count (Z => False, S _ => True).
 public export
@@ -603,31 +640,33 @@ runHadronizationTransducerNat : (fuel : Nat) -> FusedStream ColoredParton -> Lis
 runHadronizationTransducerNat fuel strm = runFueledStreamNat fuel (streamHadronizationTransducer strm)
 
 ||| Deforested multiset sink: Folds a stream of colored partons directly into a color-singlet
-||| HadronToken multiset in O(1) auxiliary registers without intermediate List allocations (Rule 04 §12).
-%spec fuel
+||| HadronToken Carrier in O(1) auxiliary registers without intermediate List allocations (Rule 04 §12).
 public export
-streamHadronizationToMultiset : (fuel : Nat) -> FusedStream ColoredParton -> Multiset BoxInt HadronToken
+streamHadronizationToMultiset : (fuel : Nat) -> FusedStream ColoredParton -> Carrier HadronToken
 streamHadronizationToMultiset fuel strm =
   foldStreamNat fuel
-    (\bag, h => insertItemBox h (intToBoxInt 1) bag)
-    ZeroM
+    (\bag, h => bag <+> singletonCarrier h (intToBoxInt 1))
+    BoxLeaf
     (streamHadronizationTransducer strm)
 
-||| End-to-end multiset hadronization: streams an algebraic multiset of colored partons
-||| through the single-pass color-singlet condensation transducer directly into a HadronToken multiset.
-%spec fuel
+||| End-to-end multiset hadronization: streams an indexed Carrier of colored partons
+||| through the single-pass color-singlet condensation transducer directly into a HadronToken Carrier.
 public export
-hadronizePartonBag : (fuel : Nat) -> Multiset BoxInt ColoredParton -> Multiset BoxInt HadronToken
+hadronizePartonBag : (fuel : Nat) -> Carrier ColoredParton -> Carrier HadronToken
 hadronizePartonBag fuel bag =
-  streamHadronizationToMultiset fuel (mapStream element (streamTokens bag))
+  streamHadronizationToMultiset fuel
+    (flatMapStream
+      (\(p, w) =>
+        let n = if w > intToBoxInt 0 then boxToNat w else 0
+        in unfoldStream (\k => case k of Z => Done; S k' => Yield p k') n)
+      (streamBoxMultisetTree bag))
 
 ||| Deforested transducer folding partons into hadrons while tracking residual color buffer state (Rule 03 §8).
-%spec fuel
 public export
-runCondensationWithResidual : (fuel : Nat) -> FusedStream ColoredParton -> (Multiset BoxInt HadronToken, ColorCondensationState)
-runCondensationWithResidual fuel (MkStream {s} step seed) = loop fuel seed initialCondensationState ZeroM
+runCondensationWithResidual : (fuel : Nat) -> FusedStream ColoredParton -> (Carrier HadronToken, ColorCondensationState)
+runCondensationWithResidual fuel (MkStream {s} step seed) = loop fuel seed initialCondensationState BoxLeaf
   where
-    loop : Nat -> s -> ColorCondensationState -> Multiset BoxInt HadronToken -> (Multiset BoxInt HadronToken, ColorCondensationState)
+    loop : Nat -> s -> ColorCondensationState -> Carrier HadronToken -> (Carrier HadronToken, ColorCondensationState)
     loop 0 _ buf acc = (acc, buf)
     loop (S k) st buf acc = case step st of
       Done => (acc, buf)
@@ -635,7 +674,7 @@ runCondensationWithResidual fuel (MkStream {s} step seed) = loop fuel seed initi
       Yield parton st' =>
         let buf' = ingestParton buf parton
         in case tryCondenseSinglet buf' of
-             (Just hadron, nextBuf) => loop k st' nextBuf (insertItemBox hadron (intToBoxInt 1) acc)
+             (Just hadron, nextBuf) => loop k st' nextBuf (acc <+> singletonCarrier hadron (intToBoxInt 1))
              (Nothing, nextBuf)     => loop k st' nextBuf acc
 
 ||| Audits that a color-triplet proton feed (u_R + u_G + d_B) condenses into a ProtonToken.
@@ -679,8 +718,8 @@ auditProtonCondensationMultisetProof =
              , QuarkParton QuarkD ColorBlue
              ]
       (resultBag, residualBuf) = runCondensationWithResidual 10 (stream feed)
-      expectedBag : Multiset BoxInt HadronToken
-      expectedBag = insertItemBox ProtonToken (intToBoxInt 1) ZeroM
+      expectedBag : Carrier HadronToken
+      expectedBag = singletonCarrier ProtonToken (intToBoxInt 1)
   in resultBag == expectedBag && isColorNeutralBuffer residualBuf == True
 
 ||| Audits that a color-triplet neutron feed condenses into a NeutronToken multiset with neutral residual buffer.
@@ -692,8 +731,8 @@ auditNeutronCondensationMultisetProof =
              , QuarkParton QuarkD ColorBlue
              ]
       (resultBag, residualBuf) = runCondensationWithResidual 10 (stream feed)
-      expectedBag : Multiset BoxInt HadronToken
-      expectedBag = insertItemBox NeutronToken (intToBoxInt 1) ZeroM
+      expectedBag : Carrier HadronToken
+      expectedBag = singletonCarrier NeutronToken (intToBoxInt 1)
   in resultBag == expectedBag && isColorNeutralBuffer residualBuf == True
 
 ||| Audits that a meson pair feed condenses into a PionPlusToken multiset with neutral residual buffer.
@@ -704,8 +743,8 @@ auditPionCondensationMultisetProof =
              , AntiQuarkParton AntiQuarkD AntiRed
              ]
       (resultBag, residualBuf) = runCondensationWithResidual 10 (stream feed)
-      expectedBag : Multiset BoxInt HadronToken
-      expectedBag = insertItemBox PionPlusToken (intToBoxInt 1) ZeroM
+      expectedBag : Carrier HadronToken
+      expectedBag = singletonCarrier PionPlusToken (intToBoxInt 1)
   in resultBag == expectedBag && isColorNeutralBuffer residualBuf == True
 
 ||| Audits that a gluon parton in QGP decays and condenses into a NeutralPionToken multiset with neutral residual buffer.
@@ -714,8 +753,8 @@ auditGluonCondensationMultisetProof : Bool
 auditGluonCondensationMultisetProof =
   let feed = [ GluonParton GluonR ]
       (resultBag, residualBuf) = runCondensationWithResidual 10 (stream feed)
-      expectedBag : Multiset BoxInt HadronToken
-      expectedBag = insertItemBox NeutralPionToken (intToBoxInt 1) ZeroM
+      expectedBag : Carrier HadronToken
+      expectedBag = singletonCarrier NeutralPionToken (intToBoxInt 1)
   in resultBag == expectedBag && isColorNeutralBuffer residualBuf == True
 
 ||| Comprehensive audit of the streaming color-singlet condensation engine across list and multiset carriers.

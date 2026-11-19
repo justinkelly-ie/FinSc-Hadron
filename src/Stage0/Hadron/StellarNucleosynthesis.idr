@@ -17,7 +17,7 @@ import Data.Vect
 import Stage1.FourGeometries
 import Stage1.Carrier.ChromogeometricMetric
 import Stage1.Multiset.PrimordialUnfolding
-import Stage1.ScalePipeline
+import public Stage1.ScalePipeline
 
 %default total
 
@@ -27,17 +27,13 @@ import Stage1.ScalePipeline
 
 ||| Monomorphic proton counter across a HadronToken multiset:
 public export
-countProtonsBox : Multiset BoxInt HadronToken -> BoxInt
-countProtonsBox ZeroM = intToBoxInt 0
-countProtonsBox (AddM ProtonToken w rest) = addBox w (countProtonsBox rest)
-countProtonsBox (AddM _ _ rest) = countProtonsBox rest
+countProtonsBox : Carrier HadronToken -> BoxInt
+countProtonsBox = lookupCarrier ProtonToken
 
 ||| Monomorphic neutron counter across a HadronToken multiset:
 public export
-countNeutronsBox : Multiset BoxInt HadronToken -> BoxInt
-countNeutronsBox ZeroM = intToBoxInt 0
-countNeutronsBox (AddM NeutronToken w rest) = addBox w (countNeutronsBox rest)
-countNeutronsBox (AddM _ _ rest) = countNeutronsBox rest
+countNeutronsBox : Carrier HadronToken -> BoxInt
+countNeutronsBox = lookupCarrier NeutronToken
 
 ||| A Certified Dependent Nuclide indexed by exact proton count Z and neutron count N (Rule 03 §7).
 ||| Carrier for all nuclear matter states across stellar and cosmic nucleosynthesis.
@@ -46,7 +42,7 @@ public export
 record Nuclide (z : Nat) (n : Nat) where
   constructor MkNuclide
   elementSymbol : String
-  hadrons       : Multiset BoxInt HadronToken
+  hadrons       : Carrier HadronToken
   protons       : Nat
   neutrons      : Nat
   0 prfZ        : protons = z
@@ -56,8 +52,8 @@ record Nuclide (z : Nat) (n : Nat) where
 public export
 mkNuclide : (z : Nat) -> (n : Nat) -> String -> Nuclide z n
 mkNuclide z n sym =
-  let pMult = AddM ProtonToken (natToBoxInt z) ZeroM
-      hads  = AddM NeutronToken (natToBoxInt n) pMult
+  let pMult = singletonCarrier ProtonToken (natToBoxInt z)
+      hads  = singletonCarrier NeutronToken (natToBoxInt n) <+> pMult
   in MkNuclide sym hads z n Refl Refl
 
 ||| Primitive fundamental proton nuclide (1H nucleus):
@@ -65,7 +61,7 @@ public export
 protonNuclide : Nuclide 1 0
 protonNuclide =
   MkNuclide "H"
-    (AddM ProtonToken (intToBoxInt 1) ZeroM)
+    (singletonCarrier ProtonToken (intToBoxInt 1))
     1 0 Refl Refl
 
 ||| Primitive fundamental free neutron nuclide (1n):
@@ -73,7 +69,7 @@ public export
 neutronNuclide : Nuclide 0 1
 neutronNuclide =
   MkNuclide "n"
-    (AddM NeutronToken (intToBoxInt 1) ZeroM)
+    (singletonCarrier NeutronToken (intToBoxInt 1))
     0 1 Refl Refl
 
 ||| Fuses two Nuclides via direct multiset sum of their constituent hadrons:
@@ -86,7 +82,7 @@ fuseNuclides (MkNuclide _ h1 p1 n1 Refl Refl) (MkNuclide _ h2 p2 n2 Refl Refl) s
 public export
 betaPlusDecay : Nuclide (S z) n -> String -> Nuclide z (S n)
 betaPlusDecay (MkNuclide _ h (S p) n Refl Refl) sym =
-  MkNuclide sym (h <+> AddM ProtonToken (intToBoxInt (-1)) (AddM NeutronToken (intToBoxInt 1) ZeroM)) p (S n) Refl Refl
+  MkNuclide sym (h <+> (singletonCarrier ProtonToken (intToBoxInt (-1)) <+> singletonCarrier NeutronToken (intToBoxInt 1))) p (S n) Refl Refl
 
 ||| Big Bang Deuteron (2H = 1p + 1n):
 public export
@@ -177,7 +173,7 @@ ironNuclide = betaPlusDecay (betaPlusDecay nickel56Nuclide "") "Fe"
 ||| Alpha-ladder nuclide constructor for step index k:
 public export
 alphaLadderNuclide : (k : Nat) -> (sym : String) -> Nuclide (2 * k) (2 * k)
-alphaLadderNuclide 0 sym = MkNuclide sym ZeroM 0 0 Refl Refl
+alphaLadderNuclide 0 sym = MkNuclide sym BoxLeaf 0 0 Refl Refl
 alphaLadderNuclide 1 sym = alphaNuclide
 alphaLadderNuclide 2 sym = beryllium8Nuclide
 alphaLadderNuclide 3 sym = carbonNuclide
@@ -187,7 +183,7 @@ alphaLadderNuclide 6 sym = magnesiumNuclide
 alphaLadderNuclide 7 sym = siliconNuclide
 alphaLadderNuclide 8 sym = sulfurNuclide
 alphaLadderNuclide (S (S (S (S (S (S (S (S (S k))))))))) sym =
-  MkNuclide sym ZeroM (2 * (9 + k)) (2 * (9 + k)) Refl Refl
+  MkNuclide sym BoxLeaf (2 * (9 + k)) (2 * (9 + k)) Refl Refl
 
 public export
 Show (Nuclide z n) where
@@ -211,13 +207,13 @@ nuclideQuarkCounts nuc =
 
 ||| Constituent valence quarks multiset for any Nuclide:
 public export
-nuclideQuarks : Nuclide z n -> Multiset BoxInt SMFermion
+nuclideQuarks : Nuclide z n -> Carrier SMFermion
 nuclideQuarks nuc = nuclideQuarkMultiset nuc.protons nuc.neutrons
 
 ||| Constituent Hadron multiset (Protons + Neutrons) for any Nuclide:
 ||| Reads the authentic multiset carrier directly from the Nuclide.
 public export
-nuclideHadrons : Nuclide z n -> Multiset BoxInt HadronToken
+nuclideHadrons : Nuclide z n -> Carrier HadronToken
 nuclideHadrons nuc = nuc.hadrons
 
 ||| Mass tokens (A * 27) for any Nuclide, grounded in the 27-state elliptic lattice capacity:
@@ -254,6 +250,26 @@ Eq StellarElement where
   ElemS  == ElemS  = True
   ElemFe == ElemFe = True
   _      == _      = False
+
+public export
+Ord StellarElement where
+  compare x y = compare (tag x) (tag y)
+    where
+      tag : StellarElement -> Nat
+      tag ElemH  = 0
+      tag ElemHe = 1
+      tag ElemC  = 2
+      tag ElemN  = 3
+      tag ElemO  = 4
+      tag ElemNe = 5
+      tag ElemMg = 6
+      tag ElemSi = 7
+      tag ElemP  = 8
+      tag ElemS  = 9
+      tag ElemFe = 10
+
+public export
+DiscreteCoord StellarElement where
 
 public export
 Show StellarElement where
@@ -311,7 +327,7 @@ prfAuditStellarNuclides ElemFe = Refl
 ||| Canonical constituent hadron multiset for every stellar nuclide (Rule 03 §7):
 ||| Grounded directly in prior-layer HadronTokens via the dependent Nuclide carrier.
 public export
-elementToHadrons : StellarElement -> Multiset BoxInt HadronToken
+elementToHadrons : StellarElement -> Carrier HadronToken
 elementToHadrons elem =
   let (_ ** _ ** nuc) = stellarNuclide elem
   in nuclideHadrons nuc
@@ -319,7 +335,7 @@ elementToHadrons elem =
 ||| Canonical constituent quark multiset for every stellar nuclide:
 ||| Grounded directly in Standard Model quarks via the dependent Nuclide carrier.
 public export
-elementToQuarks : StellarElement -> Multiset BoxInt SMFermion
+elementToQuarks : StellarElement -> Carrier SMFermion
 elementToQuarks elem =
   let (_ ** _ ** nuc) = stellarNuclide elem
   in nuclideQuarks nuc
@@ -431,73 +447,71 @@ ppFusionLinear (MkLToken x) (MkLToken y) =
 
 ||| Maps an atomic stellar element token to a multiset of nucleons (Rule 03 §7):
 public export
-elementToNucleonMultiset : Token StellarElement -> Multiset BoxInt Nat
+elementToNucleonMultiset : Token StellarElement -> Carrier Nat
 elementToNucleonMultiset (MkToken elem) =
-  AddM (stellarNucleonCount elem) (intToBoxInt 1) ZeroM
+  singletonCarrier (stellarNucleonCount elem) (intToBoxInt 1)
 
-||| Free monoid adjunction lifting element tokens into nucleon multisets:
+||| Linear basis extension lifting element tokens into nucleon multisets:
 public export
-liftElementToNucleons : Multiset BoxInt StellarElement -> Multiset BoxInt Nat
-liftElementToNucleons = liftToken elementToNucleonMultiset
+liftElementToNucleons : Carrier StellarElement -> Carrier Nat
+liftElementToNucleons = liftCarrier elementToNucleonMultiset
 
 ||| Homomorphic tally of total nucleons across a stellar element multiset:
 public export
-totalNucleonCount : Multiset BoxInt StellarElement -> BoxInt
-totalNucleonCount ZeroM = MkBoxInt 0
-totalNucleonCount (AddM elem (MkBoxInt w) rest) =
-  addBox (MkBoxInt (cast (stellarNucleonCount elem) * w)) (totalNucleonCount rest)
+totalNucleonCount : Carrier StellarElement -> BoxInt
+totalNucleonCount =
+  foldBoxTreeL (\acc, (el, MkBoxInt w) => addBox (MkBoxInt (cast (stellarNucleonCount el) * w)) acc) (MkBoxInt 0)
 
 ||| Homomorphic tally of total protons across a stellar element multiset:
 public export
-totalProtonCount : Multiset BoxInt StellarElement -> BoxInt
-totalProtonCount ZeroM = MkBoxInt 0
-totalProtonCount (AddM elem (MkBoxInt w) rest) =
-  addBox (MkBoxInt (cast (stellarAtomicNumber elem) * w)) (totalProtonCount rest)
+totalProtonCount : Carrier StellarElement -> BoxInt
+totalProtonCount =
+  foldBoxTreeL (\acc, (el, MkBoxInt w) => addBox (MkBoxInt (cast (stellarAtomicNumber el) * w)) acc) (MkBoxInt 0)
 
 ------------------------------------------------------------------------
 -- 2b. MULTI-TOKEN STOICHIOMETRIC STELLAR FUSION TRANSITIONS
 ------------------------------------------------------------------------
 
-||| Executes a single stoichiometric nuclear reaction step (k = 1) using reactMultisetBox:
+||| Executes a single stoichiometric nuclear reaction step (k = 1) using reactCarrierBox:
 public export
 fireSingleReactionBox :
-  (reactants : Multiset BoxInt StellarElement) ->
-  (products : Multiset BoxInt StellarElement) ->
-  TransitionState StellarElement ->
-  Maybe (TransitionState StellarElement)
+  (reactants : Carrier StellarElement) ->
+  (products : Carrier StellarElement) ->
+  TransitionCarrier StellarElement ->
+  Maybe (TransitionCarrier StellarElement)
 fireSingleReactionBox reactants products state =
-  let (nextState, k) = reactMultisetBox (intToBoxInt 1) reactants products state
+  let (nextState, k) = reactCarrierBox (intToBoxInt 1) reactants products state
   in if k > intToBoxInt 0 then Just nextState else Nothing
 
 ||| Triple-Alpha multi-token stoichiometric firing transition (3 x He -> C) (Rule 03 & 04):
 public export
-fireTripleAlphaMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
+fireTripleAlphaMultiToken : TransitionCarrier StellarElement -> Maybe (TransitionCarrier StellarElement)
 fireTripleAlphaMultiToken =
-  fireSingleReactionBox (AddM ElemHe (intToBoxInt 3) ZeroM) (AddM ElemC (intToBoxInt 1) ZeroM)
+  fireSingleReactionBox (singletonCarrier ElemHe (intToBoxInt 3)) (singletonCarrier ElemC (intToBoxInt 1))
 
 ||| Alpha Capture multi-token stoichiometric firing on Carbon (C + He -> O):
 public export
-fireAlphaCaptureCarbonMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
+fireAlphaCaptureCarbonMultiToken : TransitionCarrier StellarElement -> Maybe (TransitionCarrier StellarElement)
 fireAlphaCaptureCarbonMultiToken =
-  fireSingleReactionBox (AddM ElemC (intToBoxInt 1) (AddM ElemHe (intToBoxInt 1) ZeroM)) (AddM ElemO (intToBoxInt 1) ZeroM)
+  fireSingleReactionBox (singletonCarrier ElemC (intToBoxInt 1) <+> singletonCarrier ElemHe (intToBoxInt 1)) (singletonCarrier ElemO (intToBoxInt 1))
 
 ||| Alpha Capture multi-token stoichiometric firing on Oxygen (O + He -> Ne):
 public export
-fireAlphaCaptureOxygenMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
+fireAlphaCaptureOxygenMultiToken : TransitionCarrier StellarElement -> Maybe (TransitionCarrier StellarElement)
 fireAlphaCaptureOxygenMultiToken =
-  fireSingleReactionBox (AddM ElemO (intToBoxInt 1) (AddM ElemHe (intToBoxInt 1) ZeroM)) (AddM ElemNe (intToBoxInt 1) ZeroM)
+  fireSingleReactionBox (singletonCarrier ElemO (intToBoxInt 1) <+> singletonCarrier ElemHe (intToBoxInt 1)) (singletonCarrier ElemNe (intToBoxInt 1))
 
 ||| Alpha Capture multi-token stoichiometric firing on Neon (Ne + He -> Mg):
 public export
-fireAlphaCaptureNeonMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
+fireAlphaCaptureNeonMultiToken : TransitionCarrier StellarElement -> Maybe (TransitionCarrier StellarElement)
 fireAlphaCaptureNeonMultiToken =
-  fireSingleReactionBox (AddM ElemNe (intToBoxInt 1) (AddM ElemHe (intToBoxInt 1) ZeroM)) (AddM ElemMg (intToBoxInt 1) ZeroM)
+  fireSingleReactionBox (singletonCarrier ElemNe (intToBoxInt 1) <+> singletonCarrier ElemHe (intToBoxInt 1)) (singletonCarrier ElemMg (intToBoxInt 1))
 
 ||| Alpha Capture multi-token stoichiometric firing on Magnesium (Mg + He -> Si):
 public export
-fireAlphaCaptureMagnesiumMultiToken : TransitionState StellarElement -> Maybe (TransitionState StellarElement)
+fireAlphaCaptureMagnesiumMultiToken : TransitionCarrier StellarElement -> Maybe (TransitionCarrier StellarElement)
 fireAlphaCaptureMagnesiumMultiToken =
-  fireSingleReactionBox (AddM ElemMg (intToBoxInt 1) (AddM ElemHe (intToBoxInt 1) ZeroM)) (AddM ElemSi (intToBoxInt 1) ZeroM)
+  fireSingleReactionBox (singletonCarrier ElemMg (intToBoxInt 1) <+> singletonCarrier ElemHe (intToBoxInt 1)) (singletonCarrier ElemSi (intToBoxInt 1))
 
 ------------------------------------------------------------------------
 -- 3. STELLAR FUSION BALANCE ARRAY NETWORK (CH. 26 & 28)
@@ -593,8 +607,8 @@ auditLinearStellarFusion = pure Refl
 public export
 auditTripleAlphaMultiTokenProof : Bool
 auditTripleAlphaMultiTokenProof =
-  let initial = the (TransitionState StellarElement)
-                  (AddM ElemHe (intToBoxInt 3) ZeroM)
+  let initial = the (TransitionCarrier StellarElement)
+                  (singletonCarrier ElemHe (intToBoxInt 3))
   in case fireTripleAlphaMultiToken initial of
        Just finalState =>
          let nBefore = totalNucleonCount initial
@@ -608,8 +622,8 @@ auditTripleAlphaMultiTokenProof =
 public export
 auditAlphaCaptureLadderMultiTokenProof : Bool
 auditAlphaCaptureLadderMultiTokenProof =
-  let s0 = the (TransitionState StellarElement)
-             (AddM ElemC (intToBoxInt 1) (AddM ElemHe (intToBoxInt 4) ZeroM))
+  let s0 = the (TransitionCarrier StellarElement)
+             (singletonCarrier ElemC (intToBoxInt 1) <+> singletonCarrier ElemHe (intToBoxInt 4))
   in case fireAlphaCaptureCarbonMultiToken s0 of
        Nothing => False
        Just s1 => case fireAlphaCaptureOxygenMultiToken s1 of
@@ -623,10 +637,10 @@ auditAlphaCaptureLadderMultiTokenProof =
                    n4 = totalNucleonCount s4
                in boxEq n0 n4 && boxEq n4 (intToBoxInt 28)
 
-||| Compile-time witness: Free monoid adjunction nucleon tally reduces definitionally.
+||| Compile-time witness: linear basis extension nucleon tally reduces definitionally.
 public export
 0 prfAdjunctionNucleonTally :
-  boxEq (totalNucleonCount (AddM ElemC (intToBoxInt 1) ZeroM)) (intToBoxInt 12) = True
+  boxEq (totalNucleonCount (singletonCarrier ElemC (intToBoxInt 1))) (intToBoxInt 12) = True
 prfAdjunctionNucleonTally = Refl
 
 ------------------------------------------------------------------------
@@ -638,42 +652,42 @@ prfAdjunctionNucleonTally = Refl
 ||| - Hydrogen protons: 3 * Q_Blue = 75 (75 nucleons)
 ||| - Conserved nucleons: Q_Red * Q_Blue = 7 * 25 = 175 nucleons
 public export
-synthesizeNuclearFromTriad : TriadQuadrance -> Multiset BoxInt StellarElement
+synthesizeNuclearFromTriad : TriadQuadrance -> Carrier StellarElement
 synthesizeNuclearFromTriad triad =
   let heCount = triad.blueQ
       hCount  = mulBox (intToBoxInt 3) triad.blueQ
-  in AddM ElemH hCount (AddM ElemHe heCount ZeroM)
+  in singletonCarrier ElemH hCount <+> singletonCarrier ElemHe heCount
 
 ||| Canonical primordial nuclear nuclide state, synthesized from the base (25, 7, 24) triad:
 public export
-canonicalNuclearState : Multiset BoxInt StellarElement
+canonicalNuclearState : Carrier StellarElement
 canonicalNuclearState = synthesizeNuclearFromTriad (epochTriadQuadrance 0)
 
 ||| Reads active Helium-4 alpha particle count directly from the nuclear multiset:
 public export
-heliumAlphasInNuclear : Multiset BoxInt StellarElement -> BoxInt
-heliumAlphasInNuclear = lookupCountBox ElemHe
+heliumAlphasInNuclear : Carrier StellarElement -> BoxInt
+heliumAlphasInNuclear = lookupCarrier ElemHe
 
 ||| Reads active Hydrogen proton count directly from the nuclear multiset:
 public export
-hydrogenProtonsInNuclear : Multiset BoxInt StellarElement -> BoxInt
-hydrogenProtonsInNuclear = lookupCountBox ElemH
+hydrogenProtonsInNuclear : Carrier StellarElement -> BoxInt
+hydrogenProtonsInNuclear = lookupCarrier ElemH
 
 ||| Reads total conserved nucleon count directly from the nuclear multiset:
 public export
-totalNucleonsInNuclear : Multiset BoxInt StellarElement -> BoxInt
+totalNucleonsInNuclear : Carrier StellarElement -> BoxInt
 totalNucleonsInNuclear = totalNucleonCount
 
 ||| Synthesizes the primordial nuclear nuclide multiset from the condensed Elliptic VM token count (27 VM).
 ||| At full Primorial 210 saturation (ellipticCount >= 27), yields canonicalNuclearState (75 H + 25 He = 175 nucleons).
 public export
-synthesizeNuclearFromEllipticCount : (ellipticCount : Nat) -> Multiset BoxInt StellarElement
+synthesizeNuclearFromEllipticCount : (ellipticCount : Nat) -> Carrier StellarElement
 synthesizeNuclearFromEllipticCount count =
   let vmDim = ellipticLatticeCapacity
   in if count >= vmDim
        then canonicalNuclearState
        else if count == 0
-         then ZeroM
+         then BoxLeaf
          else
            let cInt = cast {to = Integer} count
                dimInt = cast {to = Integer} vmDim
@@ -682,7 +696,7 @@ synthesizeNuclearFromEllipticCount count =
                heBase = unwrapBox (heliumAlphasInNuclear base)
                hCount = (cInt * hBase) `div` dimInt
                heCount = (cInt * heBase) `div` dimInt
-           in AddM ElemH (intToBoxInt hCount) (AddM ElemHe (intToBoxInt heCount) ZeroM)
+           in singletonCarrier ElemH (intToBoxInt hCount) <+> singletonCarrier ElemHe (intToBoxInt heCount)
 
 ||| Start epoch of stellar nucleosynthesis burning phase (k = 11):
 public export
@@ -704,17 +718,17 @@ isStellarNucleosynthesisEpoch k =
 ||| Ignites Triple-Alpha fusion producing Carbon, Oxygen, Nitrogen, and Phosphorus,
 ||| linearly consuming Helium-4 via stoichiometric transition network firing.
 public export
-stepStellarNucleosynthesis : (k : Nat) -> Multiset BoxInt StellarElement -> Multiset BoxInt StellarElement
+stepStellarNucleosynthesis : (k : Nat) -> Carrier StellarElement -> Carrier StellarElement
 stepStellarNucleosynthesis k nuclides =
   if isStellarNucleosynthesisEpoch k
-    then let (s1, k1) = reactMultisetBox (intToBoxInt 1)
-                          (AddM ElemHe (intToBoxInt 3) ZeroM)
-                          (AddM ElemC (intToBoxInt 1) ZeroM)
+    then let (s1, k1) = reactCarrierBox (intToBoxInt 1)
+                          (singletonCarrier ElemHe (intToBoxInt 3))
+                          (singletonCarrier ElemC (intToBoxInt 1))
                           nuclides
          in if k1 > intToBoxInt 0
-              then fst (reactMultisetBox (intToBoxInt 1)
-                         (AddM ElemC (intToBoxInt 1) (AddM ElemHe (intToBoxInt 1) ZeroM))
-                         (AddM ElemO (intToBoxInt 1) ZeroM)
+              then fst (reactCarrierBox (intToBoxInt 1)
+                         (singletonCarrier ElemC (intToBoxInt 1) <+> singletonCarrier ElemHe (intToBoxInt 1))
+                         (singletonCarrier ElemO (intToBoxInt 1))
                          s1)
               else nuclides
     else nuclides
@@ -760,21 +774,18 @@ streamStellarLadderTransducer =
                         Nothing  => Done) 0
 
 ||| Evaluates total mass number (nucleons) across the streaming ladder using foldStreamNat.
-%spec fuel
 public export
 totalStellarLadderNucleons : (fuel : Nat) -> Nat
 totalStellarLadderNucleons fuel =
   foldStreamNat fuel (\acc, stp => acc + stp.massNumberA) 0 streamStellarLadderTransducer
 
 ||| Evaluates total cumulative energy yield across the streaming ladder in O(1) registers.
-%spec fuel
 public export
 totalStellarLadderEnergyYield : (fuel : Nat) -> BoxInt
 totalStellarLadderEnergyYield fuel =
   foldStreamNat fuel (\acc, stp => addBox acc stp.energyYieldQ) (intToBoxInt 0) streamStellarLadderTransducer
 
 ||| Step count of the complete stellar nucleosynthesis ladder (10 elements):
-%spec fuel
 public export
 stellarLadderStepCount : (fuel : Nat) -> Nat
 stellarLadderStepCount fuel =

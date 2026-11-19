@@ -1,6 +1,8 @@
 module Stage1.Hadron.HadronicConfinement
 
 import Language.Reflection
+import Stage0.BoxInt
+import Stage0.Multiset
 import Stage0.UniverseState
 import Stage1.MaxelTransform
 import Stage1.LinAlgebra.TernaryClassifier
@@ -226,28 +228,27 @@ prfCanonicalQuarkBaryonCounts = Refl
 -- 7. CONSTITUENT QUARK MULTISETS & STREAMING NUCLEONS (Rule 03 §7 & Rule 04 §8)
 ------------------------------------------------------------------------
 
-||| A Nucleon represented as a pure multiset of constituent quarks.
+||| A Nucleon represented as an indexed Carrier of constituent quarks.
 public export
-nucleonQuarkMultiset : NucleonSpecies -> Multiset BoxInt SMFermion
-nucleonQuarkMultiset ProtonSpecies  = AddM QuarkU (intToBoxInt 2) (AddM QuarkD (intToBoxInt 1) ZeroM)
-nucleonQuarkMultiset NeutronSpecies = AddM QuarkU (intToBoxInt 1) (AddM QuarkD (intToBoxInt 2) ZeroM)
+nucleonQuarkMultiset : NucleonSpecies -> Carrier SMFermion
+nucleonQuarkMultiset ProtonSpecies  = singletonCarrier QuarkU (intToBoxInt 2) <+> singletonCarrier QuarkD (intToBoxInt 1)
+nucleonQuarkMultiset NeutronSpecies = singletonCarrier QuarkU (intToBoxInt 1) <+> singletonCarrier QuarkD (intToBoxInt 2)
 
-||| A Nuclide (Z protons, N neutrons) represented directly as a multiset of constituent valence quarks:
+||| A Nuclide (Z protons, N neutrons) represented directly as an indexed Carrier of constituent valence quarks:
 ||| u = 2Z + N
 ||| d = Z + 2N
 public export
-nuclideQuarkMultiset : (protons : Nat) -> (neutrons : Nat) -> Multiset BoxInt SMFermion
+nuclideQuarkMultiset : (protons : Nat) -> (neutrons : Nat) -> Carrier SMFermion
 nuclideQuarkMultiset p n =
   let u = (2 * p) + n
       d = p + (2 * n)
-  in AddM QuarkU (natToBoxInt u) (AddM QuarkD (natToBoxInt d) ZeroM)
+  in singletonCarrier QuarkU (natToBoxInt u) <+> singletonCarrier QuarkD (natToBoxInt d)
 
-||| Total electric charge (in 1/3 e units) computed directly over a multiset of quarks:
+||| Total electric charge (in 1/3 e units) computed directly over a Carrier of quarks:
 public export
-quarkMultisetElectricChargeThirds : Multiset BoxInt SMFermion -> BoxInt
-quarkMultisetElectricChargeThirds ZeroM = intToBoxInt 0
-quarkMultisetElectricChargeThirds (AddM q count rest) =
-  addBox (mulBox (electricChargeThirds (SMPFermion q)) count) (quarkMultisetElectricChargeThirds rest)
+quarkMultisetElectricChargeThirds : Carrier SMFermion -> BoxInt
+quarkMultisetElectricChargeThirds =
+  foldBoxTreeL (\acc, (q, count) => addBox acc (mulBox (electricChargeThirds (SMPFermion q)) count)) (intToBoxInt 0)
 
 ||| Definitional proof that the Proton quark multiset carries net charge +1 e (+3 thirds).
 public export

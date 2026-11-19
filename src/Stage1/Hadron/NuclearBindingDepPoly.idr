@@ -59,7 +59,7 @@ nuclideBindingFactors nuc =
 ||| Computes discrete Weizsäcker Liquid-Drop Binding factors directly observed
 ||| from a constituent HadronToken multiset carrier (Rule 03 §8).
 public export
-observeHadronMultisetBindingFactors : Multiset BoxInt HadronToken -> (BoxInt, BoxInt)
+observeHadronMultisetBindingFactors : Carrier HadronToken -> (BoxInt, BoxInt)
 observeHadronMultisetBindingFactors hadrons =
   let z = boxToNat (countProtonsBox hadrons)
       n = boxToNat (countNeutronsBox hadrons)

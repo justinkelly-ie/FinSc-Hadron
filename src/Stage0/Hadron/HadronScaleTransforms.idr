@@ -33,7 +33,7 @@ Show ConcreteHadronState where
 public export
 quadStreamToConcreteHadron : QuadStreamMultiset BoxInt -> ConcreteHadronState
 quadStreamToConcreteHadron (MkQuadStream e h p s) =
-  MkConcreteHadron (multisetSum e + multisetSum h)
+  MkConcreteHadron (totalMassBox e + totalMassBox h)
 
 ||| Abstract macro hadronic domain state wrapping total baryonic weight BoxInt
 public export
@@ -53,11 +53,11 @@ Show HadronMacroDomain where
 public export
 quadStreamToHadronMacro : QuadStreamMultiset BoxInt -> HadronMacroDomain
 quadStreamToHadronMacro (MkQuadStream e h p s) =
-  MkHadronMacro (multisetSum e + multisetSum h + multisetSum p)
+  MkHadronMacro (totalMassBox e + totalMassBox h + totalMassBox p)
 
 ||| Heterogeneous MultisetScaleAdjunction instance (f_* ⊣ f^*) between ConcreteHadronState and HadronMacroDomain
 public export
-MultisetScaleAdjunction ConcreteHadronState HadronMacroDomain where
+MultisetScaleDuality ConcreteHadronState HadronMacroDomain where
   f_pushforward (MkConcreteHadron w) = MkHadronMacro w
   f_pullback (MkHadronMacro w)       = MkConcreteHadron w
   verifyUnit _   = Refl
@@ -127,7 +127,7 @@ proofHadronHomInv (AddM (val, MkAbstractHadronFunctor (MkHadronMacro w) payload)
 
 ||| Category-Theoretic MultisetAdjunction instance L_Hadron ⊣ R_Hadron for hadronic scale space
 public export
-MultisetAdjunction ConcreteHadronFunctor AbstractHadronFunctor where
+MultisetDuality ConcreteHadronFunctor AbstractHadronFunctor where
   leftAdjoint x = MkConcreteHadronFunctor (MkConcreteHadron (intToBoxInt 0)) x
   rightAdjoint (MkConcreteHadronFunctor _ x) = x
   homTensorIso = hadronHomTensorIso
@@ -135,10 +135,10 @@ MultisetAdjunction ConcreteHadronFunctor AbstractHadronFunctor where
   verifyHomIso = proofHadronHomIso
   verifyHomInv = proofHadronHomInv
 
-||| 2LTT Subfibration Reflection Functor instance for Hadron Scale Adjunction
+||| 2LTT Subfibration Reflection Duality instance for Hadron Scale Duality
 public export
-StrictReflectionFunctor ConcreteHadronFunctor AbstractHadronFunctor where
-  reflectionAdjunction = %search
+StrictReflectionDuality ConcreteHadronFunctor AbstractHadronFunctor where
+  reflectionDuality = %search
   reflectionRefl _ = Refl
 
 ||| QTT 0 Erased Proof: Hadron Scale Multiset Adjunction Duality Invariant
@@ -173,7 +173,7 @@ Eq BaryonState where
 
 ||| Heterogeneous MultisetScaleAdjunction instance between QuarkState and BaryonState (3 * q -> B)
 public export
-MultisetScaleAdjunction QuarkState BaryonState where
+MultisetScaleDuality QuarkState BaryonState where
   f_pushforward (MkQuarkState w) = MkBaryonState (w * intToBoxInt 3)
   f_pullback (MkBaryonState w)   = MkQuarkState w
   verifyUnit _   = Refl
@@ -239,7 +239,7 @@ proofQuarkBaryonHomInv (AddM (val, MkBaryonFunctor (MkBaryonState w) payload) we
 
 ||| Category-Theoretic MultisetAdjunction instance L_Quark ⊣ R_Baryon for Quark-Hadron Confinement
 public export
-MultisetAdjunction QuarkFunctor BaryonFunctor where
+MultisetDuality QuarkFunctor BaryonFunctor where
   leftAdjoint x = MkQuarkFunctor (MkQuarkState (intToBoxInt 0)) x
   rightAdjoint (MkQuarkFunctor _ x) = x
   homTensorIso = quarkBaryonHomTensorIso
@@ -248,8 +248,8 @@ MultisetAdjunction QuarkFunctor BaryonFunctor where
   verifyHomInv = proofQuarkBaryonHomInv
 
 public export
-StrictReflectionFunctor QuarkFunctor BaryonFunctor where
-  reflectionAdjunction = %search
+StrictReflectionDuality QuarkFunctor BaryonFunctor where
+  reflectionDuality = %search
   reflectionRefl _ = Refl
 
 --------------------------------------------------------------------------------
@@ -278,7 +278,7 @@ Eq CarbonNucleusDomain where
 
 ||| Heterogeneous MultisetScaleAdjunction instance between AlphaClusterStateDomain and CarbonNucleusDomain (3 * Alpha -> Carbon)
 public export
-MultisetScaleAdjunction AlphaClusterStateDomain CarbonNucleusDomain where
+MultisetScaleDuality AlphaClusterStateDomain CarbonNucleusDomain where
   f_pushforward (MkAlphaDomain a) = MkCarbonDomain (a * intToBoxInt 3)
   f_pullback (MkCarbonDomain c)   = MkAlphaDomain c
   verifyUnit _   = Refl
@@ -344,7 +344,7 @@ proofAlphaCarbonHomInv (AddM (val, MkCarbonFunctor (MkCarbonDomain c) payload) w
 
 ||| Category-Theoretic MultisetAdjunction instance L_Alpha ⊣ R_Carbon for Triple-Alpha Nucleosynthesis
 public export
-MultisetAdjunction AlphaFunctor CarbonFunctor where
+MultisetDuality AlphaFunctor CarbonFunctor where
   leftAdjoint x = MkAlphaFunctor (MkAlphaDomain (intToBoxInt 0)) x
   rightAdjoint (MkAlphaFunctor _ x) = x
   homTensorIso = alphaCarbonHomTensorIso
@@ -353,8 +353,8 @@ MultisetAdjunction AlphaFunctor CarbonFunctor where
   verifyHomInv = proofAlphaCarbonHomInv
 
 public export
-StrictReflectionFunctor AlphaFunctor CarbonFunctor where
-  reflectionAdjunction = %search
+StrictReflectionDuality AlphaFunctor CarbonFunctor where
+  reflectionDuality = %search
   reflectionRefl _ = Refl
 
 --------------------------------------------------------------------------------
@@ -362,7 +362,7 @@ StrictReflectionFunctor AlphaFunctor CarbonFunctor where
 --------------------------------------------------------------------------------
 
 ||| Deforested 2LTT staged code generator transducer for Hadron scale energy evaluation.
-%inline public export
+public export
 stagedHadronScalePipeline : QuadStreamMultiset BoxInt -> Code HadronMacroDomain
 stagedHadronScalePipeline qs = quote (quadStreamToHadronMacro qs)
 
@@ -372,14 +372,14 @@ public export
 prfStagedHadronScalePipeline qs = inverseSpliceQuote (quadStreamToHadronMacro qs)
 
 ||| Deforested 2LTT staged code generator transducer for Quark-Baryon confinement.
-%inline public export
+public export
 stagedQuarkBaryonPipeline : QuadStreamMultiset BoxInt -> Code BaryonState
-stagedQuarkBaryonPipeline qs = quote (MkBaryonState (multisetSum (qs.ellipticStream) * intToBoxInt 3))
+stagedQuarkBaryonPipeline qs = quote (MkBaryonState (totalMassBox (qs.ellipticStream) * intToBoxInt 3))
 
 ||| QTT 0 erased proof witness verifying Quark-Baryon confinement staging inverse identity.
 public export
-0 prfStagedQuarkBaryonPipeline : (qs : QuadStreamMultiset BoxInt) -> splice (stagedQuarkBaryonPipeline qs) = MkBaryonState (multisetSum (qs.ellipticStream) * intToBoxInt 3)
-prfStagedQuarkBaryonPipeline qs = inverseSpliceQuote (MkBaryonState (multisetSum (qs.ellipticStream) * intToBoxInt 3))
+0 prfStagedQuarkBaryonPipeline : (qs : QuadStreamMultiset BoxInt) -> splice (stagedQuarkBaryonPipeline qs) = MkBaryonState (totalMassBox (qs.ellipticStream) * intToBoxInt 3)
+prfStagedQuarkBaryonPipeline qs = inverseSpliceQuote (MkBaryonState (totalMassBox (qs.ellipticStream) * intToBoxInt 3))
 
 ||| Proof witness exporter for Hadron ScaleTransform Plugin
 public export

@@ -51,6 +51,19 @@ Eq LightNucleusSpec where
   _          == _          = False
 
 public export
+Ord LightNucleusSpec where
+  compare x y = compare (tag x) (tag y)
+    where
+      tag : LightNucleusSpec -> Nat
+      tag Deuteron2H = 0
+      tag Triton3H   = 1
+      tag Helium3He  = 2
+      tag Lithium7Li = 3
+
+public export
+DiscreteCoord LightNucleusSpec where
+
+public export
 Show LightNucleusSpec where
   show Deuteron2H = "2H (Deuteron)"
   show Triton3H   = "3H (Triton)"
@@ -90,16 +103,17 @@ fuseDeuteron p n = p <+> n
 
 ||| Fuses an authentic HadronToken multiset into a composite nuclear Boxel in a single pass (Rule 04 §12).
 public export
-fuseHadronsToBoxel : Multiset BoxInt HadronToken -> Boxel
+fuseHadronsToBoxel : Carrier HadronToken -> Boxel
 fuseHadronsToBoxel bag =
-  foldStreamNat (boxToNat (absBox (multisetSum bag)))
-    (\acc, _ => acc <+> seedHadronBoxel)
-    emptyCellMultiset
-    (streamTokens bag)
+  foldBoxTreeL (\acc, (_, w) => repeatFuse (boxToNat (absBox w)) acc) emptyCellMultiset bag
+  where
+    repeatFuse : Nat -> Boxel -> Boxel
+    repeatFuse 0 cur = cur
+    repeatFuse (S k) cur = repeatFuse k (cur <+> seedHadronBoxel)
 
 ||| Fuses 3 Protons and 4 Neutrons from an authentic HadronToken multiset into a Lithium-7 Boxel.
 public export
-fuseLithium7Multiset : Multiset BoxInt HadronToken -> Boxel
+fuseLithium7Multiset : Carrier HadronToken -> Boxel
 fuseLithium7Multiset = fuseHadronsToBoxel
 
 ||| @deprecated Materializes nucleons into intermediate `List HadronBoxel` (violates Rule 04 §8).
@@ -131,7 +145,6 @@ streamRadiativeDeuteronPhotons strm =
                                   Nothing          => Nothing) strm
 
 ||| Evaluates total radiative energy released during cosmic deuteron synthesis directly in O(1) memory.
-%spec fuel
 public export
 evaluateCosmicRadiativeEnergy : (fuel : Nat) -> FusedStream PhotonStateToken -> BoxInt
 evaluateCosmicRadiativeEnergy fuel strm =

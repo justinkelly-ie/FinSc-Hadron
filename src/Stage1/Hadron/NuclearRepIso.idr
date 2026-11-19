@@ -25,16 +25,16 @@ public export
 nuclearRepIso : TheoryRepresentationIsomorphism L5_HadronicQuantum ColorCharge ColorCharge
 nuclearRepIso =
   MkTheoryRepIso
-    "L5: Color Charge SU(3) Algebra -> Multiset ColorCharge"
-    (\c => AddM c (MkBoxInt 1) ZeroM)
+    "L5: Color Charge SU(3) Algebra -> Carrier ColorCharge"
+    (\c => singletonCarrier c (MkBoxInt 1))
     (\m => case m of
-             AddM c _ _ => c
-             ZeroM      => RedColor)
+             BoxNode _ _ c _ _ => c
+             BoxLeaf           => RedColor)
     (\c =>
-      let m = AddM c (MkBoxInt 1) ZeroM
+      let m = singletonCarrier c (MkBoxInt 1)
           c' = case m of
-                 AddM x _ _ => x
-                 ZeroM      => RedColor
+                 BoxNode _ _ x _ _ => x
+                 BoxLeaf           => RedColor
       in colorChargeEqMono c' c
     )
 

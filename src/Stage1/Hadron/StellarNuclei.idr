@@ -71,7 +71,7 @@ stellarNucleusMassTokens spec =
 
 ||| Evaluates constituent quark multiset of a stellar nucleus from dependent Nuclide.
 public export
-stellarNucleusQuarks : StellarNucleusSpec -> Multiset BoxInt Stage1.Hadron.StandardModel.SMFermion
+stellarNucleusQuarks : StellarNucleusSpec -> Carrier Stage1.Hadron.StandardModel.SMFermion
 stellarNucleusQuarks spec =
   let (_ ** _ ** nuc) = stellarNucleusSpecNuclide spec in nuclideQuarks nuc
 
@@ -81,12 +81,13 @@ stellarNucleusQuarks spec =
 
 ||| Fuses an authentic HadronToken multiset into a composite nuclear Boxel in a single pass (Rule 04 §12).
 public export
-fuseStellarHadronsToBoxel : Multiset BoxInt HadronToken -> Boxel
+fuseStellarHadronsToBoxel : Carrier HadronToken -> Boxel
 fuseStellarHadronsToBoxel bag =
-  foldStreamNat (boxToNat (absBox (multisetSum bag)))
-    (\acc, _ => acc <+> seedHadronBoxel)
-    emptyCellMultiset
-    (streamTokens bag)
+  foldBoxTreeL (\acc, (_, w) => repeatFuse (boxToNat (absBox w)) acc) emptyCellMultiset bag
+  where
+    repeatFuse : Nat -> Boxel -> Boxel
+    repeatFuse 0 cur = cur
+    repeatFuse (S k) cur = repeatFuse k (cur <+> seedHadronBoxel)
 
 ||| Fuses a deforested stream of Alpha Cores into a Neon-20 nucleus in O(1) memory.
 public export
@@ -96,7 +97,7 @@ streamFuseNeon20 strm =
 
 ||| Fuses 5 Alpha Cores (5 * 108) into a Neon-20 nucleus from a HadronToken multiset without lists (Rule 04 §12).
 public export
-fuseNeon20Multiset : Multiset BoxInt HadronToken -> Boxel
+fuseNeon20Multiset : Carrier HadronToken -> Boxel
 fuseNeon20Multiset = fuseStellarHadronsToBoxel
 
 ||| @deprecated Materializes alpha cores into intermediate List (violates Rule 04 §8).
@@ -114,7 +115,7 @@ streamFuseIron56Tokens strm =
 
 ||| Evaluates mass tokens of an authentic HadronToken multiset without list allocation.
 public export
-fuseHadronTokensMass : Multiset BoxInt HadronToken -> Stage0.BoxInt.BoxInt
+fuseHadronTokensMass : Carrier HadronToken -> Stage0.BoxInt.BoxInt
 fuseHadronTokensMass hadrons =
   mulBox (natToBoxInt 27) (addBox (countProtonsBox hadrons) (countNeutronsBox hadrons))
 

@@ -36,27 +36,27 @@ Show ExoticMultiquarkSpec where
 
 ||| Ground truth constituent quark multiset representation of exotic multiquarks (Rule 03 §8).
 public export
-exoticConstituentQuarks : ExoticMultiquarkSpec -> Multiset BoxInt SMFermion
+exoticConstituentQuarks : ExoticMultiquarkSpec -> Carrier SMFermion
 exoticConstituentQuarks TetraquarkX3872 =
-  AddM QuarkC (intToBoxInt 1)
- (AddM AntiQuarkC (intToBoxInt 1)
- (AddM QuarkU (intToBoxInt 1)
- (AddM AntiQuarkU (intToBoxInt 1) ZeroM)))
+  singletonCarrier QuarkC (intToBoxInt 1)
+    <+> singletonCarrier AntiQuarkC (intToBoxInt 1)
+    <+> singletonCarrier QuarkU (intToBoxInt 1)
+    <+> singletonCarrier AntiQuarkU (intToBoxInt 1)
 exoticConstituentQuarks PentaquarkPcPlus =
-  AddM QuarkU (intToBoxInt 2)
- (AddM QuarkD (intToBoxInt 1)
- (AddM QuarkC (intToBoxInt 1)
- (AddM AntiQuarkC (intToBoxInt 1) ZeroM)))
+  singletonCarrier QuarkU (intToBoxInt 2)
+    <+> singletonCarrier QuarkD (intToBoxInt 1)
+    <+> singletonCarrier QuarkC (intToBoxInt 1)
+    <+> singletonCarrier AntiQuarkC (intToBoxInt 1)
 exoticConstituentQuarks HDibaryon =
-  AddM QuarkU (intToBoxInt 2)
- (AddM QuarkD (intToBoxInt 2)
- (AddM QuarkS (intToBoxInt 2) ZeroM))
+  singletonCarrier QuarkU (intToBoxInt 2)
+    <+> singletonCarrier QuarkD (intToBoxInt 2)
+    <+> singletonCarrier QuarkS (intToBoxInt 2)
 
 ||| Observes net electric charge (in 1/3 e units) of an exotic multiquark via reduction over constituent quarks (Rule 03 §8).
 public export
 exoticElectricChargeThirds : ExoticMultiquarkSpec -> BoxInt
 exoticElectricChargeThirds spec =
-  foldMultiset (\q, w, acc => addBox (mulBox w (electricChargeThirds (SMPFermion q))) acc)
+  foldBoxTreeL (\acc, (q, w) => addBox (mulBox w (electricChargeThirds (SMPFermion q))) acc)
                (intToBoxInt 0)
                (exoticConstituentQuarks spec)
 
@@ -64,7 +64,7 @@ exoticElectricChargeThirds spec =
 public export
 exoticBaryonThirds : ExoticMultiquarkSpec -> BoxInt
 exoticBaryonThirds spec =
-  foldMultiset (\q, w, acc => addBox (mulBox w ((particleQuantumNumbers (SMPFermion q)).baryonThirds)) acc)
+  foldBoxTreeL (\acc, (q, w) => addBox (mulBox w ((particleQuantumNumbers (SMPFermion q)).baryonThirds)) acc)
                (intToBoxInt 0)
                (exoticConstituentQuarks spec)
 
@@ -72,7 +72,7 @@ exoticBaryonThirds spec =
 public export
 exoticMassTokens : ExoticMultiquarkSpec -> BoxInt
 exoticMassTokens spec =
-  foldMultiset (\_, w, acc => addBox (mulBox w (intToBoxInt 9)) acc)
+  foldBoxTreeL (\acc, (_, w) => addBox (mulBox w (intToBoxInt 9)) acc)
                (intToBoxInt 0)
                (exoticConstituentQuarks spec)
 
@@ -88,13 +88,13 @@ expectedExoticValence PentaquarkPcPlus = intToBoxInt 5
 expectedExoticValence HDibaryon        = intToBoxInt 6
 
 ||| Certified Dependent Exotic Multiquark Carrier (Rule 03 §7, §8).
-||| Bundles the underlying multiset carrier with QTT multiplicity 0 proof that
+||| Bundles the underlying Carrier with QTT multiplicity 0 proof that
 ||| total constituent quarks match exact physical valence (4 for Tetraquark, 5 for Pentaquark, 6 for Dibaryon).
 public export
 record CertifiedExoticMultiquark (spec : ExoticMultiquarkSpec) where
   constructor MkCertifiedExotic
-  quarks            : Multiset BoxInt SMFermion
-  0 prfValenceMatch : multisetSum quarks = expectedExoticValence spec
+  quarks            : Carrier SMFermion
+  0 prfValenceMatch : totalMassBox quarks = expectedExoticValence spec
 
 ||| Canonical certified Tetraquark X(3872) state (4 quarks: c c_bar u u_bar):
 public export
@@ -114,7 +114,7 @@ certifiedHDibaryon = MkCertifiedExotic (exoticConstituentQuarks HDibaryon) Refl
 ||| Constructively observes constituent valence directly from the certified carrier in O(1) memory:
 public export
 exoticValenceCount : CertifiedExoticMultiquark spec -> BoxInt
-exoticValenceCount (MkCertifiedExotic q _) = multisetSum q
+exoticValenceCount (MkCertifiedExotic q _) = totalMassBox q
 
 ------------------------------------------------------------------------
 -- 2. SMART CONSTRUCTORS FOR EXOTIC MULTIQUARKS

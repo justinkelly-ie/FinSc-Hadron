@@ -198,23 +198,23 @@ auditTripleAlphaCarbonBalanceProof =
 
 ||| Authentic constituent HadronToken multiset of an Alpha Cluster (2 protons + 2 neutrons):
 public export
-alphaClusterHadronMultiset : Multiset BoxInt HadronToken
+alphaClusterHadronMultiset : Carrier HadronToken
 alphaClusterHadronMultiset =
-  AddM ProtonToken (intToBoxInt 2) (AddM NeutronToken (intToBoxInt 2) ZeroM)
+  singletonCarrier ProtonToken (intToBoxInt 2) <+> singletonCarrier NeutronToken (intToBoxInt 2)
 
 ||| Observes total mass tokens across a HadronToken multiset (each nucleon = 27 tokens):
 public export
-observeHadronClusterMassTokens : Multiset BoxInt HadronToken -> BoxInt
+observeHadronClusterMassTokens : Carrier HadronToken -> BoxInt
 observeHadronClusterMassTokens bag =
-  mulBox (intToBoxInt 27) (multisetSum bag)
+  mulBox (intToBoxInt 27) (totalMassBox bag)
 
 ||| Triple-Alpha Hoyle Fusion combining 3 Alpha cluster multisets into Carbon-12:
 public export
 tripleAlphaHoyleMultisetFusion :
-  Multiset BoxInt HadronToken ->
-  Multiset BoxInt HadronToken ->
-  Multiset BoxInt HadronToken ->
-  Multiset BoxInt HadronToken
+  Carrier HadronToken ->
+  Carrier HadronToken ->
+  Carrier HadronToken ->
+  Carrier HadronToken
 tripleAlphaHoyleMultisetFusion a1 a2 a3 = a1 <+> a2 <+> a3
 
 ||| Audits that Hoyle state triple-alpha multiset fusion produces exact 12 nucleons and 324 mass tokens (Rule 03 §8).
@@ -223,7 +223,7 @@ auditHoyleTripleAlphaMultisetProof : Bool
 auditHoyleTripleAlphaMultisetProof =
   let a = alphaClusterHadronMultiset
       c12 = tripleAlphaHoyleMultisetFusion a a a
-      nTot = boxToNat (absBox (multisetSum c12))
+      nTot = boxToNat (absBox (totalMassBox c12))
       mTot = observeHadronClusterMassTokens c12
   in natEq nTot 12 && boxEq mTot (intToBoxInt 324)
 

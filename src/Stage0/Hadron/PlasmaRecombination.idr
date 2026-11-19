@@ -29,6 +29,19 @@ Eq ParticleCharge where
   _                == _                = False
 
 public export
+particleChargeTag : ParticleCharge -> Nat
+particleChargeTag ProtonPositive   = 0
+particleChargeTag ElectronNegative = 1
+particleChargeTag NeutralHydrogen  = 2
+
+public export
+Ord ParticleCharge where
+  compare x y = compare (particleChargeTag x) (particleChargeTag y)
+
+public export
+DiscreteCoord ParticleCharge where
+
+public export
 Show ParticleCharge where
   show ProtonPositive   = "p+"
   show ElectronNegative = "e-"
@@ -110,16 +123,15 @@ streamPlasmaRecombination = mapStream recombinePlasma
 
 ||| Observes net electric charge across a plasma multiset directly (Rule 03 §8):
 public export
-observePlasmaBagCharge : Multiset BoxInt ParticleCharge -> BoxInt
-observePlasmaBagCharge ZeroM = intToBoxInt 0
-observePlasmaBagCharge (AddM p w rest) =
-  addBox (mulBox (elementaryCharge p) w) (observePlasmaBagCharge rest)
+observePlasmaBagCharge : Carrier ParticleCharge -> BoxInt
+observePlasmaBagCharge =
+  foldBoxTreeL (\acc, (p, w) => addBox acc (mulBox (elementaryCharge p) w)) (intToBoxInt 0)
 
 ||| Converts a PlasmaCell into an authentic Multiset carrier (Rule 03 §8):
 public export
-plasmaCellToMultiset : PlasmaCell -> Multiset BoxInt ParticleCharge
+plasmaCellToMultiset : PlasmaCell -> Carrier ParticleCharge
 plasmaCellToMultiset (MkPlasmaCell p e) =
-  AddM ProtonPositive (natToBoxInt p) (AddM ElectronNegative (natToBoxInt e) ZeroM)
+  singletonCarrier ProtonPositive (natToBoxInt p) <+> singletonCarrier ElectronNegative (natToBoxInt e)
 
 ||| Streams emitted CMB decoupling photons directly as PhotonStateToken into FusedStream (FinSc-Electromagnetism):
 public export
@@ -130,7 +142,6 @@ streamDecoupledPhotons gas =
                         else Done) 0
 
 ||| Evaluates total energy of CMB decoupling photon stream in O(1) registers (FinSc-Electromagnetism):
-%spec fuel
 public export
 evaluateDecouplingPhotonEnergy : (fuel : Nat) -> DecoupledGas -> BoxInt
 evaluateDecouplingPhotonEnergy fuel gas =

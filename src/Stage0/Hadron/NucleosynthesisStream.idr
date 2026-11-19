@@ -49,7 +49,6 @@ unfoldAlphaFusionStream : List AlphaClusterState -> FusedStream Stage0.BoxInt.Bo
 unfoldAlphaFusionStream alphas = fusedTripleAlphaFluxStream (stream alphas)
 
 ||| Direct stream accumulator for total triple-alpha nucleosynthesis fusion energy flux using foldStreamNat.
-%spec fuel
 public export
 fusedComputeTotalNucleosynthesisFluxNatDirect : (fuel : Nat) -> FusedStream AlphaClusterState -> Stage0.BoxInt.BoxInt
 fusedComputeTotalNucleosynthesisFluxNatDirect fuel strm =
@@ -111,7 +110,7 @@ auditLinearNucleonConservationProof =
   in flux == intToBoxInt 972
 
 ||| Deforested 2LTT staged code generator transducer for nucleosynthesis fusion stream.
-%inline public export
+public export
 stagedNucleosynthesisPipeline : List AlphaClusterState -> Code Stage0.BoxInt.BoxInt
 stagedNucleosynthesisPipeline alphas = quote (fusedComputeTotalNucleosynthesisFluxNat 100 alphas)
 
@@ -155,6 +154,28 @@ Eq IsotopeToken where
   Neutrino      == Neutrino      = True
   GammaPhoton   == GammaPhoton   = True
   _             == _             = False
+
+public export
+isotopeTag : IsotopeToken -> Nat
+isotopeTag Proton        = 0
+isotopeTag Neutron       = 1
+isotopeTag Deuteron      = 2
+isotopeTag Helium3       = 3
+isotopeTag AlphaParticle = 4
+isotopeTag Carbon12      = 5
+isotopeTag Nitrogen14    = 6
+isotopeTag Oxygen16      = 7
+isotopeTag Positron      = 8
+isotopeTag Electron      = 9
+isotopeTag Neutrino      = 10
+isotopeTag GammaPhoton   = 11
+
+public export
+Ord IsotopeToken where
+  compare x y = compare (isotopeTag x) (isotopeTag y)
+
+public export
+DiscreteCoord IsotopeToken where
 
 public export
 Show IsotopeToken where
@@ -410,22 +431,22 @@ auditNuclearConservationProof =
 
 ||| Deforested stream transducer unfolding nuclear reaction trajectory over consecutive steps.
 public export
-streamNuclearTrajectory : TransitionChannel IsotopeToken -> TransitionState IsotopeToken -> FusedStream (TransitionState IsotopeToken)
-streamNuclearTrajectory = streamTransitionTrajectory
+streamNuclearTrajectory : TransitionChannel IsotopeToken -> TransitionCarrier IsotopeToken -> FusedStream (TransitionCarrier IsotopeToken)
+streamNuclearTrajectory = streamTransitionTrajectoryCarrier
 
 ||| Evaluates nuclear reaction trajectory under Nat fuel bounds without intermediate list allocations.
 public export
-runNuclearTrajectoryNat : Nat -> TransitionChannel IsotopeToken -> TransitionState IsotopeToken -> TransitionState IsotopeToken
-runNuclearTrajectoryNat = runTransitionTrajectoryNat
+runNuclearTrajectoryNat : Nat -> TransitionChannel IsotopeToken -> TransitionCarrier IsotopeToken -> TransitionCarrier IsotopeToken
+runNuclearTrajectoryNat = runTransitionTrajectoryCarrierNat
 
 ||| Evaluates nuclear reaction trajectory bounded by model-indexed GohFuel.
 public export
-runNuclearTrajectoryFuelModel : GohFuel cap -> TransitionChannel IsotopeToken -> TransitionState IsotopeToken -> TransitionState IsotopeToken
-runNuclearTrajectoryFuelModel fuel = runTransitionTrajectoryNat (gohSteps fuel)
+runNuclearTrajectoryFuelModel : GohFuel cap -> TransitionChannel IsotopeToken -> TransitionCarrier IsotopeToken -> TransitionCarrier IsotopeToken
+runNuclearTrajectoryFuelModel fuel = runTransitionTrajectoryCarrierNat (gohSteps fuel)
 
 ||| Evaluates nuclear reaction trajectory bounded canonically by masterSubstrateGohFuelModel (Primorial 210 capacity).
 public export
-runNuclearTrajectoryGoh : TransitionChannel IsotopeToken -> TransitionState IsotopeToken -> TransitionState IsotopeToken
+runNuclearTrajectoryGoh : TransitionChannel IsotopeToken -> TransitionCarrier IsotopeToken -> TransitionCarrier IsotopeToken
 runNuclearTrajectoryGoh = runNuclearTrajectoryFuelModel masterSubstrateGohFuelModel
 
 
